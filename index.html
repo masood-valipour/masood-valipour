@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masood Valipour Personal Page</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      /* deep space */
+      --bg2: #0b1229;
+      /* slightly lighter */
+      --ink: #e6ecff;
+      /* text */
+      --muted: #9bb0ff;
+      /* secondary text */
+      --accent: #3b82f6;
+      /* blue */
+      --accent-2: #60a5fa;
+      /* lighter blue */
+      --card: #0e1630cc;
+      /* glass card */
+      --glass: rgba(255, 255, 255, .06);
+      --shadow: 0 10px 30px rgba(0, 0, 0, .45), 0 0 120px rgba(59, 130, 246, .12);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 70% -20%, #1b2a52 0%, transparent 60%), var(--bg);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow-x: hidden;
+      scroll-behavior: smooth
+    }
+
+    /* Starfield canvas under everything */
+    #stars {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background: linear-gradient(180deg, var(--bg), #020617)
+    }
+
+    /* Global accents */
+    .glow {
+      filter: drop-shadow(0 0 25px rgba(59, 130, 246, .45))
+    }
+
+    .accent {
+      color: var(--accent)
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .8rem 1.1rem;
+      border: 1px solid rgba(99, 102, 241, .25);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(17, 24, 39, .45), rgba(17, 24, 39, .2));
+      backdrop-filter: blur(8px);
+      color: var(--ink);
+      text-decoration: none;
+      transition: .25s ease;
+      box-shadow: var(--shadow)
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, .25), 0 0 80px rgba(59, 130, 246, .15)
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(2, 6, 23, .75), rgba(2, 6, 23, .35));
+      border-bottom: 1px solid rgba(99, 102, 241, .15)
+    }
+
+    .nav-wrap {
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      padding: 12px 18px
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      text-decoration: none;
+      color: var(--ink)
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: radial-gradient(120% 120% at 30% 30%, var(--accent-2), var(--accent) 60%, #1e293b);
+      box-shadow: 0 0 45px rgba(255, 255, 255, 0.45) inset
+    }
+
+    .brand-name {
+      font-weight: 800;
+      letter-spacing: .4px
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: .5rem .7rem;
+      border-radius: 10px;
+      transition: .25s
+    }
+
+    .nav-links a.active,
+    .nav-links a:hover {
+      color: var(--ink);
+      background: rgba(59, 130, 246, .12);
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      min-height: 84vh;
+      display: grid;
+      align-items: center
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 0 20px
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .85rem;
+      color: #c7d2fe;
+      background: rgba(59, 130, 246, .14);
+      border: 1px solid rgba(99, 102, 241, .25);
+      padding: .35rem .6rem;
+      border-radius: 999px
+    }
+
+    .title {
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      line-height: 1.05;
+      margin: .4rem 0 .6rem;
+      font-weight: 900;
+      letter-spacing: .2px
+    }
+
+    .title .gradient {
+      background: linear-gradient(90deg, #b3c7ff, #e2e8ff 30%, #60a5fa 60%, #93c5fd 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 30px rgba(147, 197, 253, .18))
+    }
+
+    .lede {
+      max-width: 760px;
+      color: #c7d2fe;
+      font-size: 1.1rem;
+      line-height: 1.7
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap
+    }
+
+    /* GRID SECTIONS */
+    section {
+      padding: 72px 0;
+      border-top: 1px solid rgba(99, 102, 241, .12)
+    }
+
+    h2 {
+      font-weight: 900;
+      font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+      margin: 0 0 16px
+    }
+
+    p.lead {
+      color: #c7d2fe;
+      margin: 0 0 26px
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, .55), rgba(15, 23, 42, .25));
+      border: 1px solid rgba(99, 102, 241, .18);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden
+    }
+
+    .card:before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(600px 220px at var(--mx, 70%) var(--my, 30%), rgba(96, 165, 250, .12), transparent 40%);
+      pointer-events: none
+    }
+
+    .card h3 {
+      margin: .2rem 0 .4rem;
+      font-size: 1.1rem
+    }
+
+    .card p {
+      color: #c7d2fe;
+      font-size: .98rem;
+      line-height: 1.6
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: .4rem;
+      align-items: center;
+      font-size: .75rem;
+      color: #c7d2fe;
+      background: rgba(59, 130, 246, .16);
+      padding: .3rem .55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(96, 165, 250, .35)
+    }
+
+    /* TIMELINE */
+    .timeline {
+      position: relative;
+      margin: 20px 0 0;
+      padding-left: 20px
+    }
+
+    .timeline:before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(var(--accent), transparent)
+    }
+
+    .tl-item {
+      position: relative;
+      margin: 0 0 18px 0;
+      padding-left: 24px
+    }
+
+    .tl-item:before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--accent-2), var(--accent));
+      box-shadow: 0 0 25px rgba(59, 130, 246, .5)
+    }
+
+    .tl-meta {
+      color: #93c5fd;
+      font-size: .85rem
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 40px 20px;
+      color: #9fb7ff;
+      text-align: center
+    }
+
+    footer a {
+      color: #bcd3ff
+    }
+
+    /* Reveal animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .8s ease, transform .8s ease
+    }
+
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    /* Small screens */
+    @media (max-width:720px) {
+      .nav-links {
+        display: none !important
+      }
+
+      /* .hero{min-height:76vh} */
+    }
+
+    #cv {
+      display: none;
+    }
+
+
+    /* Language Switcher Styling */
+    .lang-switch {
+      display: flex;
+      gap: 8px;
+      margin-left: 25px;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-left: 1px solid rgba(99, 102, 241, .15);
+    }
+
+    .lang-switch a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .lang-switch a:hover {
+      color: var(--ink);
+    }
+
+    .lang-switch .sep {
+      color: rgba(99, 102, 241, .3);
+    }
+
+    /* Ensure Nav handles 3 items correctly (Logo - Lang - Links) */
+    .nav-wrap {
+      /* This ensures the items are spaced out evenly */
+      justify-content: space-between;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      margin-left: auto;
+      /* This pushes the links to the right side! */
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <nav>
+    <div class="nav-wrap">
+      <a class="brand" href="#home" aria-label="Go to top">
+        <!-- <div class="logo" title="MV"></div> -->
+        <img src="icon.png" class="logo" alt="Masood Valipour Logo">
+        <div class="brand-name">Masood Valipour</div>
+      </a>
+
+      <div class="lang-switch">
+        <a href="index.html" class="lang-link active" id="enLink">EN</a>
+        <span class="sep">/</span>
+        <a href="pl.html" class="lang-link" id="plLink">PL</a>
+        <span class="sep">/</span>
+        <a href="fa.html" class="lang-link" id="faLink">فا</a>
+      </div>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#projects">Projects</a>
+        <a href="#publications">Publications</a>
+        <a href="#cv">CV</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <header id="home" class="hero">
+    <div class="container">
+      <span class="tag glow">Quantum Optics • Light–Matter Interaction</span>
+      <h1 class="title">
+        Hey there, I'm <span class="gradient">Masood Valipour</span>
+      </h1>
+      <p class="lede" style="font-size:1.05rem;">
+        A PhD candidate at <span class="gradient">Nicolaus Copernicus University</span> in Toruń, Poland —
+        exploring how light and matter interact at the quantum level through theory, computation, and a bit of
+        imagination 😉.
+      </p>
+      <div class="hero-cta">
+        <a class="button" href="#projects">Explore My Work →</a>
+        <a class="button" href="#contact">Get in Touch</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="container">
+      <h2 class="reveal">Ongoing Projects</h2>
+      <p class="lead reveal">Current and completed research projects exploring light–matter interaction and quantum
+        dynamics.</p>
+      <div class="cards">
+
+        <!-- Project 1 -->
+        <article class="card reveal">
+          <span class="badge">Completed • Published</span>
+          <h3>Optimization of Two-Photon Absorption for a Three-Level Atom</h3>
+          <p>
+            This project focuses on optimizing two-photon absorption processes in three-level systems by tailoring
+            entangled and unentangled Gaussian photon pairs. The work combines analytical derivations and
+            GPU-accelerated numerical simulations.
+          </p>
+          <p>
+            🔗 <a class="accent" href="https://arxiv.org/abs/2411.13274" target="_blank">arXiv</a> ·
+            <a class="accent" href="https://doi.org/10.1103/PhysRevA.111.033709" target="_blank">Physical Review A</a> ·
+            <a class="accent" href="https://github.com/bojnordsky/TwoPhotonAbsorption" target="_blank">GitHub</a>
+          </p>
+        </article>
+
+        <!-- Project 2 -->
+        <article class="card reveal">
+          <span class="badge">Ongoing • Interactive</span>
+          <h3>Unidirectional Field Interacting with a Three-Level System</h3>
+          <p>
+            An ongoing project investigating the behavior of unidirectional quantum fields coupled to three-level
+            systems. This study aims to extend the understanding of unidirectional light interaction with a quantum
+            systems.
+          </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/detuning_interactive_plots.html"
+              target="_blank">Marginal distribution of states</a> </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/compare_peaks.html"
+              target="_blank">Comparing Peak Position of the marginal distribution </a> </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/marginal_Peaks.html"
+              target="_blank">Peak Position of the marginal distribution of Optimum State </a> </p>
+
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLICATIONS -->
+  <section id="publications">
+    <div class="container">
+      <h2 class="reveal">Publications</h2>
+      <p class="lead reveal">Peer reviewed publications.</p>
+      <div class="cards">
+
+        <article class="card reveal">
+          <span class="badge">2025 • Phys.Rev.A</span>
+          <h3>Optimization of Two-Photon Absorption for a Three-Level Atom</h3>
+          <p>Includes analytic marginal forms, Gaussian entangled vs unentangled comparisons, and computational results.
+          </p>
+          <p>🔗 <a class="accent" href="https://arxiv.org/abs/2411.13274" target="_blank">arXiv</a> · <a class="accent"
+              href="https://doi.org/10.1103/PhysRevA.111.033709" target="_blank">Phys.Rev.A</a> · <a class="accent"
+              href="https://github.com/bojnordsky/TwoPhotonAbsorption" target="_blank">GitHub</a></p>
+        </article>
+
+        <article class="card reveal">
+          <span class="badge">2023 • Iranian Journal of Physics Research</span>
+          <h3>CMB Dipole Asymmetry through Annular Variance</h3>
+          <p>This work proposes a new method to estimate the CMB dipole direction and amplitude using annular variance
+            comparisons. Applied to Planck data, it finds a dipole significance of 1.6σ, offering insights into possible
+            isotropy violations.</p>
+          <p>🔗 <a class="accent" href="https://ijpr.iut.ac.ir/article_1586_en.html?lang=fa" target="_blank">Iranian
+              Journal of Physics Research</a> · <a class="accent"
+              href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=pd996ysAAAAJ&citation_for_view=pd996ysAAAAJ:u-x6o8ySG0sC"
+              target="_blank">Google Scholar</a></p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CV / TIMELINE -->
+  <section id="cv">
+    <div class="container">
+      <h2 class="reveal">CV & Highlights</h2>
+      <p class="lead reveal">Add a downloadable PDF and a quick timeline of recent milestones.</p>
+      <p class="reveal"><a class="button" href="#" onclick="alert('Attach your PDF and replace this link.')">Download CV
+          (PDF)</a></p>
+      <div class="timeline">
+        <div class="tl-item reveal">
+          <div class="tl-meta">2025</div>
+          <div><strong>PhD research</strong>: Entangled vs unentangled photon‑pair optimization; conference talks.</div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-meta">2024</div>
+          <div><strong>Internal review</strong>: Quantum trajectories monograph; interactive dashboards prototype.</div>
+        </div>
+        <div class="tl-item reveal">
+          <div class="tl-meta">2023</div>
+          <div><strong>Doctoral School</strong>: Nicolaus Copernicus University, Toruń (WFAiIS).</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <h2 class="reveal">Contact</h2>
+      <p class="lead reveal">Email • Google Scholar • GitHub • ORCID</p>
+      <div class="cards">
+
+        <article class="card reveal">
+          <h3>Get in touch</h3>
+          <p>
+            Email: <a class="accent" href="mailto:masood.valipour@umk.pl">masood.valipour@umk.pl</a><br>
+            Scholar: <a class="accent" href="https://scholar.google.com/citations?user=pd996ysAAAAJ&hl=en&oi=ao"
+              target="_blank">Google Scholar</a><br>
+            GitHub: <a class="accent" href="https://github.com/bojnordsky" target="_blank">github.com/bojnordsky</a><br>
+            ORCID: <a class="accent" href="https://orcid.org/0000-0003-3144-2576"
+              target="_blank">0000-0003-3144-2576</a>
+          </p>
+        </article>
+
+        <article class="card reveal">
+          <h3>Office</h3>
+          <p>WFAiIS, Nicolaus Copernicus University<br>
+            <a class="accent" href="https://maps.app.goo.gl/wEzWNwqAxY5JokTp7" target="_blank">Grudziądzka 5/7, 87-100
+              Toruń</a><br>
+            Office: B.01.07
+          </p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+
+
+  <footer>
+    © <span id="year"></span> Masood Valipour · Crafted with curiosity and a touch of quantum light.
+  </footer>
+
+  <script>
+    // ===== Animated starfield (cinematic background) =====
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let w, h, stars;
+    function resize() { w = canvas.width = innerWidth; h = canvas.height = innerHeight; createStars() }
+    function createStars() {
+      const count = Math.min(260, Math.floor((w * h) / 12000));
+      stars = new Array(count).fill(0).map(() => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        z: Math.random() * 2 + .6,
+        r: Math.random() * 1.2 + .2,
+        tw: Math.random() * 0.04 + 0.005
+      }));
+    }
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        const alpha = .6 + Math.sin(performance.now() * s.tw) * .4;
+        ctx.fillStyle = `rgba(96,165,250,${alpha})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+        s.y += s.z * 0.06; if (s.y > h) { s.y = 0; s.x = Math.random() * w }
+      }
+      requestAnimationFrame(draw)
+    }
+    addEventListener('resize', resize, { passive: true }); resize(); draw();
+
+    // ===== Card hover light following cursor =====
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('pointermove', e => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+
+    // ===== Reveal on scroll =====
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } });
+    }, { threshold: .12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // ===== Active link highlight while scrolling =====
+    const sections = ['projects', 'publications', 'cv', 'contact'];
+    const links = [...document.querySelectorAll('.nav-links a')];
+    const map = Object.fromEntries(links.map(a => [a.getAttribute('href').slice(1), a]));
+    function setActive() {
+      let current = null; let top = scrollY + innerHeight * 0.33;
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= top) current = id;
+      }
+      links.forEach(a => a.classList.remove('active'));
+      if (current && map[current]) map[current].classList.add('active');
+    }
+    addEventListener('scroll', setActive, { passive: true }); setActive();
+
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

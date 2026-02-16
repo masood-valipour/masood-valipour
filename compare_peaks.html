@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peak Data Visualizer - Three States</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container {
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 24px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* RESPONSIVE GRID FOR THREE PLOTS */
+        .plots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .plot-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .plot-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 12px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* GRID LAYOUT FOR CHART + LATEX LABELS */
+        .chart-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: 1fr auto;
+            gap: 0px;
+            height: 400px;
+        }
+
+        .y-axis-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 16px;
+            padding-right: 8px;
+            color: #1f2937;
+        }
+
+        .x-axis-label {
+            grid-column: 2;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 5px;
+            color: #1f2937;
+        }
+
+        .canvas-holder {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controls Styling */
+        .controls-box {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .slider-container { margin-bottom: 12px; }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            appearance: none;
+            background: #e5e7eb;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .slider-ticks {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: #6b7280; margin-top: 4px;
+            font-family: 'Times New Roman', serif;
+        }
+        .info-box {
+            padding: 16px;
+            background: #f3f4f6; 
+            border-radius: 8px;
+            color: #4b5563; 
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .info-box h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        #loading { text-align: center; padding: 32px; font-family: 'Times New Roman'; }
+        .error-msg { color: #dc2626; background: #fee2e2; padding: 1rem; border-radius: 8px; display: none; }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .plots-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Peak Position of Marginal Distributions</h1>
+        
+        <div id="loading">Loading data...</div>
+        <div id="errorMsg" class="error-msg"></div>
+
+        <div id="content" style="display: none;">
+            
+
+            <!-- Three Plots Grid -->
+            <div class="plots-grid">
+                <!-- Optimum State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Optimum State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <canvas id="chartOpt"></canvas>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entangled State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Entangled State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <canvas id="chartEnt"></canvas>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unentangled State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Unentangled State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <canvas id="chartUnEnt"></canvas>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls Section -->
+            <div class="controls-box">
+                <div class="controls-grid">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span>\( \delta_a / \Gamma_f \)</span>
+                            <span style="font-weight: bold; color: #4f46e5;" id="deltaValue">0.0</span>
+                        </div>
+                        <input type="range" id="deltaSlider" min="0" max="25" step="0.5" value="0">
+                        <div class="slider-ticks">
+                            <span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <h3>Figure Overview and Methodology</h3>
+                <p>These plots display the <strong>maximum peak positions</strong> (\(\omega\)) of the marginal distributions for three different quantum states: Optimum, Entangled, and Unentangled. The data represents the real roots derived from the marginal distribution formulas.</p>
+                <ul>
+                    <li><strong>Calculation Method:</strong> Peak positions were computed using analytical approaches by finding roots of the derivatives of the respective distribution functions.</li>
+                    <li><strong>Dynamically Plotted Lines:</strong> The curves represent peak positions as functions of the decay ratio (\(\Gamma_e / \Gamma_f\)). They change based on the detuning parameter \(\delta_a / \Gamma_f\).</li>
+                </ul>
+                
+                <h3>Reference Guidelines</h3>
+                <p>Horizontal reference lines show the central frequencies:</p>
+                <ul>
+                    <li><span style="color: red;">Red dashed line:</span> \(\omega_{fe} / \Gamma_f\)</li>
+                    <li><span style="color: rgb(112, 112, 240);">Blue dashed line:</span> \(\omega_{eg} / \Gamma_f\)</li>
+                </ul>
+                
+                <h3>Data Source</h3>
+                <p>All data points are stored in local files: <code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, and <code>peak_data_UnEnt.json</code>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DATA_URLS = {
+            opt: './DataSets/peak_data_Opt.json',
+            ent: './DataSets/peak_data_Ent.json',
+            unent: './DataSets/peak_data_UnEnt.json'
+ 
+        };
+
+        let allData = {
+            opt: [],
+            ent: [],
+            unent: []
+        };
+
+        let charts = {
+            opt: null,
+            ent: null,
+            unent: null
+        };
+
+        const content = document.getElementById('content');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        const deltaSlider = document.getElementById('deltaSlider');
+
+        const toSuperscript = (num) => {
+            const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+            return num.toString().split('').map(c => map[c] || c).join('');
+        };
+
+        function createReferenceLineLabelsPlugin() {
+            return {
+                id: 'referenceLineLabels',
+                afterDraw(chart, args, options) {
+                    const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+                    const deltaA = parseFloat(deltaSlider.value);
+                    const refY = deltaA / 2;
+                    
+                    const labels = [
+                        { text: `ω_fe (${refY.toFixed(2)})`, yValue: refY, color: '#dc2626', offset: 15 },
+                        { text: `ω_eg (${(-refY).toFixed(2)})`, yValue: -refY, color: '#1d4ed8', offset: -10 }
+                    ];
+
+                    ctx.save();
+                    ctx.font = '12px Times New Roman';
+                    ctx.textAlign = 'right';
+
+                    labels.forEach(label => {
+                        const yPos = y.getPixelForValue(label.yValue);
+                        if (yPos > top && yPos < bottom) {
+                            ctx.fillStyle = label.color;
+                            ctx.fillText(label.text, right - 5, yPos + label.offset);
+                        }
+                    });
+
+                    ctx.restore();
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Load all three datasets
+                const [dataOpt, dataEnt, dataUnEnt] = await Promise.all([
+                    fetch(DATA_URLS.opt).then(res => res.json()),
+                    fetch(DATA_URLS.ent).then(res => res.json()),
+                    fetch(DATA_URLS.unent).then(res => res.json())
+                ]);
+
+                allData.opt = dataOpt;
+                allData.ent = dataEnt;
+                allData.unent = dataUnEnt;
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                
+                updateAllPlots(true);
+                
+                if (window.MathJax) {
+                    MathJax.typesetPromise([document.getElementById('content')]);
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                errorMsg.style.display = 'block';
+                errorMsg.innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+        });
+
+        deltaSlider.addEventListener('input', function() {
+            deltaValue.textContent = parseFloat(this.value).toFixed(1);
+            updateAllPlots(false);
+        });
+
+        function updateAllPlots(animate = false) {
+            updatePlot('opt', 'chartOpt', animate);
+            updatePlot('ent', 'chartEnt', animate);
+            updatePlot('unent', 'chartUnEnt', animate);
+        }
+
+        function updatePlot(dataKey, canvasId, animate = false) {
+            const deltaA = parseFloat(deltaSlider.value);
+            const tolerance = 0.5;
+
+            const filteredData = allData[dataKey].filter(point => 
+                Math.abs(point.delta_a - deltaA) < tolerance
+            );
+            
+            if (filteredData.length === 0) return;
+
+            // Get unique points by Gamma_e
+            const uniquePointsMap = new Map();
+            filteredData.forEach(point => {
+                const gamma = point.Gamma_e;
+                const dist = Math.abs(point.delta_a - deltaA);
+                if (!uniquePointsMap.has(gamma) || dist < uniquePointsMap.get(gamma).dist) {
+                    uniquePointsMap.set(gamma, { data: point, dist: dist });
+                }
+            });
+
+            const sortedData = Array.from(uniquePointsMap.values())
+                .map(item => item.data)
+                .sort((a, b) => a.Gamma_e - b.Gamma_e);
+
+            const maxPeaks = Math.max(...sortedData.map(d => d.peaks.length));
+            const colors = ['#e69f00', '#56b4e9'];
+
+            // Calculate dynamic Y-range
+            let allYValues = [];
+            sortedData.forEach(d => {
+                d.peaks.forEach(peak => {
+                    if (peak !== null && peak !== undefined) {
+                        allYValues.push(peak);
+                    }
+                });
+            });
+            
+            const refY = deltaA / 2;
+            allYValues.push(refY, -refY);
+            
+            const minDataY = Math.min(...allYValues);
+            const maxDataY = Math.max(...allYValues);
+            const rangeDiff = maxDataY - minDataY;
+            
+            let newYMin, newYMax;
+            if (rangeDiff === 0) {
+                newYMin = minDataY - 0.5;
+                newYMax = maxDataY + 0.5;
+            } else {
+                const padding = rangeDiff * 0.1;
+                newYMin = minDataY - padding;
+                newYMax = maxDataY + padding;
+            }
+
+            // Reference lines
+            const xMin = 0.01;
+            const xMax = 100;
+
+            const refLineStyle = {
+                fill: false,
+                pointRadius: 0,
+                borderWidth: 1.5,
+                borderDash: [5, 5],
+                spanGaps: true
+            };
+
+            const datasets = [
+                {
+                    label: `+δ_a/2`,
+                    data: [{ x: xMin, y: refY }, { x: xMax, y: refY }],
+                    borderColor: '#dc2626',
+                    ...refLineStyle
+                },
+                {
+                    label: `-δ_a/2`,
+                    data: [{ x: xMin, y: -refY }, { x: xMax, y: -refY }],
+                    borderColor: '#1d4ed8',
+                    ...refLineStyle
+                }
+            ];
+
+            // Add peak datasets
+            for (let i = 0; i < maxPeaks; i++) {
+                datasets.push({
+                    label: `Peak ${i + 1}`,
+                    data: sortedData.map(d => ({
+                        x: d.Gamma_e,
+                        y: d.peaks[i] !== undefined ? d.peaks[i] : null
+                    })),
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length],
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointHoverRadius: 4,
+                    spanGaps: false
+                });
+            }
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const tickFont = { family: 'Times New Roman', size: 12 };
+
+            if (charts[dataKey]) {
+                charts[dataKey].data.datasets = datasets;
+                charts[dataKey].options.scales.y.min = newYMin;
+                charts[dataKey].options.scales.y.max = newYMax;
+                charts[dataKey].update(animate ? 'default' : 'none');
+            } else {
+                charts[dataKey] = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 0 },
+                        layout: { padding: 0 },
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                min: xMin,
+                                max: xMax,
+                                title: { display: false },
+                                ticks: {
+                                    font: tickFont,
+                                    color: '#374151',
+                                    callback: function(value) {
+                                        const log10 = Math.log10(value);
+                                        if (Number.isInteger(log10)) return '10' + toSuperscript(log10);
+                                        return null;
+                                    }
+                                }
+                            },
+                            y: {
+                                min: newYMin,
+                                max: newYMax,
+                                title: { display: false },
+                                ticks: { font: tickFont, color: '#374151' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                position: 'nearest',
+                                mode: 'index',
+                                intersect: false,
+                                titleFont: { family: 'Times New Roman', size: 11 },
+                                bodyFont: { family: 'Times New Roman', size: 11 },
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        const xValue = tooltipItems[0].parsed.x;
+                                        return [`Γₑ / Γf = ${xValue.toFixed(4)}`];
+                                    },
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label.startsWith('+') || label.startsWith('-')) {
+                                            return `Reference: ${label} = ${context.parsed.y.toFixed(4)}`;
+                                        }
+                                        return `${label}: ${context.parsed.y !== null ? context.parsed.y.toFixed(4) : 'N/A'}`;
+                                    }
+                                }
+                            },
+                            referenceLineLabels: {}
+                        }
+                    },
+                    plugins: [createReferenceLineLabelsPlugin()]
+                });
+            }
+        }
+    </script>
+</body>
+</html>

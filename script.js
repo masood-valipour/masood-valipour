@@ -1,0 +1,883 @@
+
+// ============================================================================
+// CONSTANTS AND GLOBAL VARIABLES
+// ============================================================================
+
+const SCALE = 1.4;
+const N_T = 200;
+const N_W = 200;
+
+// Global data storage
+// "Opt" suffix = optimized delta_f
+// "Fixed" suffix = fixed delta_f (delta_f = 0)
+let df_UnEnt_Opt = null;
+let df_Ent_Opt = null;
+let df_UnEnt_Fixed = null;
+let df_Ent_Fixed = null;
+
+let Gamma_values = [];
+let Delta_values = [];
+
+
+// Grids
+let T_opt, W_opt, T_UnEn, W_UnEn, T_Ent, W_Ent;
+
+let domainRange = 5;
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+
+// Create linearly spaced array (like numpy.linspace)
+function linspace(start, end, num) {
+    const step = (end - start) / (num - 1);
+    return Array.from({length: num}, (_, i) => start + step * i);
+}
+
+// Create meshgrid (like numpy.meshgrid)
+function meshgrid(x, y) {
+    const X = [];
+    const Y = [];
+    for (let i = 0; i < y.length; i++) {
+        X.push([...x]);
+        Y.push(new Array(x.length).fill(y[i]));
+    }
+    return [X, Y];
+}
+
+// Apply function element-wise to 2D array
+function applyElementWise2D(arr1, arr2, func) {
+    const result = [];
+    for (let i = 0; i < arr1.length; i++) {
+        result.push([]);
+        for (let j = 0; j < arr1[i].length; j++) {
+            result[i].push(func(arr1[i][j], arr2[i][j]));
+        }
+    }
+    return result;
+}
+
+// Apply function element-wise to 1D array
+function applyElementWise1D(arr, func) {
+    return arr.map(func);
+}
+
+
+// ============================================================================
+// DATA LOADING
+// ============================================================================
+
+async function loadData() {
+    try {
+       // 1. Load Original Data (Optimized delta_f)
+        const p1 = fetch('./DataSets/HeatMap_deltas_UnEnt_Delay.json').then(r => r.json());
+        const p2 = fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay.json').then(r => r.json());
+        
+        // 2. Load New Data (Fixed delta_f / _deltaf0)
+        // Adjust these filenames if they differ slightly on your system
+        const p3 = fetch('./DataSets/HeatMap_deltas_UnEnt_Delay_deltaF0.json').then(r => r.json());
+        const p4 = fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay_deltaF0.json').then(r => r.json());
+
+        // Wait for all files to load
+        const [d1, d2, d3, d4] = await Promise.all([p1, p2, p3, p4]);
+        
+        df_UnEnt_Opt = d1;
+        df_Ent_Opt = d2;
+        df_UnEnt_Fixed = d3;
+        df_Ent_Fixed = d4;
+
+        
+        // Extract unique Gamma and Delta values and sort them
+        const gammaSet = new Set(df_UnEnt_Opt.map(row => row.Gamma_e));
+        const deltaSet = new Set(df_UnEnt_Opt.map(row => row.delta_a));
+        
+        Gamma_values = Array.from(gammaSet).sort((a, b) => a - b);
+        Delta_values = Array.from(deltaSet).sort((a, b) => a - b);
+        
+
+        // Initialize sliders
+            // Initialize grids with default domain
+        initializeGrids();
+        
+        // Initialize sliders and checkbox
+        initializeControls();
+
+        
+        // Initialize domain controls
+        initializeDomainControls();
+        
+        // Initial plot
+        updatePlots();
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        document.getElementById('param-display').textContent = 'Error loading data files';
+    }
+}
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - OPTIMUM STATE
+// ============================================================================
+
+function OptimumState_temporal(Gamma_e, marginal = false) {
+    const tStar = Math.max(...T_opt);
+    const Gamma_f = 1;
+
+    if (marginal) {
+        return applyElementWise1D(T_opt, (t) => {
+            const exp1 = Math.exp((Gamma_f - Gamma_e) * tStar + Gamma_e * t);
+            const exp2 = Math.exp(Gamma_f * t);
+            const denom = Gamma_f - Gamma_e;
+            let p = denom !== 0 ? (exp1 - exp2) / denom : exp1 * (tStar - t);
+            p += exp2 / Gamma_e;
+            p *= (Gamma_e * Gamma_f * Math.exp(-Gamma_f * tStar)) / 2;
+            return p;
+        });
+    } else {
+        const [T1, T2] = meshgrid(T_opt, T_opt);
+        const constant = (Gamma_e * Gamma_f * Math.exp(-Gamma_f * tStar)) / 2;
+
+        return applyElementWise2D(T1, T2, (t1, t2) => {
+            const chi1 = (t1 < t2 && t2 < tStar) ? 1 : 0;
+            const chi2 = (t2 < t1 && t1 < tStar) ? 1 : 0;
+            const term1 = Math.exp((Gamma_f - Gamma_e) * t2 + Gamma_e * t1) * chi1;
+            const term2 = Math.exp((Gamma_f - Gamma_e) * t1 + Gamma_e * t2) * chi2;
+            return constant * (term1 + term2);
+        });
+    }
+}
+
+function OptimumState_frequency(Gamma_e, delta_a, marginal = false) {
+    const Gf = 1;
+    const tStar = 0;
+    const w_eg = -0.5 * delta_a;
+    const w_fe = 0.5 * delta_a;
+
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    if (marginal) {
+        return applyElementWise1D(W_opt, (w) => {
+            let p = Gamma_e * (Gamma_e + Gf) * (Gamma_e + Gf/4) +
+                    Gamma_e * (w_fe - w_eg) ** 2 +
+                    Gf * (w - w_eg) ** 2;
+            p /= 4 * Math.PI *
+                 ((w - w_eg) ** 2 + Gamma_e ** 2/4) *
+                 ((w - w_fe) ** 2 + (Gamma_e + Gf) ** 2/4);
+            return p;
+        });
+    } else {
+        const [W1, W2] = meshgrid(W_opt, W_opt);
+
+        const PHI = (w1, w2) => {
+            const denom1 = math.add(math.complex(Gamma_e / 2, 0), math.complex(0, w1 - w_eg));
+            const denom2 = math.add(math.complex(Gamma_e / 2, 0), math.complex(0, w2 - w_eg));
+
+            const term1 = math.divide(1, denom1);
+            const term2 = math.divide(1, denom2);
+            let phi = math.add(term1, term2);
+
+            const phase = (w1 + w2 - w_fe - w_eg) * tStar;
+            const expTerm = math.complex(Math.cos(phase), Math.sin(phase));
+            phi = math.multiply(phi, expTerm);
+            phi = math.multiply(phi, Math.sqrt(Gamma_e * Gf));
+
+            const denomSum = math.add(math.complex(Gf / 2, 0), math.complex(0, w1 + w2 - w_eg - w_fe));
+            phi = math.divide(phi, denomSum);
+            phi = math.multiply(phi, 1 / (4 * Math.PI));
+
+            return phi;
+        };
+
+        return applyElementWise2D(W2, W1, (w2, w1) => {
+            const phi = PHI(w1, w2);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - UNENTANGLED STATE
+// ============================================================================
+
+function Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f= 0, marginal = false) {
+    const MuB = Mu;
+    const MuA = 0;
+    const w_gf = 0;
+    const wB = 0.5 * (w_gf + delta_f);
+    const wA = 0.5 * (w_gf - delta_f);
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    const PsiA = (t) => {
+        const factor = Math.pow(OmegaA ** 2 / (2 * Math.PI), 0.25);
+        const exp_real = Math.exp(-(OmegaA ** 2) * (t - MuA) ** 2 / 4);
+        return math.complex(
+            factor * exp_real * Math.cos(-wA * t),
+            factor * exp_real * Math.sin(-wA * t)
+        );
+    };
+
+    const PsiB = (t) => {
+        const factor = Math.pow(OmegaB ** 2 / (2 * Math.PI), 0.25);
+        const exp_real = Math.exp(-(OmegaB ** 2) * (t - MuB) ** 2 / 4);
+        return math.complex(
+            factor * exp_real * Math.cos(-wB * t),
+            factor * exp_real * Math.sin(-wB * t)
+        );
+    };
+
+    let N = Math.exp(-((MuB - MuA) ** 2 * OmegaA ** 2 * OmegaB ** 2 + 4 * (wB - wA) ** 2) /
+                     (2 * OmegaA ** 2 + 2 * OmegaB ** 2));
+    N = 4 * (1 + 2 * OmegaA * OmegaB * N / (OmegaA ** 2 + OmegaB ** 2));
+
+    if (marginal) {
+        return applyElementWise1D(T_UnEn.map(t => t+ MuB), (t) => {
+            const X_exp = (OmegaA ** 2 * OmegaB ** 2 * (MuB - MuA) ** 2 + 4 * (wB - wA) ** 2) /
+                          (-4 * (OmegaA ** 2 + OmegaB ** 2));
+            const X_mag = Math.sqrt(2 * OmegaA * OmegaB / (OmegaA ** 2 + OmegaB ** 2)) *
+                         Math.exp(X_exp);
+            const X_phase = -(wB - wA) * (MuA * OmegaA ** 2 + MuB * OmegaB ** 2) /
+                           (OmegaA ** 2 + OmegaB ** 2);
+            const X = math.complex(X_mag * Math.cos(X_phase), X_mag * Math.sin(X_phase));
+
+            const psiA = PsiA(t);
+            const psiB = PsiB(t);
+
+            let P = math.multiply(math.multiply(math.conj(psiA), psiB), X);
+            P = math.add(P, math.multiply(math.multiply(math.conj(psiB), psiA), math.conj(X)));
+            P = math.add(P, math.complex(abs2(psiA) + abs2(psiB), 0));
+            P = math.multiply(P, 2 / N);
+
+            return math.abs(P);
+        });
+    } else {
+        const [T1, T2] = meshgrid(T_UnEn.map(t => t + MuB), T_UnEn.map(t => t + MuB));
+
+        const PHI = (t2, t1) => {
+            const psiTerm1 = math.multiply(PsiA(t1), PsiB(t2));
+            const psiTerm2 = math.multiply(PsiA(t2), PsiB(t1));
+            const psiSum = math.add(psiTerm1, psiTerm2);
+            return math.multiply(psiSum, 1 / Math.sqrt(N));
+        };
+
+        return applyElementWise2D(T2, T1, (t2, t1) => {
+            const phi = PHI(t2, t1);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+function Unentangled_frequency(OmegaA, OmegaB, MuA = 0, MuB = 0, delta_f = 0, marginal = false) {
+    const w_gf = 0;
+    const wB = 0.5 * (w_gf + delta_f);
+    const wA = 0.5 * (w_gf - delta_f);
+
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    const PsiA = (w) => {
+        const factor = Math.pow(2 / (OmegaA ** 2 * Math.PI), 0.25);
+        const exp_real = Math.exp(-((w - wA) ** 2) / OmegaA ** 2);
+        const phase = MuA * (w - wA);
+        return math.complex(
+            factor * exp_real * Math.cos(phase),
+            factor * exp_real * Math.sin(phase)
+        );
+    };
+
+    const PsiB = (w) => {
+        const factor = Math.pow(2 / (OmegaB ** 2 * Math.PI), 0.25);
+        const exp_real = Math.exp(-((w - wB) ** 2) / OmegaB ** 2);
+        const phase = MuB * (w - wB);
+        return math.complex(
+            factor * exp_real * Math.cos(phase),
+            factor * exp_real * Math.sin(phase)
+        );
+    };
+
+    // --- Normalization constant N ---
+    let N = Math.exp(-(MuB ** 2 * OmegaA ** 2 * OmegaB ** 2 + 4 * (wB - wA) ** 2) /
+                     (2 * OmegaA ** 2 + 2 * OmegaB ** 2));
+    N = 4 * (1 + 2 * OmegaA * OmegaB * N / (OmegaA ** 2 + OmegaB ** 2));
+
+    // ================= MARGINAL =================
+    if (marginal) {
+        return applyElementWise1D(W_UnEn, (w1) => {
+            // --- build A fully complex (exact Python translation) ---
+            let A = math.add(
+                math.multiply(math.complex(0, MuB - MuA), 1),
+                -2 * (wA - wB) / (OmegaB ** 2)
+            );
+            A = math.multiply(math.pow(A, 2), OmegaA ** 2 * OmegaB ** 2);
+            A = math.divide(A, 4 * (OmegaA ** 2 + OmegaB ** 2));
+            A = math.add(A, math.complex(0, MuB * (wA - wB)));
+            A = math.subtract(A, (wA - wB) ** 2 / (OmegaB ** 2));
+            A = math.multiply(
+                math.exp(A),
+                Math.sqrt(2 * OmegaA * OmegaB / (OmegaA ** 2 + OmegaB ** 2))
+            );
+            A = math.conj(A);
+
+            const psiA = PsiA(w1);
+            const psiB = PsiB(w1);
+
+            let p = math.multiply(math.multiply(math.conj(psiA), psiB), A);
+            p = math.add(p, math.conj(p));
+            p = math.add(p, math.complex(abs2(psiA) + abs2(psiB), 0));
+            p = math.multiply(p, 2 / N);
+            return math.abs(p);
+        });
+    }
+
+    // ================= JOINT =================
+    else {
+        const [W1, W2] = meshgrid(W_UnEn, W_UnEn);
+
+        const PHI = (w2, w1) => {
+            const psiTerm1 = math.multiply(PsiA(w1), PsiB(w2));
+            const psiTerm2 = math.multiply(PsiA(w2), PsiB(w1));
+            const psiSum = math.add(psiTerm1, psiTerm2);
+            return math.multiply(psiSum, 1 / Math.sqrt(N));
+        };
+
+        return applyElementWise2D(W2, W1, (w2, w1) => {
+            const phi = PHI(w2, w1);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - ENTANGLED STATE 
+// ============================================================================
+
+function Entangled_temporal(OmegaP, OmegaM, t02 = 0, t01 = 0, delta_f=0, marginal = false) {
+    const MuP = t02 + t01;
+    const MuM = t02 - t01;
+    const w_gf = 0;
+    const w02 = 0.5 * (w_gf + delta_f);
+    const w01 = 0.5 * (w_gf - delta_f);
+    const dW = w02 - w01;
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    let N = Math.exp(-(OmegaM ** 2) * MuM ** 2 / 4 - dW ** 2 / OmegaM ** 2) + 1;
+    N *= 8 * Math.PI / (OmegaP * OmegaM);
+
+    if (marginal) {
+        // ---- Marginal probability ----
+        return applyElementWise1D(T_Ent.map(t => t ), (t) => {
+            const A = OmegaP ** 2 / 4;
+            const B = OmegaM ** 2 / 4;
+
+            let P = 2 * Math.exp(-A * B * (2 * t - MuP) ** 2 / (A + B) -
+                                 B * MuM ** 2 -
+                                 dW ** 2 / (4 * A + 4 * B)) *
+                    Math.cos(A * dW * (2 * t - MuP) / (A + B));
+
+            P += Math.exp(-A * B * (2 * t - MuP + MuM) ** 2 / (A + B));
+            P += Math.exp(-A * B * (2 * t - MuP - MuM) ** 2 / (A + B));
+            P *= Math.sqrt(Math.PI / (A + B)) * 2 / N;
+
+            return P;
+        });
+    } else {
+        // ---- Joint probability ----
+        const [T1, T2] = meshgrid(T_Ent.map(t => t + MuP), T_Ent.map(t => t + MuP));
+
+        const PHI = (t2, t1) => {
+            const exp1_real = Math.exp(-(OmegaM ** 2) * (t2 - t1 - MuM) ** 2 / 8);
+            const phase1 = -(w01 * t1 + w02 * t2);
+            const term1 = math.complex(exp1_real * Math.cos(phase1), exp1_real * Math.sin(phase1));
+
+            const exp2_real = Math.exp(-(OmegaM ** 2) * (t1 - t2 - MuM) ** 2 / 8);
+            const phase2 = -(w01 * t2 + w02 * t1);
+            const term2 = math.complex(exp2_real * Math.cos(phase2), exp2_real * Math.sin(phase2));
+
+            let phi = math.add(term1, term2);
+
+            const expP = Math.exp(-(OmegaP ** 2) * (t2 + t1 - MuP) ** 2 / 8);
+            phi = math.multiply(phi, expP / Math.sqrt(N));
+
+            return phi;
+        };
+
+        return applyElementWise2D(T2, T1, (t2, t1) => {
+            const phi = PHI(t2, t1);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+function Entangled_frequency(OmegaP, OmegaM, t01 = 0, t02 = 0, delta_f = 0, w_gf = 0, marginal = false) {
+    const MuP = t02 + t01;
+    const MuM = t02 - t01;
+
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    let N = Math.exp(-(OmegaM ** 2) * MuM ** 2 / 4 - delta_f ** 2 / OmegaM ** 2) + 1;
+    N *= 8 * Math.PI / (OmegaP * OmegaM);
+
+    if (marginal) {
+        // ---- Marginal probability ----
+        return applyElementWise1D(W_Ent, (w) => {
+            let p = Math.exp(-((2 * w - w_gf + delta_f) ** 2) / (OmegaP ** 2 + OmegaM ** 2));
+            p += Math.exp(-((2 * w - w_gf - delta_f) ** 2) / (OmegaP ** 2 + OmegaM ** 2));
+            p += 2 * Math.exp(-((2 * w - w_gf) ** 2) / (OmegaP ** 2 + OmegaM ** 2) -
+                              OmegaM ** 2 * OmegaP ** 2 * MuM ** 2 / (4 * OmegaP ** 2 + 4 * OmegaM ** 2) -
+                              delta_f ** 2 / OmegaM ** 2) *
+                Math.cos((2 * w - w_gf) * OmegaM ** 2 * MuM / (OmegaP ** 2 + OmegaM ** 2));
+
+            p *= 4 / (N * OmegaM * OmegaP);
+            p *= Math.sqrt(Math.PI) / Math.sqrt(OmegaP ** 2 + OmegaM ** 2);
+            return 2 * p;
+        });
+    } else {
+        // ---- Joint probability ----
+        const [W1, W2] = meshgrid(W_Ent, W_Ent);
+
+        const PHI = (w2, w1) => {
+            const DELTA = w2 - w1;
+            const DELTA_0 = delta_f;
+            const SIGMA = w2 + w1;
+            const SIGMA_0 = w_gf;
+
+            const exp1_real = Math.exp(-((DELTA - DELTA_0) ** 2) / (2 * OmegaM ** 2));
+            const phase1 = MuM * (DELTA - DELTA_0) / 2;
+            const term1 = math.complex(exp1_real * Math.cos(phase1), exp1_real * Math.sin(phase1));
+
+            const exp2_real = Math.exp(-((DELTA + DELTA_0) ** 2) / (2 * OmegaM ** 2));
+            const phase2 = -MuM * (DELTA + DELTA_0) / 2;
+            const term2 = math.complex(exp2_real * Math.cos(phase2), exp2_real * Math.sin(phase2));
+
+            let phi = math.add(term1, term2);
+
+            const expSigma_real = Math.exp(-((SIGMA - SIGMA_0) ** 2) / (2 * OmegaP ** 2));
+            const phaseSigma = MuP * (SIGMA - SIGMA_0) / 2;
+            const sigmaTerm = math.complex(expSigma_real * Math.cos(phaseSigma), expSigma_real * Math.sin(phaseSigma));
+
+            phi = math.multiply(phi, sigmaTerm);
+            phi = math.multiply(phi, 2 / (OmegaM * OmegaP * Math.sqrt(N)));
+
+            return phi;
+        };
+
+        return applyElementWise2D(W2, W1, (w2, w1) => {
+            const phi = PHI(w2, w1);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+// ============================================================================
+// UI AND PLOTTING FUNCTIONS
+// ============================================================================
+function initializeGrids() {
+    T_opt = linspace(-domainRange, 0, N_T);
+    W_opt = linspace(-domainRange, domainRange, N_W);
+    T_UnEn = linspace(-domainRange, domainRange, N_T);
+    W_UnEn = linspace(-domainRange, domainRange, N_W);
+    T_Ent = linspace(-domainRange, domainRange, N_T);
+    W_Ent = linspace(-domainRange, domainRange, N_W);
+    
+    updateDomainDisplay();
+}
+
+function updateDomainDisplay() {
+    const displayElement = document.getElementById('domain-display');
+    if (displayElement) {
+        displayElement.textContent = `Current: Optimum [-${domainRange}, 0], Others [-${domainRange}, ${domainRange}]`;
+    }
+}
+
+
+function initializeDomainControls() {
+    const domainInput = document.getElementById('domain-range');
+    const updateButton = document.getElementById('update-domain');
+    
+    if (domainInput) {
+        domainInput.value = domainRange;
+    }
+    
+    if (updateButton) {
+        updateButton.addEventListener('click', () => {
+            const newRange = parseFloat(domainInput.value);
+            if (newRange > 0 && newRange <= 50) {
+                domainRange = newRange;
+                initializeGrids(); // Reinitialize grids with new range
+                updatePlots(); // Redraw plots
+            } else {
+                alert('Please enter a valid range between 0.5 and 50');
+            }
+        });
+    }
+    
+    // Optional: Update on Enter key press
+    if (domainInput) {
+        domainInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                updateButton.click();
+            }
+        });
+    }
+}
+function initializeControls() {
+    const gammaSlider = document.getElementById('gamma-slider');
+    const deltaSlider = document.getElementById('delta-slider');
+    const gammaValue = document.getElementById('gamma-value');
+    const deltaValue = document.getElementById('delta-value');
+    const optimumCheck = document.getElementById('optimum-deltaf-check');
+    
+    // Set slider ranges
+    gammaSlider.max = Gamma_values.length - 1;
+    deltaSlider.max = Delta_values.length - 1;
+    
+    // Update display values
+    gammaValue.textContent = Gamma_values[0].toFixed(4);
+    deltaValue.textContent = Delta_values[0].toFixed(2);
+    
+    // Add event listeners
+    gammaSlider.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.value);
+        gammaValue.textContent = Gamma_values[idx].toFixed(4);
+        updatePlots();
+    });
+    
+    deltaSlider.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.value);
+        deltaValue.textContent = Delta_values[idx].toFixed(2);
+        updatePlots();
+    });
+
+    // Add checkbox listener
+    if (optimumCheck) {
+        optimumCheck.addEventListener('change', () => {
+            updatePlots();
+        });
+    }
+
+}
+
+function findDataRow(df, Gamma_e, delta_a) {
+    for (let row of df) {
+        if (Math.abs(row.Gamma_e - Gamma_e) < 1e-10 && 
+            Math.abs(row.delta_a - delta_a) < 1e-10) {
+            return row;
+        }
+    }
+    return null;
+}
+
+function updatePlots() {
+    const gammaIdx = parseInt(document.getElementById('gamma-slider').value);
+    const deltaIdx = parseInt(document.getElementById('delta-slider').value);
+    
+    // Check which dataset to use
+    const isOptimum = document.getElementById('optimum-deltaf-check').checked;
+    
+    // Select appropriate dataframes
+    const current_df_UnEnt = isOptimum ? df_UnEnt_Opt : df_UnEnt_Fixed;
+    const current_df_Ent = isOptimum ? df_Ent_Opt : df_Ent_Fixed;
+
+
+    const Gamma_e = Gamma_values[gammaIdx];
+    const delta_a = Delta_values[deltaIdx];
+    
+    // Update parameter display
+    //document.getElementById('param-display').textContent = 
+      //  `Selected: Γₑ = ${Gamma_e.toFixed(4)}, δₐ = ${delta_a.toFixed(2)}`;
+  
+    document.getElementById('param-display').innerHTML =
+        `Selected: (<i>Γ</i><sub>e</sub> / <i>Γ</i><sub>f</sub>) = ${Gamma_e.toFixed(4)}, <i>δ</i><sub>a</sub> / Γ<sub>f</sub>  = ${delta_a.toFixed(2)}` + 
+        `<br><span style="font-size: 0.8em; color: #666;">(${isOptimum ? "Optimized δf" : "Fixed δf"})</span>`;
+
+    // Compute Optimum probabilities
+    const temp_prob_opt = OptimumState_temporal(Gamma_e);
+    const freq_prob_opt = OptimumState_frequency(Gamma_e, delta_a);
+    const marg_temp_opt = OptimumState_temporal(Gamma_e, true);
+    const marg_freq_opt = OptimumState_frequency(Gamma_e, delta_a, true);
+    
+    const row_UnEnt = findDataRow(current_df_UnEnt, Gamma_e, delta_a);
+    const row_Ent = findDataRow(current_df_Ent, Gamma_e, delta_a);
+    // Get Unentangled parameters
+    // const row_UnEnt = findDataRow(df_UnEnt_Opt, Gamma_e, delta_a);
+    const OmegaA = row_UnEnt.OmegaA;
+    const OmegaB = row_UnEnt.OmegaB;
+    const Mu = row_UnEnt.Mu;
+    const delta_f_UnEnt = row_UnEnt.delta_f;
+    
+    const temp_prob_un = Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f_UnEnt);
+    const freq_prob_un = Unentangled_frequency(OmegaA, OmegaB, 0, Mu, delta_f_UnEnt);
+    const marg_temp_un = Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f_UnEnt, true);
+    const marg_freq_un = Unentangled_frequency(OmegaA, OmegaB, 0, Mu, delta_f_UnEnt, true);
+    
+    // Get Entangled parameters
+    // const row_Ent = findDataRow(df_Ent_Opt, Gamma_e, delta_a);
+    const OmegaP = row_Ent.OmegaP;
+    const OmegaM = row_Ent.OmegaM;
+    const t02 = row_Ent.Mu;
+    const delta_f_Ent = row_Ent.delta_f;
+    
+    const temp_prob_ent = Entangled_temporal(OmegaP, OmegaM, t02,0,delta_f_Ent);
+    const freq_prob_ent = Entangled_frequency(OmegaP, OmegaM, 0, t02, delta_f_Ent, 0);
+    const marg_temp_ent = Entangled_temporal(OmegaP, OmegaM, t02, 0, delta_f_Ent, true);
+    const marg_freq_ent = Entangled_frequency(OmegaP, OmegaM, 0, t02, delta_f_Ent, 0, true);
+    
+    // Create the plot
+    createSubplots(
+        temp_prob_opt, freq_prob_opt, marg_temp_opt, marg_freq_opt,
+        temp_prob_un, freq_prob_un, marg_temp_un, marg_freq_un,
+        temp_prob_ent, freq_prob_ent, marg_temp_ent, marg_freq_ent
+    );
+}
+
+// THE CREATESUBPLOTS FUNCTION SHOULD BE PASTED HERE
+// ============================================================================
+// CREATE SUBPLOTS FUNCTION
+// ============================================================================
+
+function createSubplots(
+    temp_prob_opt, freq_prob_opt, marg_temp_opt, marg_freq_opt,
+    temp_prob_un, freq_prob_un, marg_temp_un, marg_freq_un,
+    temp_prob_ent, freq_prob_ent, marg_temp_ent, marg_freq_ent
+) {
+        // Get current delta_a value from slider
+    const deltaIdx = parseInt(document.getElementById('delta-slider').value);
+    const delta_a = Delta_values[deltaIdx];
+    const traces = [];
+
+    // --- Row 1: Temporal marginals (thin) ---
+    traces.push({
+        x: T_opt,
+        y: marg_temp_opt,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'blue' },
+        xaxis: 'x1',
+        yaxis: 'y1',
+        showlegend: false
+    });
+    traces.push({
+        x: T_UnEn,
+        y: marg_temp_ent,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'blue' },
+        xaxis: 'x2',
+        yaxis: 'y2',
+        showlegend: false
+    });
+    traces.push({
+        x: T_Ent,
+        y: marg_temp_un,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'blue' },
+        xaxis: 'x3',
+        yaxis: 'y3',
+        showlegend: false
+    });
+ // --- Row 2: Temporal heatmaps ---
+    traces.push({
+        z: temp_prob_opt,
+        x: T_opt,
+        y: T_opt,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: {  x: 0.30, y: 0.68, len: 0.31 },
+        xaxis: 'x4',
+        yaxis: 'y4',
+        showscale: true
+    });
+    traces.push({
+        z: temp_prob_ent,
+        x: T_UnEn,
+        y: T_UnEn,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: {x: 0.64, y: 0.68, len: 0.31 },
+        xaxis: 'x5',
+        yaxis: 'y5',
+        showscale: true
+    });
+    traces.push({
+        z: temp_prob_un,
+        x: T_Ent,
+        y: T_Ent,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: { x: 0.99, y: 0.68, len: 0.31 },
+        xaxis: 'x6',
+        yaxis: 'y6',
+        showscale: true
+    });
+
+    // --- Row 3: Frequency marginals (bottom thin row) ---
+    traces.push({
+        x: W_opt,
+        y: marg_freq_opt,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'red' },
+        xaxis: 'x7',
+        yaxis: 'y7',
+        showlegend: false
+    });
+    traces.push({
+        x: W_UnEn,
+        y: marg_freq_ent,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'red' },
+        xaxis: 'x8',
+        yaxis: 'y8',
+        showlegend: false
+    });
+    traces.push({
+        x: W_Ent,
+        y: marg_freq_un,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'red' },
+        xaxis: 'x9',
+        yaxis: 'y9',
+        showlegend: false
+    });
+  // --- Row 4: Frequency heatmaps ---
+    traces.push({
+        z: freq_prob_opt,
+        x: W_opt,
+        y: W_opt,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: {x: 0.30, y: 0.21, len: 0.31 },
+        xaxis: 'x10',
+        yaxis: 'y10',
+        showscale: true
+    });
+    traces.push({
+        z: freq_prob_ent,
+        x: W_UnEn,
+        y: W_UnEn,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: {x: 0.64, y: 0.21, len: 0.31 },
+        xaxis: 'x11',
+        yaxis: 'y11',
+        showscale: true
+    });
+    traces.push({
+        z: freq_prob_un,
+        x: W_Ent,
+        y: W_Ent,
+        type: 'heatmap',
+        colorscale: 'Plasma',
+        colorbar: {x: 0.99, y: 0.21, len: 0.31 },
+        xaxis: 'x12',
+        yaxis: 'y12',
+        showscale: true
+    });
+
+    // --- Layout configuration ---
+const layout = {
+    width: 1400,
+    height: 1200,
+    margin: { l: 20, r: 20, t: 30, b: 30 },
+    showlegend: false,
+
+
+    // ==== AXES DOMAINS ====
+    // Each domain defines [start, end] as a fraction of figure height (0–1)
+    // Top marginals (short)
+    yaxis:   {title: '$P(t)$', titlefont: { size: 14 }, domain: [0.84, 0.99],side: 'left', anchor: 'free', position: 0.05,  visible: true, showline: true },   // Optimum temporal marginal
+    yaxis2:  {title: '$P(t)$', titlefont: { size: 14 }, domain: [0.84, 0.99], side: 'left',anchor: 'free', position: 0.39, visible: true, showline: true },   // Unentangled
+    yaxis3:  {title: '$P(t)$', titlefont: { size: 14 }, domain: [0.84, 0.99], side: 'left', anchor: 'free', position: 0.74,  visible: true, showline: true },   // Entangled
+
+    // Temporal heatmaps (taller)
+    yaxis4:  { title: '$t_2 \\Gamma_f$', titlefont: { size: 14 }, domain: [0.53, 0.82], visible: true , scaleratio: 1},   // Optimum
+    yaxis5:  { title: '$t_2 \\Gamma_f$', titlefont: { size: 14 }, domain: [0.53, 0.82], side: 'left',anchor: 'free', position: 0.39},
+    yaxis6:  { title: '$(t_2 - \\mu) \\Gamma_f$', titlefont: { size: 14 }, domain: [0.53, 0.82], side: 'left',anchor: 'free', position: 0.74 },
+
+    // Frequency marginals (short)
+    yaxis7:  {title: '$P((\\omega - \\omega_{eg})/\\Gamma_f)$', titlefont: { size: 14 }, domain: [0.37, 0.48] , side: 'left',anchor: 'free', position: 0.05 },   // Optimum
+    yaxis8:  {title: '$P((\\omega - \\omega_{eg})/\\Gamma_f)$', titlefont: { size: 14 }, domain: [0.37, 0.48], side: 'left',anchor: 'free', position: 0.39 },
+    yaxis9:  {title: '$P((\\omega - \\omega_{eg})/\\Gamma_f)$', titlefont: { size: 14 }, domain: [0.37, 0.48], side: 'left',anchor: 'free', position: 0.74 },
+
+    // Frequency heatmaps (taller)
+    yaxis10: {title: '$(\\omega_2 - \\omega_{eg})/\\Gamma_f$ ', titlefont: { size: 14 },  domain: [0.06, 0.35] },
+    yaxis11: {title: '$(\\omega_2 - \\omega_{eg})/\\Gamma_f$', titlefont: { size: 14 },  domain: [0.06, 0.35],side: 'left',anchor: 'free', position: 0.39 },
+    yaxis12: {title: '$(\\omega_2 - \\omega_{eg})/\\Gamma_f$', titlefont: { size: 14 },  domain: [0.06, 0.35], side: 'left',anchor: 'free', position: 0.74 },
+
+    // Horizontal positions (x domains)
+    xaxis:   { domain: [0.05, 0.30], showticklabels: false },  // Optimum column
+    xaxis2:  { domain: [0.39, 0.64], showticklabels: false  },  // Unentangled
+    xaxis3:  { domain: [0.74, 0.99], showticklabels: false },  // Entangled
+    xaxis4:  { title: '$t_1 \\Gamma_f$', titlefont: { size: 14 }, domain: [0.05, 0.30], side: 'bottom', anchor: 'free', position: 0.53},
+    xaxis5:  { title: '$t_1 \\Gamma_f$', titlefont: { size: 14 }, domain: [0.39, 0.64], side: 'bottom', anchor: 'free', position: 0.53},
+    xaxis6:  { title: '$(t_1 - \\mu) \\Gamma_f$', titlefont: { size: 14 }, domain: [0.74, 0.99], side: 'bottom', anchor: 'free', position: 0.53 },
+    xaxis7:  { domain: [0.05, 0.30], showticklabels: false },
+    xaxis8:  { domain: [0.39, 0.64], showticklabels: false},
+    xaxis9:  { domain: [0.74, 0.99], showticklabels: false },
+    xaxis10: {title: '$(\\omega_1 - \\omega_{eg})/\\Gamma_f$', titlefont: { size: 14 },  domain: [0.05, 0.30], side: 'bottom', anchor: 'free', position: 0.06},
+    xaxis11: {title: '$(\\omega_1 - \\omega_{eg})/\\Gamma_f$ ', titlefont: { size: 14 },  domain: [0.39, 0.64], side: 'bottom', anchor: 'free', position: 0.06},
+    xaxis12: {title: '$(\\omega_1 - \\omega_{eg})/\\Gamma_f$ ', titlefont: { size: 14 },  domain: [0.74, 0.99], side: 'bottom', anchor: 'free', position: 0.06},
+
+    // ==== Annotations ====
+    annotations: [
+        { text: '$p(t_1,t_2)$', x: 0.99, y: 0.85, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: '$p(t_1,t_2)$', x: 0.64, y: 0.85, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: '$p(t_1,t_2)$', x: 0.30, y: 0.85, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: '$p(\\omega_1,\\omega_2)$', x: 0.99, y: 0.39, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: '$p(\\omega_1,\\omega_2)$', x: 0.64, y: 0.39, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: '$p(\\omega_1,\\omega_2)$', x: 0.30, y: 0.39, xref: 'paper', yref: 'paper', showarrow: false,  textangle: -0, font: { size: 14 }, xanchor: 'left'},
+        { text: 'Optimum', xref: 'paper', yref: 'paper', x: 0.16, y: 1.00, showarrow: false, font: { size: 14 } },
+        { text: 'Entangled', xref: 'paper', yref: 'paper', x: 0.51, y: 1.00, showarrow: false, font: { size: 14 } },
+        { text: 'Unentangled', xref: 'paper', yref: 'paper', x: 0.90, y: 1.00, showarrow: false, font: { size: 14 } },
+        { text: 'Temporal domain', xref: 'paper', yref: 'paper', x: 0.0, y: 0.70, showarrow: false, font: { size: 14 }, textangle: -90 },
+        { text: 'Frequency domain', xref: 'paper', yref: 'paper', x: 0.0, y: 0.23, showarrow: false, font: { size: 14 }, textangle: -90 }
+    ],
+
+    shapes: [
+            
+            // Frequency heatmaps (Row 4) - axes 10, 11, 12
+            // Optimum frequency (xaxis10, yaxis10)
+            { type: 'line', x0: -0.5*delta_a, x1: -0.5*delta_a, y0: W_opt[0], y1: W_opt[W_opt.length-1],
+              xref: 'x10', yref: 'y10', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: 0.5*delta_a, x1: 0.5*delta_a, y0: W_opt[0], y1: W_opt[W_opt.length-1],
+              xref: 'x10', yref: 'y10', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: W_opt[0], x1: W_opt[W_opt.length-1], y0: -0.5*delta_a, y1: -0.5*delta_a,
+              xref: 'x10', yref: 'y10', line: { color: 'white', width: 2, dash: 'dash' } },
+           { type: 'line', x0: W_opt[0], x1: W_opt[W_opt.length-1], y0: 0.5*delta_a, y1: 0.5*delta_a,
+              xref: 'x10', yref: 'y10', line: { color: 'white', width: 2, dash: 'dash' } },
+            
+            // Entangled frequency (xaxis11, yaxis11)
+            { type: 'line', x0: -0.5*delta_a, x1: -0.5*delta_a, y0: W_UnEn[0], y1: W_UnEn[W_UnEn.length-1],
+              xref: 'x11', yref: 'y11', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: 0.5*delta_a, x1: 0.5*delta_a, y0: W_UnEn[0], y1: W_UnEn[W_UnEn.length-1],
+              xref: 'x11', yref: 'y11', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: W_UnEn[0], x1: W_UnEn[W_UnEn.length-1], y0: -0.5*delta_a, y1: -0.5*delta_a,
+              xref: 'x11', yref: 'y11', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: W_UnEn[0], x1: W_UnEn[W_UnEn.length-1], y0: 0.5*delta_a, y1: 0.5*delta_a,
+              xref: 'x11', yref: 'y11', line: { color: 'white', width: 2, dash: 'dash' } },
+            
+            // Unentangled frequency (xaxis12, yaxis12)
+            { type: 'line', x0: 0.5*delta_a, x1: 0.5*delta_a, y0: W_Ent[0], y1: W_Ent[W_Ent.length-1],
+              xref: 'x12', yref: 'y12', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: -0.5*delta_a, x1: -0.5*delta_a, y0: W_Ent[0], y1: W_Ent[W_Ent.length-1],
+              xref: 'x12', yref: 'y12', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: W_Ent[0], x1: W_Ent[W_Ent.length-1], y0: -0.5*delta_a, y1: -0.5*delta_a,
+              xref: 'x12', yref: 'y12', line: { color: 'white', width: 2, dash: 'dash' } },
+            { type: 'line', x0: W_Ent[0], x1: W_Ent[W_Ent.length-1], y0: 0.5*delta_a, y1: 0.5*delta_a,
+              xref: 'x12', yref: 'y12', line: { color: 'white', width: 2, dash: 'dash' } }
+        ]
+
+};
+
+
+
+    Plotly.newPlot('heatmap-graph', traces, layout);
+
+}
+
+window.addEventListener("DOMContentLoaded", loadData);
+
+
+

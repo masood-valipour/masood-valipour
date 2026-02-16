@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peak Data Visualizer with Heatmap</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container {
+            margin: 0 0px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 24px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* GRID LAYOUT FOR CHART + LATEX LABELS */
+        .chart-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: 1fr auto;
+            gap: 0px;
+            height: 65vh;
+            min-height: 500px;
+            margin-bottom: 24px;
+        }
+
+        .y-axis-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 18px;
+            padding-right: 10px;
+            color: #1f2937;
+        }
+
+        .x-axis-label {
+            grid-column: 2;
+            text-align: center;
+            font-size: 18px;
+            margin-top: 5px;
+            color: #1f2937;
+        }
+
+        .canvas-holder {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #plotlyDiv {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controls Styling */
+        .controls-box {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .slider-container { margin-bottom: 12px; }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            appearance: none;
+            background: #e5e7eb;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .slider-ticks {
+            display: flex; justify-content: space-between;
+            font-size: 14px; color: #6b7280; margin-top: 4px;
+            font-family: 'Times New Roman', serif;
+        }
+        .info-box {
+            margin-top: 24px; 
+            padding: 12px;
+            background: #f3f4f6; 
+            border-radius: 8px;
+            color: #4b5563; 
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .info-box h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        #loading { text-align: center; padding: 32px; font-family: 'Times New Roman'; }
+        .error-msg { color: #dc2626; background: #fee2e2; padding: 1rem; border-radius: 8px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Peak Position of Marginal Distribution with Heatmap</h1>
+        
+        <div id="loading">Loading data...</div>
+        <div id="errorMsg" class="error-msg" style="display: none;"></div>
+
+        <div id="content" style="display: none;">
+            
+            <div class="chart-wrapper">
+                <div class="y-axis-label">
+                    \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                </div>
+
+                <div class="canvas-holder">
+                    <div id="plotlyDiv"></div>
+                </div>
+
+                <div class="x-axis-label">
+                    \( \Gamma_e / \Gamma_f \)
+                </div>
+            </div>
+
+            <div class="controls-box">
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span>\( \delta_a / \Gamma_f \)</span>
+                        <span style="font-weight: bold; color: #4f46e5;" id="deltaValue">10.0</span>
+                    </div>
+                    <input type="range" id="deltaSlider" min="0" max="100" step="0.25" value="10">
+                    <div class="slider-ticks">
+                        <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3>Figure Overview and Methodology</h3>
+                <p>This plot displays the <strong>marginal distribution p(ω)</strong> for the <strong>Optimum State</strong> as a heatmap background, with the <strong>maximum peak positions</strong> overlaid on top.</p>
+                <ul>
+                    <li><strong>Heatmap Background:</strong> The color intensity represents the probability density p(ω) computed from the analytical formula for the Optimum State. The distribution shows the probability density across different decay ratios (Γₑ/Γf) and frequencies (ω).</li>
+                    <li><strong>Peak Lines (Foreground):</strong> The orange and cyan curves trace the positions of local maxima in the distribution, showing how peak positions evolve with the decay ratio.</li>
+                    <li><strong>Calculation Method:</strong> The marginal distribution is computed using the formula:
+                    <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 4px; overflow-x: auto;">
+                        \( p_{\text{Opt}}(\omega) = \frac{\Gamma_e(\Gamma_e + \Gamma_f)(\Gamma_e + \Gamma_f/4) + \Gamma_e(\omega_{fe} - \omega_{eg})^2 + \Gamma_f(\omega - \omega_{eg})^2}{4\pi[(\omega - \omega_{eg})^2 + \Gamma_e^2/4][(\omega - \omega_{fe})^2 + (\Gamma_e + \Gamma_f)^2/4]} \)
+                    </div>
+                    where \(\omega_{eg} = -\delta_a/2\) and \(\omega_{fe} = +\delta_a/2\). The peak positions are found by locating the roots of the derivative of this distribution (Equation 33 of the draft).</li>
+                </ul>
+                
+                <h3>Reference Guidelines and Context</h3>
+                <p>Two horizontal reference guidelines provide context for the bidirectional system:</p>
+                <ul>
+                    <li>The <span style="color: red;">red dashed line</span> corresponds to ωfₑ/Γf = +δₐ/2Γf, representing one of the two-photon resonance frequencies.</li>
+                    <li>The <span style="color: rgb(112, 112, 240);">blue dashed line</span> corresponds to ωₑg/Γf = -δₐ/2Γf, representing the other resonance frequency.</li>
+                </ul>
+                
+                <h3>Data Source and Credit</h3>
+                <p>Peak position data points are pre-calculated values stored in <code>peak_data.json</code>. The heatmap is computed dynamically from the analytical formula.</p>
+                <p><strong>Credit:</strong> The theoretical framework and model are based on the paper: <strong>doi: [Insert Paper DOI Here]</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DATA_URL = './DataSets/peak_data.json';
+        let allData = [];
+        let chart = null;
+
+        const content = document.getElementById('content');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        const deltaSlider = document.getElementById('deltaSlider');
+
+        const toSuperscript = (num) => {
+            const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+            return num.toString().split('').map(c => map[c] || c).join('');
+        };
+
+        // Function to compute marginal distribution p(ω) for "Optimum State"
+        // Translated from the Python function analytic_p_Opt
+        function computeMarginalDistribution(omega, gamma_e, delta_a) {
+            const Gamma_f = 1.0; // Gf = 1 (normalized)
+            const w_eg = -0.5 * delta_a;
+            const w_fe = +0.5 * delta_a;
+            
+            // Numerator
+            const numerator = gamma_e * (gamma_e + Gamma_f) * (gamma_e + Gamma_f/4) 
+                            + gamma_e * Math.pow(w_fe - w_eg, 2) 
+                            + Gamma_f * Math.pow(omega - w_eg, 2);
+            
+            // Denominator
+            const denom1 = Math.pow(omega - w_eg, 2) + Math.pow(gamma_e, 2) / 4;
+            const denom2 = Math.pow(omega - w_fe, 2) + Math.pow(gamma_e + Gamma_f, 2) / 4;
+            const denominator = 4 * Math.PI * denom1 * denom2;
+            
+            return numerator / denominator;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch(DATA_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    allData = data;
+                    loading.style.display = 'none';
+                    content.style.display = 'block';
+                    updatePlot(true);
+                    
+                    if (window.MathJax) {
+                        MathJax.typesetPromise([document.getElementById('content')]); 
+                    }
+                })
+                .catch(err => {
+                    loading.style.display = 'none';
+                    errorMsg.style.display = 'block';
+                    errorMsg.innerHTML = `<strong>Error:</strong> ${err.message}`;
+                });
+        });
+
+        deltaSlider.addEventListener('input', function() {
+            deltaValue.textContent = parseFloat(this.value).toFixed(1);
+            updatePlot(false); 
+        });
+
+        function updatePlot(animate = false) {
+            console.log('updatePlot called, animate:', animate);
+            const deltaA = parseFloat(deltaSlider.value);
+            const tolerance = 0.5;
+
+            // 1. Filter data for current delta_a
+            const filteredData = allData.filter(point => Math.abs(point.delta_a - deltaA) < tolerance);
+            console.log('Filtered data points:', filteredData.length);
+            if (filteredData.length === 0) {
+                console.error('No data found for delta_a:', deltaA);
+                return;
+            }
+
+            // 2. Get unique points
+            // Debug: Check the structure of the first data point
+            if (filteredData.length > 0) {
+                console.log('Sample data point:', JSON.stringify(filteredData[0]));
+                console.log('Fields:', Object.keys(filteredData[0]));
+            }
+            
+            const uniquePointsMap = new Map();
+            filteredData.forEach(point => {
+                // Validate that required fields exist
+                if (!point.hasOwnProperty('Gamma_e')) {
+                    console.error('Point missing Gamma_e:', point);
+                    return;
+                }
+                if (!point.hasOwnProperty('peaks')) {
+                    console.error('Point missing peaks:', point);
+                    return;
+                }
+                
+                const gamma = point.Gamma_e;
+                const dist = Math.abs(point.delta_a - deltaA);
+                if (!uniquePointsMap.has(gamma) || dist < uniquePointsMap.get(gamma).dist) {
+                    uniquePointsMap.set(gamma, { data: point, dist: dist });
+                }
+            });
+
+            const sortedData = Array.from(uniquePointsMap.values())
+                .map(item => item.data)
+                .sort((a, b) => a.Gamma_e - b.Gamma_e);
+            
+            console.log('Sorted data points:', sortedData.length);
+
+            // 3. Prepare heatmap data
+            const gammaValues = [];
+            const omegaResolution = 100; // Number of omega points
+            
+            // Get gamma range from data
+            sortedData.forEach(d => gammaValues.push(d.Gamma_e));
+            
+            console.log('Gamma values extracted:', gammaValues.length);
+            
+            // Determine omega range from all peaks
+            let allOmegaValues = [];
+            try {
+                sortedData.forEach(d => {
+                    if (!d.peaks || !Array.isArray(d.peaks)) {
+                        console.error('Invalid peaks data:', d);
+                        return;
+                    }
+                    d.peaks.forEach(peak => {
+                        if (peak !== null && peak !== undefined && !isNaN(peak)) {
+                            allOmegaValues.push(peak);
+                        }
+                    });
+                });
+                console.log('All omega values collected:', allOmegaValues.length);
+            } catch (error) {
+                console.error('Error collecting omega values:', error);
+                return;
+            }
+            const refY = deltaA / 2;
+            allOmegaValues.push(refY, -refY);
+            
+            console.log('Reference Y added. Total omega values:', allOmegaValues.length);
+            
+            if (allOmegaValues.length === 0) {
+                console.error('No omega values found!');
+                return;
+            }
+            
+            const minOmega = Math.min(...allOmegaValues);
+            const maxOmega = Math.max(...allOmegaValues);
+            const omegaRange = maxOmega - minOmega;
+            const padding = omegaRange === 0 ? 0.15 : omegaRange * 0.1;
+            const omegaMin = minOmega - padding;
+            const omegaMax = maxOmega + padding;
+            
+            console.log('Omega range calculated:', {minOmega, maxOmega, omegaMin, omegaMax});
+            
+            // Create omega grid
+            const omegaValues = [];
+            try {
+                for (let i = 0; i < omegaResolution; i++) {
+                    omegaValues.push(omegaMin + (omegaMax - omegaMin) * i / (omegaResolution - 1));
+                }
+                console.log('Omega grid created:', omegaValues.length, 'points');
+            } catch (error) {
+                console.error('Error creating omega grid:', error);
+                return;
+            }
+            
+            // Compute heatmap Z values (probability density)
+            console.log('Starting Z values computation...');
+            const zValues = [];
+            let zValuesLog = [];
+            try {
+                for (let j = 0; j < omegaValues.length; j++) {
+                    const row = [];
+                    for (let i = 0; i < gammaValues.length; i++) {
+                        try {
+                            const prob = computeMarginalDistribution(omegaValues[j], gammaValues[i], deltaA);
+                            if (isNaN(prob) || !isFinite(prob)) {
+                                console.warn(`Invalid prob at omega=${omegaValues[j]}, gamma=${gammaValues[i]}: ${prob}`);
+                                row.push(0);
+                            } else {
+                                row.push(prob);
+                            }
+                        } catch (innerError) {
+                            console.error(`Error computing prob at j=${j}, i=${i}:`, innerError);
+                            row.push(0);
+                        }
+                    }
+                    zValues.push(row);
+                    
+                    // Log progress every 10 rows
+                    if (j % 10 === 0) {
+                        console.log(`Computing Z values... ${j}/${omegaValues.length} rows done`);
+                    }
+                }
+                
+                console.log('Z values computed. Dimensions:', zValues.length, 'x', zValues[0].length);
+                console.log('Z values sample (first row, first 5):', zValues[0].slice(0, 5));
+                const flatZ = zValues.flat();
+                const validZ = flatZ.filter(z => isFinite(z) && !isNaN(z) && z > 0);
+                console.log('Z values range:', Math.min(...validZ), 'to', Math.max(...validZ));
+                
+                // Apply log transformation for logarithmic colorbar
+                zValuesLog = zValues.map(row => 
+                    row.map(val => val > 0 ? Math.log10(val) : -10)
+                );
+                console.log('Log Z values computed');
+            } catch (error) {
+                console.error('Error in Z values computation:', error);
+                return;
+            }
+
+            // 4. Create Plotly heatmap/contour
+            console.log('Creating heatmap with dimensions:', gammaValues.length, 'x', omegaValues.length);
+            console.log('Gamma range:', Math.min(...gammaValues), 'to', Math.max(...gammaValues));
+            console.log('Omega range:', omegaMin, 'to', omegaMax);
+            
+            const heatmapTrace = {
+                type: 'contour',
+                x: gammaValues,
+                y: omegaValues,
+                z: zValuesLog,
+                colorscale: 'Viridis',
+                showscale: true,
+                contours: {
+                    coloring: 'heatmap'
+                },
+                colorbar: {
+                    title: 'log₁₀(p(ω))',
+                    titleside: 'right',
+                    tickfont: { family: 'Times New Roman', size: 12 },
+                    titlefont: { family: 'Times New Roman', size: 14 }
+                },
+                hovertemplate: 'Γₑ/Γf: %{x:.4f}<br>ω: %{y:.4f}<br>log₁₀(p(ω)): %{z:.2f}<extra></extra>'
+            };
+
+            // Create reference lines as Plotly traces (refY already declared earlier)
+            
+            const refLineFe = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [refY, refY],
+                mode: 'lines',
+                line: { color: 'red', width: 2, dash: 'dash' },
+                name: 'ωfₑ',
+                showlegend: true,
+                hoverinfo: 'name'
+            };
+            
+            const refLineEg = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [-refY, -refY],
+                mode: 'lines',
+                line: { color: 'blue', width: 2, dash: 'dash' },
+                name: 'ωₑg',
+                showlegend: true,
+                hoverinfo: 'name'
+            };
+            
+            // Create peak position traces
+            const maxPeaks = Math.max(...sortedData.map(d => d.peaks.length));
+            const peakColors = ['#e69f00', '#56b4e9'];
+            const peakTraces = [];
+            
+            for (let i = 0; i < maxPeaks; i++) {
+                const peakData = sortedData
+                    .filter(d => d.peaks[i] !== undefined)
+                    .map(d => ({ x: d.Gamma_e, y: d.peaks[i] }));
+                
+                peakTraces.push({
+                    type: 'scatter',
+                    x: peakData.map(p => p.x),
+                    y: peakData.map(p => p.y),
+                    mode: 'lines',
+                    line: { color: peakColors[i % peakColors.length], width: 3 },
+                    name: `Peak ${i + 1}`,
+                    showlegend: true,
+                    hovertemplate: 'Γₑ/Γf: %{x:.4f}<br>ω: %{y:.4f}<extra></extra>'
+                });
+            }
+            
+            const plotlyLayout = {
+                title: {
+                    text: '',
+                    font: { family: 'Times New Roman', size: 18 }
+                },
+                xaxis: {
+                    type: 'log',
+                    range: [Math.log10(0.01), Math.log10(100)],
+                    title: { 
+                        text: '',
+                        font: { family: 'Times New Roman', size: 16 }
+                    },
+                    showgrid: true,
+                    zeroline: false,
+                    showticklabels: true,
+                    tickfont: { family: 'Times New Roman', size: 14 },
+                    gridcolor: 'rgba(128, 128, 128, 0.3)',
+                    tickmode: 'array',
+                    tickvals: [0.01, 0.1, 1, 10, 100],
+                    ticktext: ['10⁻²', '10⁻¹', '10⁰', '10¹', '10²']
+                },
+                yaxis: {
+                    range: [omegaMin, omegaMax],
+                    title: { 
+                        text: '',
+                        font: { family: 'Times New Roman', size: 16 }
+                    },
+                    showgrid: true,
+                    zeroline: false,
+                    showticklabels: true,
+                    tickfont: { family: 'Times New Roman', size: 14 },
+                    gridcolor: 'rgba(128, 128, 128, 0.3)'
+                },
+                margin: { l: 80, r: 120, t: 20, b: 80 },
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                hovermode: 'closest',
+                legend: {
+                    x: 0.98,
+                    y: 0.98,
+                    xanchor: 'right',
+                    yanchor: 'top',
+                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                    bordercolor: 'rgba(0, 0, 0, 0.3)',
+                    borderwidth: 1
+                }
+            };
+
+            const plotlyConfig = {
+                displayModeBar: true,
+                staticPlot: false,
+                responsive: true
+            };
+
+            console.log('About to render Plotly with heatmap and overlays...');
+            
+            // Combine all traces: heatmap first (background), then lines on top
+            const allTraces = [heatmapTrace, refLineFe, refLineEg, ...peakTraces];
+            
+            try {
+                Plotly.newPlot('plotlyDiv', allTraces, plotlyLayout, plotlyConfig)
+                    .then(() => {
+                        console.log('Plotly figure rendered successfully!');
+                    })
+                    .catch(err => {
+                        console.error('Plotly render error:', err);
+                    });
+            } catch (error) {
+                console.error('Error calling Plotly.newPlot:', error);
+            }
+        }
+    </script>
+</body>
+</html>

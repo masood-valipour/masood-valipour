@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masood Valipour Personal Page</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0a0f1f;
+      --bg2:#0b1229;
+      --ink:#e6ecff;
+      --muted:#9bb0ff;
+      --accent:#3b82f6;
+      --accent-2:#60a5fa;
+      --card:#0e1630cc;
+      --glass:rgba(255,255,255,.06);
+      --shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 120px rgba(59,130,246,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background: radial-gradient(1200px 800px at 70% -20%, #1b2a52 0%, transparent 60%), var(--bg);
+      color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif;
+      overflow-x:hidden;scroll-behavior:smooth
+    }
+    #stars{position:fixed;inset:0;z-index:-2;background:linear-gradient(180deg,var(--bg),#020617)}
+    .glow{filter:drop-shadow(0 0 25px rgba(59,130,246,.45))}
+    .accent{color:var(--accent)}
+    .button{display:inline-flex;align-items:center;gap:.6rem;padding:.8rem 1.1rem;border:1px solid rgba(99,102,241,.25);border-radius:14px;background:linear-gradient(180deg, rgba(17,24,39,.45), rgba(17,24,39,.2));backdrop-filter: blur(8px); color:var(--ink); text-decoration:none;transition:.25s ease; box-shadow:var(--shadow)}
+    .button:hover{transform:translateY(-2px);border-color:var(--accent); box-shadow:0 10px 30px rgba(59,130,246,.25), 0 0 80px rgba(59,130,246,.15)}
+    nav{position:sticky;top:0;z-index:1000; backdrop-filter: blur(10px); background:linear-gradient(180deg, rgba(2,6,23,.75), rgba(2,6,23,.35)); border-bottom:1px solid rgba(99,102,241,.15)}
+    .nav-wrap{max-width:1100px;margin:auto;display:flex;align-items:center;padding:12px 18px}
+    .brand{display:flex;align-items:center;gap:.8rem;text-decoration:none;color:var(--ink)}
+    .logo{width:36px;height:36px;border-radius:10px;background:radial-gradient(120% 120% at 30% 30%, var(--accent-2), var(--accent) 60%, #1e293b);box-shadow:0 0 45px rgba(212, 212, 212, 0.45) inset}
+    .brand-name{font-weight:800;letter-spacing:.4px}
+    .nav-links{display:flex;gap:18px}
+    .nav-links a{color:var(--muted);text-decoration:none;padding:.5rem .7rem;border-radius:10px;transition:.25s}
+    .nav-links a.active,.nav-links a:hover{color:var(--ink);background:rgba(59,130,246,.12);}
+    .hero{position:relative;min-height:84vh;display:grid;align-items:center}
+    .container{max-width:1100px;margin:auto;padding:0 20px}
+    .tag{display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;color:#c7d2fe;background:rgba(59,130,246,.14);border:1px solid rgba(99,102,241,.25);padding:.35rem .6rem;border-radius:999px}
+    .title{font-size:clamp(2.6rem,6vw,4.2rem);line-height:1.05;margin:.4rem 0 .6rem;font-weight:900;letter-spacing:.2px}
+    .title .gradient{background:linear-gradient(90deg,#b3c7ff, #e2e8ff 30%, #60a5fa 60%, #93c5fd 90%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 30px rgba(147,197,253,.18))}
+    .lede{max-width:760px;color:#c7d2fe;font-size:1.1rem;line-height:1.7}
+    .hero-cta{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+    section{padding:72px 0;border-top:1px solid rgba(99,102,241,.12)}
+    h2{font-weight:900;font-size:clamp(1.6rem,3.6vw,2.2rem);margin:0 0 16px}
+    p.lead{color:#c7d2fe;margin:0 0 26px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+    .card{background:linear-gradient(180deg, rgba(15,23,42,.55), rgba(15,23,42,.25)); border:1px solid rgba(99,102,241,.18); border-radius:18px;padding:18px; box-shadow:var(--shadow); position:relative; overflow:hidden}
+    .card:before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:radial-gradient(600px 220px at var(--mx,70%) var(--my,30%), rgba(96,165,250,.12), transparent 40%); pointer-events:none}
+    .card h3{margin:.2rem 0 .4rem;font-size:1.1rem}
+    .card p{color:#c7d2fe;font-size:.98rem;line-height:1.6}
+    .badge{display:inline-flex;gap:.4rem;align-items:center;font-size:.75rem;color:#c7d2fe;background:rgba(59,130,246,.16);padding:.3rem .55rem;border-radius:999px;border:1px solid rgba(96,165,250,.35)}
+    .timeline{position:relative;margin:20px 0 0;padding-left:20px}
+    .timeline:before{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:linear-gradient(var(--accent), transparent)}
+    .tl-item{position:relative;margin:0 0 18px 0;padding-left:24px}
+    .tl-item:before{content:"";position:absolute;left:-2px;top:6px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 30% 30%, var(--accent-2), var(--accent));box-shadow:0 0 25px rgba(59,130,246,.5)}
+    .tl-meta{color:#93c5fd;font-size:.85rem}
+    footer{padding:40px 20px;color:#9fb7ff;text-align:center}
+    footer a{color:#bcd3ff}
+    .reveal{opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease}
+    .reveal.in{opacity:1; transform:translateY(0)}
+
+
+    /* Language Switcher Styling */
+    .lang-switch {display: flex;gap: 8px;margin-left: 25px;align-items: center;font-weight: 600;font-size: 0.9rem;border-left: 1px solid rgba(99, 102, 241, .15);}
+    .lang-switch a {color: var(--muted);text-decoration: none;transition: color 0.2s;}
+    .lang-switch a:hover {color: var(--ink);}
+    .lang-switch .sep {color: rgba(99, 102, 241, .3);}
+    .nav-links {display: flex;gap: 18px;margin-left: auto;}
+    .nav-wrap {justify-content: space-between;}
+    @media (max-width:720px){
+      .nav-links{display:none}
+      .hero{min-height:76vh}
+    }
+    #cv { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <nav>
+    <div class="nav-wrap">
+      <a class="brand" href="#home" aria-label="Przejdź na górę">
+        <img src="icon.png" class="logo" alt="Masood Valipour">
+        <div class="brand-name">Masood Valipour</div>
+      </a>
+      <div class="lang-switch">
+        <a href="index.html" class="lang-link active" id="enLink">EN</a>
+        <span class="sep">/</span>
+        <a href="pl.html" class="lang-link" id="plLink">PL</a>
+        <span class="sep">/</span>
+        <a href="fa.html" class="lang-link" id="faLink">فا</a>
+      </div>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#projects">Projekty</a>
+        <a href="#publications">Publikacje</a>
+        <a href="#cv">CV</a>
+        <a href="#contact">Kontakt</a>
+      </div>
+    </div>
+  </nav>
+
+<header id="home" class="hero">
+  <div class="container">
+    <span class="tag glow">Optyka kwantowa • Oddziaływanie światło‑materia</span>
+    <h1 class="title">
+      Witaj, jestem <span class="gradient">Masood Valipour</span>
+    </h1>
+    <p class="lede" style="font-size:1.05rem;">
+      Doktorant na <span class="gradient">Uniwersytecie Mikołaja Kopernika</span> w Toruniu — 
+      badający oddziaływania światła i materii na poziomie kwantowym poprzez teorię, obliczenia i trochę wyobraźni 😉.
+    </p>
+    <div class="hero-cta">
+      <a class="button" href="#projects">Zobacz moje projekty →</a>
+      <a class="button" href="#contact">Skontaktuj się</a>
+    </div>
+  </div>
+</header>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="container">
+    <h2 class="reveal">Projekty w toku</h2>
+    <p class="lead reveal">Aktualne i zakończone projekty badawcze związane z oddziaływaniem światła i materii oraz dynamiką kwantową.</p>
+    <div class="cards">
+      <!-- Project 1 -->
+      <article class="card reveal">
+        <span class="badge">Zakończone • Opublikowane</span>
+        <h3>Optymalizacja pochłaniania dwóch fotonów dla atomu trójpoziomowego</h3>
+        <p>
+          Projekt koncentruje się na optymalizacji procesów pochłaniania dwóch fotonów w systemach trójpoziomowych poprzez dostosowanie splątanych i niesplątanych fotonów Gaussa. Praca łączy analityczne wyprowadzenia i symulacje GPU.
+        </p>
+        <p>
+          🔗 <a class="accent" href="https://arxiv.org/abs/2411.13274" target="_blank">arXiv</a> ·
+          <a class="accent" href="https://doi.org/10.1103/PhysRevA.111.033709" target="_blank">Physical Review A</a> ·
+          <a class="accent" href="https://github.com/bojnordsky/TwoPhotonAbsorption" target="_blank">GitHub</a>
+        </p>
+      </article>
+
+      <!-- Project 2 -->
+      <article class="card reveal">
+        <span class="badge">W toku • Interaktywny</span>
+        <h3>Jednokierunkowe pole oddziałujące z układem trójpoziomowym</h3>
+        <p>
+          Trwający projekt badający zachowanie jednokierunkowych pól kwantowych sprzężonych z systemami trójpoziomowymi. Badanie ma na celu poszerzenie wiedzy o jednokierunkowym oddziaływaniu światła z układami kwantowymi.
+        </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/detuning_interactive_plots.html"
+              target="_blank">Marginal distribution of states</a> </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/compare_peaks.html"
+              target="_blank">Comparing Peak Position of the marginal distribution </a> </p>
+          <p> 🌐 <a class="accent" href="https://fizyka.umk.pl/~masood.valipour/marginal_Peaks.html"
+              target="_blank">Peak Position of the marginal distribution of Optimum State </a> </p>
+
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- PUBLICATIONS -->
+<section id="publications">
+  <div class="container">
+    <h2 class="reveal">Publikacje</h2>
+    <p class="lead reveal">Linki do arXiv/DOI. Opcjonalnie generowane z pliku BibTeX.</p>
+    <div class="cards">
+      <article class="card reveal">
+        <span class="badge">2025 • Phys.Rev.A</span>
+        <h3>Optymalizacja pochłaniania dwóch fotonów dla atomu trójpoziomowego</h3>
+        <p>Zawiera analityczne formy marginalne, porównania fotonów splątanych i niesplątanych oraz wyniki obliczeniowe.</p>
+        <p>🔗 <a class="accent" href="https://arxiv.org/abs/2411.13274" target="_blank">arXiv</a> · <a class="accent" href="https://doi.org/10.1103/PhysRevA.111.033709" target="_blank">Phys.Rev.A</a> · <a class="accent" href="https://github.com/bojnordsky/TwoPhotonAbsorption" target="_blank">GitHub</a></p>
+      </article>
+
+      <article class="card reveal">
+        <span class="badge">2023 • Iranian Journal of Physics Research</span>
+        <h3>Niejednorodność dipolowa CMB poprzez wariancję pierścieniową</h3>
+        <p>Proponuje nową metodę określenia kierunku i amplitudy dipola CMB przy użyciu porównań wariancji pierścieniowej. Zastosowanie na danych Plancka pokazuje istotność dipola 1.6σ, co daje wgląd w możliwe naruszenia izotropii.</p>
+        <p>🔗 <a class="accent" href="https://ijpr.iut.ac.ir/article_1586_en.html?lang=fa" target="_blank">Iranian Journal of Physics Research</a> · <a class="accent" href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=pd996ysAAAAJ&citation_for_view=pd996ysAAAAJ:u-x6o8ySG0sC" target="_blank">Google Scholar</a></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- CV / TIMELINE -->
+<section id="cv">
+  <div class="container">
+    <h2 class="reveal">CV i osiągnięcia</h2>
+    <p class="lead reveal">Dodaj PDF do pobrania i krótki przegląd najważniejszych etapów.</p>
+    <p class="reveal"><a class="button" href="#" onclick="alert('Załącz swój PDF i zastąp ten link.')">Pobierz CV (PDF)</a></p>
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="tl-meta">2025</div>
+        <div><strong>Badania doktoranckie</strong>: Optymalizacja fotonów splątanych i niesplątanych; wystąpienia konferencyjne.</div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-meta">2024</div>
+        <div><strong>Przegląd wewnętrzny</strong>: Monografia trajektorii kwantowych; prototypy interaktywnych pulpitów.</div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-meta">2023</div>
+        <div><strong>Szkoła Doktorska</strong>: Uniwersytet Mikołaja Kopernika, Toruń (WFAiIS).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <h2 class="reveal">Kontakt</h2>
+    <p class="lead reveal">Email • Google Scholar • GitHub • ORCID</p>
+    <div class="cards">
+      <article class="card reveal">
+        <h3>Skontaktuj się</h3>
+        <p>
+          Email: <a class="accent" href="mailto:masood.valipour@umk.pl">masood.valipour@umk.pl</a><br>
+          Scholar: <a class="accent" href="https://scholar.google.com/citations?user=pd996ysAAAAJ&hl=en&oi=ao" target="_blank">Google Scholar</a><br>
+          GitHub: <a class="accent" href="https://github.com/bojnordsky" target="_blank">github.com/bojnordsky</a><br>
+          ORCID: <a class="accent" href="https://orcid.org/0000-0003-3144-2576" target="_blank">0000-0003-3144-2576</a>
+        </p>
+      </article>
+      <article class="card reveal">
+        <h3>Biuro</h3>
+        <p>WFAiIS, Uniwersytet Mikołaja Kopernika<br>
+        <a class="accent" href="https://maps.app.goo.gl/wEzWNwqAxY5JokTp7" target="_blank">Grudziądzka 5/7, 87-100 Toruń, Polska</a></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  &copy; 2025 Masood Valipour. Wszystkie prawa zastrzeżone.
+</footer>
+
+<script>
+  // simple reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  window.addEventListener('scroll', () => {
+    reveals.forEach(el => {
+      const top = el.getBoundingClientRect().top;
+      if(top < window.innerHeight - 50) el.classList.add('in');
+    });
+  });
+
+  // animated background stars
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+  const stars = [];
+  for(let i=0;i<200;i++){
+    stars.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.2});
+  }
+  function draw(){
+    ctx.fillStyle = 'rgba(10,15,31,0.3)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'white';
+    stars.forEach(s=>ctx.beginPath(), ctx.arc(s.x,s.y,s.r,0,Math.PI*2), ctx.fill());
+    requestAnimationFrame(draw);
+  }
+  draw();
+</script>
+</body>
+</html>
+

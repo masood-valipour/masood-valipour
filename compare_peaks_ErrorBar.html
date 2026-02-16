@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peak Data Visualizer - Three States with Error Bars</title>
+    
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container {
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 24px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* RESPONSIVE GRID FOR THREE PLOTS */
+        .plots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .plot-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .plot-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 12px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* GRID LAYOUT FOR CHART + LATEX LABELS */
+        .chart-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: 1fr auto;
+            gap: 0px;
+            height: 400px;
+        }
+
+        .y-axis-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 16px;
+            padding-right: 8px;
+            color: #1f2937;
+        }
+
+        .x-axis-label {
+            grid-column: 2;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 5px;
+            color: #1f2937;
+        }
+
+        .canvas-holder {
+            width: 100%;
+            height: 100%;
+        }
+
+        .plotly-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controls Styling */
+        .controls-box {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .slider-container { margin-bottom: 12px; }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            appearance: none;
+            background: #e5e7eb;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .slider-ticks {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: #6b7280; margin-top: 4px;
+            font-family: 'Times New Roman', serif;
+        }
+        .info-box {
+            padding: 16px;
+            background: #f3f4f6; 
+            border-radius: 8px;
+            color: #4b5563; 
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        .info-box h3 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        #loading { text-align: center; padding: 32px; font-family: 'Times New Roman'; }
+        .error-msg { color: #dc2626; background: #fee2e2; padding: 1rem; border-radius: 8px; display: none; }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .plots-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Peak Position of Marginal Distributions with FWHM Error Bars</h1>
+        
+        <div id="loading">Loading data...</div>
+        <div id="errorMsg" class="error-msg"></div>
+
+        <div id="content" style="display: none;">
+            
+            <!-- Three Plots Grid -->
+            <div class="plots-grid">
+                <!-- Optimum State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Optimum State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <div id="plotOpt" class="plotly-container"></div>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entangled State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Entangled State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <div id="plotEnt" class="plotly-container"></div>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unentangled State Plot -->
+                <div class="plot-card">
+                    <div class="plot-title">Unentangled State</div>
+                    <div class="chart-wrapper">
+                        <div class="y-axis-label">
+                            \( (\omega - \omega_{fg}/2 ) /\Gamma_f \)
+                        </div>
+                        <div class="canvas-holder">
+                            <div id="plotUnEnt" class="plotly-container"></div>
+                        </div>
+                        <div class="x-axis-label">
+                            \( \Gamma_e / \Gamma_f \)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls Section -->
+            <div class="controls-box">
+                <div class="controls-grid">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span>\( \delta_a / \Gamma_f \)</span>
+                            <span style="font-weight: bold; color: #4f46e5;" id="deltaValue">0.0</span>
+                        </div>
+                        <input type="range" id="deltaSlider" min="0" max="25" step="0.5" value="0">
+                        <div class="slider-ticks">
+                            <span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <h3>Figure Overview and Methodology</h3>
+                <p>These plots display the <strong>maximum peak positions</strong> with <strong>FWHM error bars</strong> for three different quantum states: Optimum, Entangled, and Unentangled.</p>
+                <ul>
+                    <li><strong>Peak Lines:</strong> Orange and cyan curves show the positions of local maxima in the distributions.</li>
+                    <li><strong>Error Bars:</strong> Vertical bars show the Full Width at Half Maximum (FWHM) - the range of ω where p(ω) ≥ p_max/2 around each peak.</li>
+                    <li><strong>Calculation Method:</strong> For each peak, we find p_max at the peak position, then identify the ω range where the probability is at least half of the maximum value.</li>
+                </ul>
+                
+                <h3>Reference Guidelines</h3>
+                <p>Horizontal reference lines show:</p>
+                <ul>
+                    <li><span style="color: red;">Red dashed line:</span> +δ_a/2</li>
+                    <li><span style="color: rgb(29, 78, 216);">Blue dashed line:</span> -δ_a/2</li>
+                </ul>
+                
+                <h3>Data Source</h3>
+                <p>Peak position data from: <code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, <code>peak_data_UnEnt.json</code>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DATA_URLS = {
+            opt: './DataSets/peak_data_Opt.json',
+            ent: './DataSets/peak_data_Ent.json',
+            unent: './DataSets/peak_data_UnEnt.json'
+        };
+
+        let allData = {
+            opt: [],
+            ent: [],
+            unent: []
+        };
+
+        const content = document.getElementById('content');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        const deltaSlider = document.getElementById('deltaSlider');
+        const deltaValue = document.getElementById('deltaValue');
+
+        // ============================================
+        // Marginal Distribution Functions
+        // ============================================
+        
+        // Optimum State
+        function computeMarginalDistribution_Opt(omega, gamma_e, delta_a) {
+            const Gamma_f = 1.0;
+            const w_eg = -0.5 * delta_a;
+            const w_fe = +0.5 * delta_a;
+            
+            const numerator = gamma_e * (gamma_e + Gamma_f) * (gamma_e + Gamma_f/4) 
+                            + gamma_e * Math.pow(w_fe - w_eg, 2) 
+                            + Gamma_f * Math.pow(omega - w_eg, 2);
+            
+            const denom1 = Math.pow(omega - w_eg, 2) + Math.pow(gamma_e, 2) / 4;
+            const denom2 = Math.pow(omega - w_fe, 2) + Math.pow(gamma_e + Gamma_f, 2) / 4;
+            const denominator = 4 * Math.PI * denom1 * denom2;
+            
+            return numerator / denominator;
+        }
+
+        // Entangled State
+        function computeMarginalDistribution_Ent(omega, OmegaP, OmegaM, delta_f, Mu = 0) {
+            const Gf = 1.0;
+            const w_gf = 0;
+            
+            const N_exp = Math.exp(-Math.pow(OmegaM, 2) * Math.pow(Mu, 2) / 4 - Math.pow(delta_f, 2) / Math.pow(OmegaM, 2)) + 1;
+            const N = N_exp * 8 * Math.PI / (OmegaP * OmegaM);
+            
+            const term1_exp = -(Math.pow(2 * omega - w_gf, 2) / (Math.pow(OmegaM, 2) + Math.pow(OmegaP, 2))) 
+                            - (Math.pow(OmegaM, 2) * Math.pow(OmegaP, 2) * Math.pow(Mu, 2) / (4 * Math.pow(OmegaP, 2) + 4 * Math.pow(OmegaM, 2))) 
+                            - Math.pow(delta_f, 2) / Math.pow(OmegaM, 2);
+            const term1_cos = Math.cos(-(2 * omega - w_gf) * Math.pow(OmegaM, 2) * Mu / (Math.pow(OmegaP, 2) + Math.pow(OmegaM, 2)));
+            const term1 = 2 * Math.exp(term1_exp) * term1_cos;
+            
+            const term2 = Math.exp(-(Math.pow(2 * omega - w_gf + delta_f, 2) / (Math.pow(OmegaM, 2) + Math.pow(OmegaP, 2))));
+            const term3 = Math.exp(-(Math.pow(2 * omega - w_gf - delta_f, 2) / (Math.pow(OmegaM, 2) + Math.pow(OmegaP, 2))));
+            
+            const p_Ent = (term1 + term2 + term3) * 8 * Math.pow(Math.PI, 0.5) / (OmegaM * OmegaP) / Math.pow(Math.pow(OmegaP, 2) + Math.pow(OmegaM, 2), 0.5) / N;
+            
+            return p_Ent;
+        }
+
+        // Unentangled State
+        function computeMarginalDistribution_UnEnt(omega, OmegaA, OmegaB, delta_f, MuB = 0) {
+            const MuA = 0;
+            const w_gf = 0;
+            const wB = 0.5 * (w_gf + delta_f);
+            const wA = 0.5 * (w_gf - delta_f);
+            
+            const N_exp = Math.exp(-(Math.pow(MuB, 2) * Math.pow(OmegaA, 2) * Math.pow(OmegaB, 2) + 4 * Math.pow(wB - wA, 2)) / (2 * Math.pow(OmegaA, 2) + 2 * Math.pow(OmegaB, 2)));
+            const N = 4 * (1 + 2 * OmegaA * OmegaB * N_exp / (Math.pow(OmegaA, 2) + Math.pow(OmegaB, 2)));
+            
+            // PsiA and PsiB
+            const PsiA_real = Math.pow(2 / (Math.pow(OmegaA, 2) * Math.PI), 0.25) * Math.exp(-Math.pow(omega - wA, 2) / Math.pow(OmegaA, 2)) * Math.cos(MuA * (omega - wA));
+            const PsiA_imag = Math.pow(2 / (Math.pow(OmegaA, 2) * Math.PI), 0.25) * Math.exp(-Math.pow(omega - wA, 2) / Math.pow(OmegaA, 2)) * Math.sin(MuA * (omega - wA));
+            
+            const PsiB_real = Math.pow(2 / (Math.pow(OmegaB, 2) * Math.PI), 0.25) * Math.exp(-Math.pow(omega - wB, 2) / Math.pow(OmegaB, 2)) * Math.cos(MuB * (omega - wB));
+            const PsiB_imag = Math.pow(2 / (Math.pow(OmegaB, 2) * Math.PI), 0.25) * Math.exp(-Math.pow(omega - wB, 2) / Math.pow(OmegaB, 2)) * Math.sin(MuB * (omega - wB));
+            
+            // Compute A coefficient (complex)
+            const A_phase_real = -(MuB - MuA) * 2 * (wA - wB) / Math.pow(OmegaB, 2);
+            const A_phase_imag = Math.pow(MuB - MuA, 2) - 4 * Math.pow(wA - wB, 2) / Math.pow(OmegaB, 4);
+            const A_exp_arg = A_phase_real * A_phase_real - A_phase_imag * A_phase_imag;
+            const A_exp_real_part = Math.pow(OmegaA, 2) * Math.pow(OmegaB, 2) * A_exp_arg / (4 * Math.pow(OmegaA, 2) + 4 * Math.pow(OmegaB, 2)) + MuB * (wA - wB) - Math.pow(wA - wB, 2) / Math.pow(OmegaB, 2);
+            const A_mag = Math.exp(A_exp_real_part) * Math.pow(2 * OmegaA * OmegaB, 0.5) / Math.pow(Math.pow(OmegaA, 2) + Math.pow(OmegaB, 2), 0.5);
+            
+            // Simplified: |conj(PsiA)*PsiB*conj(A) + conj(conj(PsiA)*PsiB*conj(A)) + |PsiA|^2 + |PsiB|^2|
+            const cross_term = 2 * A_mag * (PsiA_real * PsiB_real + PsiA_imag * PsiB_imag);
+            const p = (cross_term + Math.pow(PsiA_real, 2) + Math.pow(PsiA_imag, 2) + Math.pow(PsiB_real, 2) + Math.pow(PsiB_imag, 2)) * 2 / N;
+            
+            return Math.abs(p);
+        }
+
+        // ============================================
+        // FWHM Calculation Function
+        // ============================================
+        function findFWHM(peakPosition, p_max, omegaRange, computeP_func, ...params) {
+            // Find the range where p(omega) >= p_max/2 around the peak
+            const halfMax = p_max / 2;
+            const numPoints = 200;
+            const searchRange = omegaRange * 0.5; // Search within 50% of total range around peak
+            
+            const omegaMin = peakPosition - searchRange;
+            const omegaMax = peakPosition + searchRange;
+            
+            // Scan from peak to left to find left edge
+            let omegaLeft = peakPosition;
+            for (let i = 0; i < numPoints; i++) {
+                const omega = peakPosition - (i / numPoints) * searchRange;
+                const p = computeP_func(omega, ...params);
+                if (p < halfMax) {
+                    omegaLeft = omega;
+                    break;
+                }
+                if (i === numPoints - 1) omegaLeft = omega;
+            }
+            
+            // Scan from peak to right to find right edge
+            let omegaRight = peakPosition;
+            for (let i = 0; i < numPoints; i++) {
+                const omega = peakPosition + (i / numPoints) * searchRange;
+                const p = computeP_func(omega, ...params);
+                if (p < halfMax) {
+                    omegaRight = omega;
+                    break;
+                }
+                if (i === numPoints - 1) omegaRight = omega;
+            }
+            
+            return { omegaLeft, omegaRight };
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const [dataOpt, dataEnt, dataUnEnt] = await Promise.all([
+                    fetch(DATA_URLS.opt).then(res => res.json()),
+                    fetch(DATA_URLS.ent).then(res => res.json()),
+                    fetch(DATA_URLS.unent).then(res => res.json())
+                ]);
+
+                allData.opt = dataOpt;
+                allData.ent = dataEnt;
+                allData.unent = dataUnEnt;
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                
+                updateAllPlots(true);
+                
+                if (window.MathJax) {
+                    MathJax.typesetPromise([document.getElementById('content')]);
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                errorMsg.style.display = 'block';
+                errorMsg.innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+        });
+
+        deltaSlider.addEventListener('input', function() {
+            deltaValue.textContent = parseFloat(this.value).toFixed(1);
+            updateAllPlots(false);
+        });
+
+        function updateAllPlots(animate = false) {
+            updatePlot_Opt('plotOpt', animate);
+            updatePlot_Ent('plotEnt', animate);
+            updatePlot_UnEnt('plotUnEnt', animate);
+        }
+
+        // ============================================
+        // Common Plot Configuration
+        // ============================================
+        function getCommonPlotLayout(omegaMinFinal, omegaMaxFinal) {
+            return {
+                title: { text: '' },
+                xaxis: {
+                    type: 'log',
+                    range: [Math.log10(0.01), Math.log10(100)],
+                    title: { text: '' },
+                    showgrid: true,
+                    zeroline: false,
+                    showticklabels: true,
+                    tickfont: { family: 'Times New Roman', size: 12 },
+                    gridcolor: 'rgba(128, 128, 128, 0.3)',
+                    tickmode: 'array',
+                    tickvals: [0.01, 0.1, 1, 10, 100],
+                    ticktext: ['10⁻²', '10⁻¹', '10⁰', '10¹', '10²']
+                },
+                yaxis: {
+                    range: [omegaMinFinal, omegaMaxFinal],
+                    title: { text: '' },
+                    showgrid: true,
+                    zeroline: false,
+                    showticklabels: true,
+                    tickfont: { family: 'Times New Roman', size: 12 },
+                    gridcolor: 'rgba(128, 128, 128, 0.3)'
+                },
+                margin: { l: 60, r: 20, t: 10, b: 60 },
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                hovermode: 'closest',
+                legend: {
+                    x: 0.98,
+                    y: 0.98,
+                    xanchor: 'right',
+                    yanchor: 'top',
+                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                    bordercolor: 'rgba(0, 0, 0, 0.3)',
+                    borderwidth: 1,
+                    font: { size: 10 }
+                }
+            };
+        }
+
+        const plotlyConfig = {
+            displayModeBar: true,
+            staticPlot: false,
+            responsive: true
+        };
+
+        // ============================================
+        // Update Plot for Optimum State
+        // ============================================
+        function updatePlot_Opt(plotId, animate = false) {
+            const deltaA = parseFloat(deltaSlider.value);
+            const tolerance = 0.5;
+
+            const filteredData = allData.opt.filter(point => 
+                Math.abs(point.delta_a - deltaA) < tolerance
+            );
+            
+            if (filteredData.length === 0) return;
+
+            const uniquePointsMap = new Map();
+            filteredData.forEach(point => {
+                const gamma = point.Gamma_e;
+                const dist = Math.abs(point.delta_a - deltaA);
+                if (!uniquePointsMap.has(gamma) || dist < uniquePointsMap.get(gamma).dist) {
+                    uniquePointsMap.set(gamma, { data: point, dist: dist });
+                }
+            });
+
+            const sortedData = Array.from(uniquePointsMap.values())
+                .map(item => item.data)
+                .sort((a, b) => a.Gamma_e - b.Gamma_e);
+
+            // Determine omega range
+            let allOmegaValues = [];
+            sortedData.forEach(d => {
+                if (d.peaks && Array.isArray(d.peaks)) {
+                    d.peaks.forEach(peak => {
+                        if (peak !== null && peak !== undefined && !isNaN(peak)) {
+                            allOmegaValues.push(peak);
+                        }
+                    });
+                }
+            });
+            
+            const refY = deltaA / 2;
+            allOmegaValues.push(refY, -refY);
+            
+            const minOmega = Math.min(...allOmegaValues);
+            const maxOmega = Math.max(...allOmegaValues);
+            const omegaRange = maxOmega - minOmega;
+
+            // Create reference lines
+            const refLineFe = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [refY, refY],
+                mode: 'lines',
+                line: { color: '#dc2626', width: 2, dash: 'dash' },
+                name: '+δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const refLineEg = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [-refY, -refY],
+                mode: 'lines',
+                line: { color: '#1d4ed8', width: 2, dash: 'dash' },
+                name: '-δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            // Create peak position traces with error bars
+            const maxPeaks = Math.max(...sortedData.map(d => d.peaks.length));
+            const peakColors = ['#e69f00', '#56b4e9'];
+            const peakTraces = [];
+            
+            // Track all y values including error bars for proper axis scaling
+            let allYValuesWithErrors = [...allOmegaValues];
+            
+            for (let i = 0; i < maxPeaks; i++) {
+                const xData = [];
+                const yData = [];
+                const errorYMinus = [];
+                const errorYPlus = [];
+                
+                sortedData.forEach(d => {
+                    if (d.peaks[i] !== undefined) {
+                        const peakPos = d.peaks[i];
+                        const gamma_e = d.Gamma_e;
+                        
+                        // Compute p_max at peak position
+                        const p_max = computeMarginalDistribution_Opt(peakPos, gamma_e, deltaA);
+                        
+                        // Find FWHM range
+                        const fwhm = findFWHM(peakPos, p_max, omegaRange, computeMarginalDistribution_Opt, gamma_e, deltaA);
+                        
+                        xData.push(gamma_e);
+                        yData.push(peakPos);
+                        errorYMinus.push(peakPos - fwhm.omegaLeft);
+                        errorYPlus.push(fwhm.omegaRight - peakPos);
+                        
+                        // Add error bar extents to y values for axis calculation
+                        allYValuesWithErrors.push(fwhm.omegaLeft);
+                        allYValuesWithErrors.push(fwhm.omegaRight);
+                    }
+                });
+                
+                peakTraces.push({
+                    type: 'scatter',
+                    x: xData,
+                    y: yData,
+                    mode: 'lines+markers',
+                    line: { color: peakColors[i % peakColors.length], width: 2 },
+                    marker: { size: 2, color: peakColors[i % peakColors.length] },
+                    error_y: {
+                        type: 'data',
+                        symmetric: false,
+                        array: errorYPlus,
+                        arrayminus: errorYMinus,
+                        color: peakColors[i % peakColors.length],
+                        thickness: 1.5,
+                        width: 3
+                    },
+                    name: `Peak ${i + 1}`,
+                    showlegend: false,
+                    hovertemplate: 'Γₑ/Γf: %{x:.4f}<br>ω: %{y:.4f}<extra></extra>'
+                });
+            }
+            
+            // Recalculate y-axis range including error bars
+            const minOmegaWithErrors = Math.min(...allYValuesWithErrors);
+            const maxOmegaWithErrors = Math.max(...allYValuesWithErrors);
+            const omegaRangeWithErrors = maxOmegaWithErrors - minOmegaWithErrors;
+            const paddingWithErrors = omegaRangeWithErrors === 0 ? 0.15 : omegaRangeWithErrors * 0.1;
+            const omegaMinFinal = minOmegaWithErrors - paddingWithErrors;
+            const omegaMaxFinal = maxOmegaWithErrors + paddingWithErrors;
+            
+            const plotlyLayout = getCommonPlotLayout(omegaMinFinal, omegaMaxFinal);
+            const allTraces = [refLineFe, refLineEg, ...peakTraces];
+            
+            Plotly.newPlot(plotId, allTraces, plotlyLayout, plotlyConfig);
+        }
+
+        // ============================================
+        // Update Plot for Entangled State
+        // ============================================
+        function updatePlot_Ent(plotId, animate = false) {
+            const deltaA = parseFloat(deltaSlider.value);
+            const tolerance = 0.5;
+
+            const filteredData = allData.ent.filter(point => 
+                Math.abs(point.delta_a - deltaA) < tolerance
+            );
+            
+            if (filteredData.length === 0) return;
+
+            const uniquePointsMap = new Map();
+            filteredData.forEach(point => {
+                const key = point.OmegaP;
+                const dist = Math.abs(point.delta_a - deltaA);
+                if (!uniquePointsMap.has(key) || dist < uniquePointsMap.get(key).dist) {
+                    uniquePointsMap.set(key, { data: point, dist: dist });
+                }
+            });
+
+            const sortedData = Array.from(uniquePointsMap.values())
+                .map(item => item.data)
+                .sort((a, b) => a.OmegaP - b.OmegaP);
+
+            // Determine omega range
+            let allOmegaValues = [];
+            sortedData.forEach(d => {
+                if (d.peaks && Array.isArray(d.peaks)) {
+                    d.peaks.forEach(peak => {
+                        if (peak !== null && peak !== undefined && !isNaN(peak)) {
+                            allOmegaValues.push(peak);
+                        }
+                    });
+                }
+            });
+            
+            const refY = deltaA / 2;
+            allOmegaValues.push(refY, -refY);
+            
+            const minOmega = Math.min(...allOmegaValues);
+            const maxOmega = Math.max(...allOmegaValues);
+            const omegaRange = maxOmega - minOmega;
+            
+            const refLineFe = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [refY, refY],
+                mode: 'lines',
+                line: { color: '#dc2626', width: 2, dash: 'dash' },
+                name: '+δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const refLineEg = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [-refY, -refY],
+                mode: 'lines',
+                line: { color: '#1d4ed8', width: 2, dash: 'dash' },
+                name: '-δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const maxPeaks = Math.max(...sortedData.map(d => d.peaks.length));
+            const peakColors = ['#e69f00', '#56b4e9'];
+            const peakTraces = [];
+            
+            // Track all y values including error bars for proper axis scaling
+            let allYValuesWithErrors = [...allOmegaValues];
+            
+            for (let i = 0; i < maxPeaks; i++) {
+                const xData = [];
+                const yData = [];
+                const errorYMinus = [];
+                const errorYPlus = [];
+                
+                sortedData.forEach(d => {
+                    if (d.peaks[i] !== undefined) {
+                        const peakPos = d.peaks[i];
+                        const p_max = computeMarginalDistribution_Ent(peakPos, d.OmegaP, d.OmegaM, d.delta_f, 0);
+                        const fwhm = findFWHM(peakPos, p_max, omegaRange, computeMarginalDistribution_Ent, d.OmegaP, d.OmegaM, d.delta_f, 0);
+                        
+                        xData.push(d.OmegaP);
+                        yData.push(peakPos);
+                        errorYMinus.push(peakPos - fwhm.omegaLeft);
+                        errorYPlus.push(fwhm.omegaRight - peakPos);
+                        
+                        // Add error bar extents to y values for axis calculation
+                        allYValuesWithErrors.push(fwhm.omegaLeft);
+                        allYValuesWithErrors.push(fwhm.omegaRight);
+                    }
+                });
+                
+                peakTraces.push({
+                    type: 'scatter',
+                    x: xData,
+                    y: yData,
+                    mode: 'lines+markers',
+                    line: { color: peakColors[i % peakColors.length], width: 2 },
+                    marker: { size: 2, color: peakColors[i % peakColors.length] },
+                    error_y: {
+                        type: 'data',
+                        symmetric: false,
+                        array: errorYPlus,
+                        arrayminus: errorYMinus,
+                        color: peakColors[i % peakColors.length],
+                        thickness: 1.5,
+                        width: 3
+                    },
+                    name: `Peak ${i + 1}`,
+                    showlegend: false,
+                    hovertemplate: 'Γₑ/Γf: %{x:.4f}<br>ω: %{y:.4f}<extra></extra>'
+                });
+            }
+            
+            // Recalculate y-axis range including error bars
+            const minOmegaWithErrors = Math.min(...allYValuesWithErrors);
+            const maxOmegaWithErrors = Math.max(...allYValuesWithErrors);
+            const omegaRangeWithErrors = maxOmegaWithErrors - minOmegaWithErrors;
+            const paddingWithErrors = omegaRangeWithErrors === 0 ? 0.15 : omegaRangeWithErrors * 0.1;
+            const omegaMinFinal = minOmegaWithErrors - paddingWithErrors;
+            const omegaMaxFinal = maxOmegaWithErrors + paddingWithErrors;
+            
+            const plotlyLayout = getCommonPlotLayout(omegaMinFinal, omegaMaxFinal);
+            const allTraces = [refLineFe, refLineEg, ...peakTraces];
+            
+            Plotly.newPlot(plotId, allTraces, plotlyLayout, plotlyConfig);
+        }
+
+        // ============================================
+        // Update Plot for Unentangled State
+        // ============================================
+        function updatePlot_UnEnt(plotId, animate = false) {
+            const deltaA = parseFloat(deltaSlider.value);
+            const tolerance = 0.5;
+
+            const filteredData = allData.unent.filter(point => 
+                Math.abs(point.delta_a - deltaA) < tolerance
+            );
+            
+            if (filteredData.length === 0) return;
+
+            const uniquePointsMap = new Map();
+            filteredData.forEach(point => {
+                const key = point.OmegaA;
+                const dist = Math.abs(point.delta_a - deltaA);
+                if (!uniquePointsMap.has(key) || dist < uniquePointsMap.get(key).dist) {
+                    uniquePointsMap.set(key, { data: point, dist: dist });
+                }
+            });
+
+            const sortedData = Array.from(uniquePointsMap.values())
+                .map(item => item.data)
+                .sort((a, b) => a.OmegaA - b.OmegaA);
+
+            // Determine omega range
+            let allOmegaValues = [];
+            sortedData.forEach(d => {
+                if (d.peaks && Array.isArray(d.peaks)) {
+                    d.peaks.forEach(peak => {
+                        if (peak !== null && peak !== undefined && !isNaN(peak)) {
+                            allOmegaValues.push(peak);
+                        }
+                    });
+                }
+            });
+            
+            const refY = deltaA / 2;
+            allOmegaValues.push(refY, -refY);
+            
+            const minOmega = Math.min(...allOmegaValues);
+            const maxOmega = Math.max(...allOmegaValues);
+            const omegaRange = maxOmega - minOmega;
+            
+            const refLineFe = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [refY, refY],
+                mode: 'lines',
+                line: { color: '#dc2626', width: 2, dash: 'dash' },
+                name: '+δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const refLineEg = {
+                type: 'scatter',
+                x: [0.01, 100],
+                y: [-refY, -refY],
+                mode: 'lines',
+                line: { color: '#1d4ed8', width: 2, dash: 'dash' },
+                name: '-δ_a/2',
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const maxPeaks = Math.max(...sortedData.map(d => d.peaks.length));
+            const peakColors = ['#e69f00', '#56b4e9'];
+            const peakTraces = [];
+            
+            // Track all y values including error bars for proper axis scaling
+            let allYValuesWithErrors = [...allOmegaValues];
+            
+            for (let i = 0; i < maxPeaks; i++) {
+                const xData = [];
+                const yData = [];
+                const errorYMinus = [];
+                const errorYPlus = [];
+                
+                sortedData.forEach(d => {
+                    if (d.peaks[i] !== undefined) {
+                        const peakPos = d.peaks[i];
+                        const p_max = computeMarginalDistribution_UnEnt(peakPos, d.OmegaA, d.OmegaB, d.delta_f, 0);
+                        const fwhm = findFWHM(peakPos, p_max, omegaRange, computeMarginalDistribution_UnEnt, d.OmegaA, d.OmegaB, d.delta_f, 0);
+                        
+                        xData.push(d.OmegaA);
+                        yData.push(peakPos);
+                        errorYMinus.push(peakPos - fwhm.omegaLeft);
+                        errorYPlus.push(fwhm.omegaRight - peakPos);
+                        
+                        // Add error bar extents to y values for axis calculation
+                        allYValuesWithErrors.push(fwhm.omegaLeft);
+                        allYValuesWithErrors.push(fwhm.omegaRight);
+                    }
+                });
+                
+                peakTraces.push({
+                    type: 'scatter',
+                    x: xData,
+                    y: yData,
+                    mode: 'lines+markers',
+                    line: { color: peakColors[i % peakColors.length], width: 2 },
+                    marker: { size: 2, color: peakColors[i % peakColors.length] },
+                    error_y: {
+                        type: 'data',
+                        symmetric: false,
+                        array: errorYPlus,
+                        arrayminus: errorYMinus,
+                        color: peakColors[i % peakColors.length],
+                        thickness: 1.5,
+                        width: 3
+                    },
+                    name: `Peak ${i + 1}`,
+                    showlegend: false,
+                    hovertemplate: 'Γₑ/Γf: %{x:.4f}<br>ω: %{y:.4f}<extra></extra>'
+                });
+            }
+            
+            // Recalculate y-axis range including error bars
+            const minOmegaWithErrors = Math.min(...allYValuesWithErrors);
+            const maxOmegaWithErrors = Math.max(...allYValuesWithErrors);
+            const omegaRangeWithErrors = maxOmegaWithErrors - minOmegaWithErrors;
+            const paddingWithErrors = omegaRangeWithErrors === 0 ? 0.15 : omegaRangeWithErrors * 0.1;
+            const omegaMinFinal = minOmegaWithErrors - paddingWithErrors;
+            const omegaMaxFinal = maxOmegaWithErrors + paddingWithErrors;
+            
+            const plotlyLayout = getCommonPlotLayout(omegaMinFinal, omegaMaxFinal);
+            const allTraces = [refLineFe, refLineEg, ...peakTraces];
+            
+            Plotly.newPlot(plotId, allTraces, plotlyLayout, plotlyConfig);
+        }
+    </script>
+</body>
+</html>
