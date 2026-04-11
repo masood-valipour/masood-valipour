@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-photon State Probabilities</title>
+
+    <!-- MathJax v3 (matches Peak Data Visualizer) -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Math.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+
+    <!-- Plotly v2.27 (matches Peak Data Visualizer) -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 28px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 24px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* ── Plot card ── */
+        .plot-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        #heatmap-graph {
+            width: 100%;
+        }
+
+        /* ── Parameter display ── */
+        #param-display {
+            font-family: 'Times New Roman', serif;
+            font-size: 17px;
+            text-align: center;
+            color: #374151;
+            padding: 10px 0 4px;
+            line-height: 1.6;
+        }
+
+        /* ── Controls box ── */
+        .controls-box {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* ── Sliders ── */
+        .slider-container { margin-bottom: 4px; }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-family: 'Times New Roman', serif;
+            color: #374151;
+        }
+
+        .slider-header .val {
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            appearance: none;
+            background: #e5e7eb;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ── Checkbox ── */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #eef2ff;
+            padding: 10px 18px;
+            border-radius: 20px;
+            border: 1px solid #c7d2fe;
+            width: fit-content;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-size: 15px;
+            cursor: pointer;
+            color: #3730a3;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* ── Domain settings ── */
+        .domain-box {
+            background: #f9fafb;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .domain-box h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 12px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .domain-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .domain-row label {
+            font-size: 14px;
+            color: #374151;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .domain-row input[type="number"] {
+            width: 80px;
+            padding: 5px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1f2937;
+            background: white;
+            margin-left: 6px;
+        }
+
+        #update-domain {
+            padding: 7px 18px;
+            cursor: pointer;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Times New Roman', serif;
+            transition: background 0.15s;
+        }
+        #update-domain:hover { background: #4338ca; }
+
+        #domain-display {
+            font-size: 13px;
+            color: #6b7280;
+            font-style: italic;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* ── Info box ── */
+        .info-box {
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ── Loading / error ── */
+        #loading {
+            text-align: center;
+            padding: 40px;
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Optimum vs Entangled vs Unentangled Two-photon State Probabilities</h1>
+
+    <div id="loading">Loading data…</div>
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div id="content" style="display:none;">
+
+        <!-- Plot -->
+        <div class="plot-card">
+            <div id="heatmap-graph"></div>
+        </div>
+
+        <!-- Parameter display -->
+        <div id="param-display">Loading…</div>
+
+        <!-- Controls -->
+        <div class="controls-box" style="margin-top:16px;">
+            <div class="controls-grid">
+
+                <!-- Checkbox -->
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="optimum-deltaf-check" checked>
+                        <label for="optimum-deltaf-check">Optimum \(\delta_f\)</label>
+                    </div>
+                </div>
+
+                <!-- Gamma slider -->
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span>\( \Gamma_e / \Gamma_f \)</span>
+                        <span class="val" id="gamma-value">0.0000</span>
+                    </div>
+                    <input type="range" id="gamma-slider" min="0" max="0" step="1" value="0">
+                </div>
+
+                <!-- Delta slider -->
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span>\( \delta_a / \Gamma_f \)</span>
+                        <span class="val" id="delta-value">0.00</span>
+                    </div>
+                    <input type="range" id="delta-slider" min="0" max="0" step="1" value="0">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Domain settings -->
+        <div class="domain-box">
+            <h3>Domain Range Settings</h3>
+            <div class="domain-row">
+                <label>
+                    Domain Range:
+                    <input type="number" id="domain-range" value="5" step="0.5" min="0.5" max="50">
+                </label>
+                <button id="update-domain">Update Domain</button>
+                <span id="domain-display">Current: Optimum [-5, 0], Others [-5, 5]</span>
+            </div>
+        </div>
+
+    </div><!-- /#content -->
+</div><!-- /.container -->
+
+<script>
+// ============================================================================
+// CONSTANTS AND GLOBAL VARIABLES
+// ============================================================================
+
+const SCALE = 1.4;
+const N_T = 200;
+const N_W = 200;
+
+let df_UnEnt_Opt = null;
+let df_Ent_Opt   = null;
+let df_UnEnt_Fixed = null;
+let df_Ent_Fixed   = null;
+
+let Gamma_values = [];
+let Delta_values = [];
+
+let T_opt, W_opt, T_UnEn, W_UnEn, T_Ent, W_Ent;
+let domainRange = 5;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function linspace(start, end, num) {
+    const step = (end - start) / (num - 1);
+    return Array.from({length: num}, (_, i) => start + step * i);
+}
+
+function meshgrid(x, y) {
+    const X = [], Y = [];
+    for (let i = 0; i < y.length; i++) {
+        X.push([...x]);
+        Y.push(new Array(x.length).fill(y[i]));
+    }
+    return [X, Y];
+}
+
+function applyElementWise2D(arr1, arr2, func) {
+    const result = [];
+    for (let i = 0; i < arr1.length; i++) {
+        result.push([]);
+        for (let j = 0; j < arr1[i].length; j++) {
+            result[i].push(func(arr1[i][j], arr2[i][j]));
+        }
+    }
+    return result;
+}
+
+function applyElementWise1D(arr, func) {
+    return arr.map(func);
+}
+
+// ============================================================================
+// DATA LOADING
+// ============================================================================
+
+async function loadData() {
+    try {
+        const p1 = fetch('./DataSets/HeatMap_deltas_UnEnt_Delay.json').then(r => r.json());
+        const p2 = fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay.json').then(r => r.json());
+        const p3 = fetch('./DataSets/HeatMap_deltas_UnEnt_Delay_deltaF0.json').then(r => r.json());
+        const p4 = fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay_deltaF0.json').then(r => r.json());
+
+        const [d1, d2, d3, d4] = await Promise.all([p1, p2, p3, p4]);
+
+        df_UnEnt_Opt   = d1;
+        df_Ent_Opt     = d2;
+        df_UnEnt_Fixed = d3;
+        df_Ent_Fixed   = d4;
+
+        const gammaSet = new Set(df_UnEnt_Opt.map(row => row.Gamma_e));
+        const deltaSet = new Set(df_UnEnt_Opt.map(row => row.delta_a));
+
+        Gamma_values = Array.from(gammaSet).sort((a, b) => a - b);
+        Delta_values = Array.from(deltaSet).sort((a, b) => a - b);
+
+        initializeGrids();
+        initializeControls();
+        initializeDomainControls();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        updatePlots();
+
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById('content')]);
+        }
+
+    } catch (error) {
+        console.error('Error loading data:', error);
+        document.getElementById('loading').style.display = 'none';
+        const err = document.getElementById('errorMsg');
+        err.style.display = 'block';
+        err.innerHTML = `<strong>Error:</strong> ${error.message}`;
+    }
+}
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - OPTIMUM STATE
+// ============================================================================
+
+function OptimumState_temporal(Gamma_e, marginal = false) {
+    const tStar   = Math.max(...T_opt);
+    const Gamma_f = 1;
+
+    if (marginal) {
+        return applyElementWise1D(T_opt, (t) => {
+            const exp1  = Math.exp((Gamma_f - Gamma_e) * tStar + Gamma_e * t);
+            const exp2  = Math.exp(Gamma_f * t);
+            const denom = Gamma_f - Gamma_e;
+            let p = denom !== 0 ? (exp1 - exp2) / denom : exp1 * (tStar - t);
+            p += exp2 / Gamma_e;
+            p *= (Gamma_e * Gamma_f * Math.exp(-Gamma_f * tStar)) / 2;
+            return p;
+        });
+    } else {
+        const [T1, T2] = meshgrid(T_opt, T_opt);
+        const constant = (Gamma_e * Gamma_f * Math.exp(-Gamma_f * tStar)) / 2;
+        return applyElementWise2D(T1, T2, (t1, t2) => {
+            const chi1  = (t1 < t2 && t2 < tStar) ? 1 : 0;
+            const chi2  = (t2 < t1 && t1 < tStar) ? 1 : 0;
+            const term1 = Math.exp((Gamma_f - Gamma_e) * t2 + Gamma_e * t1) * chi1;
+            const term2 = Math.exp((Gamma_f - Gamma_e) * t1 + Gamma_e * t2) * chi2;
+            return constant * (term1 + term2);
+        });
+    }
+}
+
+function OptimumState_frequency(Gamma_e, delta_a, marginal = false) {
+    const Gf    = 1;
+    const tStar = 0;
+    const w_eg  = -0.5 * delta_a;
+    const w_fe  =  0.5 * delta_a;
+    const abs2  = (z) => math.pow(math.abs(z), 2);
+
+    if (marginal) {
+        return applyElementWise1D(W_opt, (w) => {
+            let p = Gamma_e * (Gamma_e + Gf) * (Gamma_e + Gf/4) +
+                    Gamma_e * (w_fe - w_eg) ** 2 +
+                    Gf * (w - w_eg) ** 2;
+            p /= 4 * Math.PI *
+                 ((w - w_eg) ** 2 + Gamma_e ** 2/4) *
+                 ((w - w_fe) ** 2 + (Gamma_e + Gf) ** 2/4);
+            return p;
+        });
+    } else {
+        const [W1, W2] = meshgrid(W_opt, W_opt);
+
+        const PHI = (w1, w2) => {
+            const denom1 = math.add(math.complex(Gamma_e / 2, 0), math.complex(0, w1 - w_eg));
+            const denom2 = math.add(math.complex(Gamma_e / 2, 0), math.complex(0, w2 - w_eg));
+            const term1  = math.divide(1, denom1);
+            const term2  = math.divide(1, denom2);
+            let phi = math.add(term1, term2);
+            const phase   = (w1 + w2 - w_fe - w_eg) * tStar;
+            const expTerm = math.complex(Math.cos(phase), Math.sin(phase));
+            phi = math.multiply(phi, expTerm);
+            phi = math.multiply(phi, Math.sqrt(Gamma_e * Gf));
+            const denomSum = math.add(math.complex(Gf / 2, 0), math.complex(0, w1 + w2 - w_eg - w_fe));
+            phi = math.divide(phi, denomSum);
+            phi = math.multiply(phi, 1 / (4 * Math.PI));
+            return phi;
+        };
+
+        return applyElementWise2D(W2, W1, (w2, w1) => {
+            const phi = PHI(w1, w2);
+            return 2 * abs2(phi);
+        });
+    }
+}
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - UNENTANGLED STATE
+// ============================================================================
+
+function Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f = 0, marginal = false) {
+    const MuB   = Mu;
+    const MuA   = 0;
+    const w_gf  = 0;
+    const wB    = 0.5 * (w_gf + delta_f);
+    const wA    = 0.5 * (w_gf - delta_f);
+    const abs2  = (z) => math.pow(math.abs(z), 2);
+
+    const PsiA = (t) => {
+        const factor    = Math.pow(OmegaA ** 2 / (2 * Math.PI), 0.25);
+        const exp_real  = Math.exp(-(OmegaA ** 2) * (t - MuA) ** 2 / 4);
+        return math.complex(factor * exp_real * Math.cos(-wA * t),
+                            factor * exp_real * Math.sin(-wA * t));
+    };
+
+    const PsiB = (t) => {
+        const factor    = Math.pow(OmegaB ** 2 / (2 * Math.PI), 0.25);
+        const exp_real  = Math.exp(-(OmegaB ** 2) * (t - MuB) ** 2 / 4);
+        return math.complex(factor * exp_real * Math.cos(-wB * t),
+                            factor * exp_real * Math.sin(-wB * t));
+    };
+
+    let N = Math.exp(-((MuB - MuA) ** 2 * OmegaA ** 2 * OmegaB ** 2 + 4 * (wB - wA) ** 2) /
+                     (2 * OmegaA ** 2 + 2 * OmegaB ** 2));
+    N = 4 * (1 + 2 * OmegaA * OmegaB * N / (OmegaA ** 2 + OmegaB ** 2));
+
+    if (marginal) {
+        return applyElementWise1D(T_UnEn.map(t => t + MuB), (t) => {
+            const X_exp = (OmegaA ** 2 * OmegaB ** 2 * (MuB - MuA) ** 2 + 4 * (wB - wA) ** 2) /
+                          (-4 * (OmegaA ** 2 + OmegaB ** 2));
+            const X_mag = Math.sqrt(2 * OmegaA * OmegaB / (OmegaA ** 2 + OmegaB ** 2)) *
+                          Math.exp(X_exp);
+            const X_phase = -(wB - wA) * (MuA * OmegaA ** 2 + MuB * OmegaB ** 2) /
+                            (OmegaA ** 2 + OmegaB ** 2);
+            const X = math.complex(X_mag * Math.cos(X_phase), X_mag * Math.sin(X_phase));
+            const psiA = PsiA(t);
+            const psiB = PsiB(t);
+            let P = math.multiply(math.multiply(math.conj(psiA), psiB), X);
+            P = math.add(P, math.multiply(math.multiply(math.conj(psiB), psiA), math.conj(X)));
+            P = math.add(P, math.complex(abs2(psiA) + abs2(psiB), 0));
+            P = math.multiply(P, 2 / N);
+            return math.abs(P);
+        });
+    } else {
+        const [T1, T2] = meshgrid(T_UnEn.map(t => t + MuB), T_UnEn.map(t => t + MuB));
+        const PHI = (t2, t1) => {
+            const psiTerm1 = math.multiply(PsiA(t1), PsiB(t2));
+            const psiTerm2 = math.multiply(PsiA(t2), PsiB(t1));
+            return math.multiply(math.add(psiTerm1, psiTerm2), 1 / Math.sqrt(N));
+        };
+        return applyElementWise2D(T2, T1, (t2, t1) => 2 * abs2(PHI(t2, t1)));
+    }
+}
+
+function Unentangled_frequency(OmegaA, OmegaB, MuA = 0, MuB = 0, delta_f = 0, marginal = false) {
+    const w_gf  = 0;
+    const wB    = 0.5 * (w_gf + delta_f);
+    const wA    = 0.5 * (w_gf - delta_f);
+    const abs2  = (z) => math.pow(math.abs(z), 2);
+
+    const PsiA = (w) => {
+        const factor    = Math.pow(2 / (OmegaA ** 2 * Math.PI), 0.25);
+        const exp_real  = Math.exp(-((w - wA) ** 2) / OmegaA ** 2);
+        const phase     = MuA * (w - wA);
+        return math.complex(factor * exp_real * Math.cos(phase),
+                            factor * exp_real * Math.sin(phase));
+    };
+
+    const PsiB = (w) => {
+        const factor    = Math.pow(2 / (OmegaB ** 2 * Math.PI), 0.25);
+        const exp_real  = Math.exp(-((w - wB) ** 2) / OmegaB ** 2);
+        const phase     = MuB * (w - wB);
+        return math.complex(factor * exp_real * Math.cos(phase),
+                            factor * exp_real * Math.sin(phase));
+    };
+
+    let N = Math.exp(-(MuB ** 2 * OmegaA ** 2 * OmegaB ** 2 + 4 * (wB - wA) ** 2) /
+                     (2 * OmegaA ** 2 + 2 * OmegaB ** 2));
+    N = 4 * (1 + 2 * OmegaA * OmegaB * N / (OmegaA ** 2 + OmegaB ** 2));
+
+    if (marginal) {
+        return applyElementWise1D(W_UnEn, (w1) => {
+            let A = math.add(math.multiply(math.complex(0, MuB - MuA), 1),
+                             -2 * (wA - wB) / (OmegaB ** 2));
+            A = math.multiply(math.pow(A, 2), OmegaA ** 2 * OmegaB ** 2);
+            A = math.divide(A, 4 * (OmegaA ** 2 + OmegaB ** 2));
+            A = math.add(A, math.complex(0, MuB * (wA - wB)));
+            A = math.subtract(A, (wA - wB) ** 2 / (OmegaB ** 2));
+            A = math.multiply(math.exp(A),
+                    Math.sqrt(2 * OmegaA * OmegaB / (OmegaA ** 2 + OmegaB ** 2)));
+            A = math.conj(A);
+            const psiA = PsiA(w1);
+            const psiB = PsiB(w1);
+            let p = math.multiply(math.multiply(math.conj(psiA), psiB), A);
+            p = math.add(p, math.conj(p));
+            p = math.add(p, math.complex(abs2(psiA) + abs2(psiB), 0));
+            p = math.multiply(p, 2 / N);
+            return math.abs(p);
+        });
+    } else {
+        const [W1, W2] = meshgrid(W_UnEn, W_UnEn);
+        const PHI = (w2, w1) => {
+            const psiTerm1 = math.multiply(PsiA(w1), PsiB(w2));
+            const psiTerm2 = math.multiply(PsiA(w2), PsiB(w1));
+            return math.multiply(math.add(psiTerm1, psiTerm2), 1 / Math.sqrt(N));
+        };
+        return applyElementWise2D(W2, W1, (w2, w1) => 2 * abs2(PHI(w2, w1)));
+    }
+}
+
+// ============================================================================
+// PROBABILITY FUNCTIONS - ENTANGLED STATE
+// ============================================================================
+
+function Entangled_temporal(OmegaP, OmegaM, t02 = 0, t01 = 0, delta_f = 0, marginal = false) {
+    const MuP  = t02 + t01;
+    const MuM  = t02 - t01;
+    const w_gf = 0;
+    const w02  = 0.5 * (w_gf + delta_f);
+    const w01  = 0.5 * (w_gf - delta_f);
+    const dW   = w02 - w01;
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    let N = Math.exp(-(OmegaM ** 2) * MuM ** 2 / 4 - dW ** 2 / OmegaM ** 2) + 1;
+    N *= 8 * Math.PI / (OmegaP * OmegaM);
+
+    if (marginal) {
+        return applyElementWise1D(T_Ent.map(t => t), (t) => {
+            const A = OmegaP ** 2 / 4;
+            const B = OmegaM ** 2 / 4;
+            let P = 2 * Math.exp(-A * B * (2*t - MuP) ** 2 / (A + B) - B * MuM ** 2
+                                 - dW ** 2 / (4*A + 4*B)) *
+                    Math.cos(A * dW * (2*t - MuP) / (A + B));
+            P += Math.exp(-A * B * (2*t - MuP + MuM) ** 2 / (A + B));
+            P += Math.exp(-A * B * (2*t - MuP - MuM) ** 2 / (A + B));
+            P *= Math.sqrt(Math.PI / (A + B)) * 2 / N;
+            return P;
+        });
+    } else {
+        const [T1, T2] = meshgrid(T_Ent.map(t => t + MuP), T_Ent.map(t => t + MuP));
+        const PHI = (t2, t1) => {
+            const exp1_real = Math.exp(-(OmegaM ** 2) * (t2 - t1 - MuM) ** 2 / 8);
+            const phase1    = -(w01 * t1 + w02 * t2);
+            const term1     = math.complex(exp1_real * Math.cos(phase1), exp1_real * Math.sin(phase1));
+            const exp2_real = Math.exp(-(OmegaM ** 2) * (t1 - t2 - MuM) ** 2 / 8);
+            const phase2    = -(w01 * t2 + w02 * t1);
+            const term2     = math.complex(exp2_real * Math.cos(phase2), exp2_real * Math.sin(phase2));
+            let phi = math.add(term1, term2);
+            const expP = Math.exp(-(OmegaP ** 2) * (t2 + t1 - MuP) ** 2 / 8);
+            phi = math.multiply(phi, expP / Math.sqrt(N));
+            return phi;
+        };
+        return applyElementWise2D(T2, T1, (t2, t1) => 2 * abs2(PHI(t2, t1)));
+    }
+}
+
+function Entangled_frequency(OmegaP, OmegaM, t01 = 0, t02 = 0, delta_f = 0, w_gf = 0, marginal = false) {
+    const MuP  = t02 + t01;
+    const MuM  = t02 - t01;
+    const abs2 = (z) => math.pow(math.abs(z), 2);
+
+    let N = Math.exp(-(OmegaM ** 2) * MuM ** 2 / 4 - delta_f ** 2 / OmegaM ** 2) + 1;
+    N *= 8 * Math.PI / (OmegaP * OmegaM);
+
+    if (marginal) {
+        return applyElementWise1D(W_Ent, (w) => {
+            let p  = Math.exp(-((2*w - w_gf + delta_f) ** 2) / (OmegaP**2 + OmegaM**2));
+            p     += Math.exp(-((2*w - w_gf - delta_f) ** 2) / (OmegaP**2 + OmegaM**2));
+            p     += 2 * Math.exp(-((2*w - w_gf) ** 2) / (OmegaP**2 + OmegaM**2)
+                                  - OmegaM**2 * OmegaP**2 * MuM**2 / (4*OmegaP**2 + 4*OmegaM**2)
+                                  - delta_f**2 / OmegaM**2) *
+                    Math.cos((2*w - w_gf) * OmegaM**2 * MuM / (OmegaP**2 + OmegaM**2));
+            p *= 4 / (N * OmegaM * OmegaP);
+            p *= Math.sqrt(Math.PI) / Math.sqrt(OmegaP**2 + OmegaM**2);
+            return 2 * p;
+        });
+    } else {
+        const [W1, W2] = meshgrid(W_Ent, W_Ent);
+        const PHI = (w2, w1) => {
+            const DELTA   = w2 - w1;
+            const DELTA_0 = delta_f;
+            const SIGMA   = w2 + w1;
+            const SIGMA_0 = w_gf;
+
+            const exp1_real = Math.exp(-((DELTA - DELTA_0) ** 2) / (2 * OmegaM**2));
+            const phase1    = MuM * (DELTA - DELTA_0) / 2;
+            const term1     = math.complex(exp1_real * Math.cos(phase1), exp1_real * Math.sin(phase1));
+
+            const exp2_real = Math.exp(-((DELTA + DELTA_0) ** 2) / (2 * OmegaM**2));
+            const phase2    = -MuM * (DELTA + DELTA_0) / 2;
+            const term2     = math.complex(exp2_real * Math.cos(phase2), exp2_real * Math.sin(phase2));
+
+            let phi = math.add(term1, term2);
+
+            const expSigma_real = Math.exp(-((SIGMA - SIGMA_0) ** 2) / (2 * OmegaP**2));
+            const phaseSigma    = MuP * (SIGMA - SIGMA_0) / 2;
+            const sigmaTerm     = math.complex(expSigma_real * Math.cos(phaseSigma),
+                                               expSigma_real * Math.sin(phaseSigma));
+            phi = math.multiply(phi, sigmaTerm);
+            phi = math.multiply(phi, 2 / (OmegaM * OmegaP * Math.sqrt(N)));
+            return phi;
+        };
+        return applyElementWise2D(W2, W1, (w2, w1) => 2 * abs2(PHI(w2, w1)));
+    }
+}
+
+// ============================================================================
+// UI AND PLOTTING FUNCTIONS
+// ============================================================================
+
+function initializeGrids() {
+    T_opt  = linspace(-domainRange, 0, N_T);
+    W_opt  = linspace(-domainRange, domainRange, N_W);
+    T_UnEn = linspace(-domainRange, domainRange, N_T);
+    W_UnEn = linspace(-domainRange, domainRange, N_W);
+    T_Ent  = linspace(-domainRange, domainRange, N_T);
+    W_Ent  = linspace(-domainRange, domainRange, N_W);
+    updateDomainDisplay();
+}
+
+function updateDomainDisplay() {
+    const el = document.getElementById('domain-display');
+    if (el) el.textContent =
+        `Current: Optimum [-${domainRange}, 0], Others [-${domainRange}, ${domainRange}]`;
+}
+
+function initializeDomainControls() {
+    const domainInput  = document.getElementById('domain-range');
+    const updateButton = document.getElementById('update-domain');
+    if (domainInput)  domainInput.value = domainRange;
+    if (updateButton) {
+        updateButton.addEventListener('click', () => {
+            const newRange = parseFloat(domainInput.value);
+            if (newRange > 0 && newRange <= 50) {
+                domainRange = newRange;
+                initializeGrids();
+                updatePlots();
+            } else {
+                alert('Please enter a valid range between 0.5 and 50');
+            }
+        });
+    }
+    if (domainInput) {
+        domainInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') updateButton.click();
+        });
+    }
+}
+
+function initializeControls() {
+    const gammaSlider   = document.getElementById('gamma-slider');
+    const deltaSlider   = document.getElementById('delta-slider');
+    const gammaValue    = document.getElementById('gamma-value');
+    const deltaValue    = document.getElementById('delta-value');
+    const optimumCheck  = document.getElementById('optimum-deltaf-check');
+
+    gammaSlider.max = Gamma_values.length - 1;
+    deltaSlider.max = Delta_values.length - 1;
+
+    gammaValue.textContent = Gamma_values[0].toFixed(4);
+    deltaValue.textContent = Delta_values[0].toFixed(2);
+
+    gammaSlider.addEventListener('input', (e) => {
+        gammaValue.textContent = Gamma_values[parseInt(e.target.value)].toFixed(4);
+        updatePlots();
+    });
+    deltaSlider.addEventListener('input', (e) => {
+        deltaValue.textContent = Delta_values[parseInt(e.target.value)].toFixed(2);
+        updatePlots();
+    });
+    if (optimumCheck) {
+        optimumCheck.addEventListener('change', () => updatePlots());
+    }
+}
+
+function findDataRow(df, Gamma_e, delta_a) {
+    for (let row of df) {
+        if (Math.abs(row.Gamma_e - Gamma_e) < 1e-10 &&
+            Math.abs(row.delta_a - delta_a)  < 1e-10) return row;
+    }
+    return null;
+}
+
+function updatePlots() {
+    const gammaIdx  = parseInt(document.getElementById('gamma-slider').value);
+    const deltaIdx  = parseInt(document.getElementById('delta-slider').value);
+    const isOptimum = document.getElementById('optimum-deltaf-check').checked;
+
+    const current_df_UnEnt = isOptimum ? df_UnEnt_Opt : df_UnEnt_Fixed;
+    const current_df_Ent   = isOptimum ? df_Ent_Opt   : df_Ent_Fixed;
+
+    const Gamma_e = Gamma_values[gammaIdx];
+    const delta_a = Delta_values[deltaIdx];
+
+    document.getElementById('param-display').innerHTML =
+        `Selected: \u0393<sub>e</sub> / \u0393<sub>f</sub> = ${Gamma_e.toFixed(4)},` +
+        `\u2002\u03b4<sub>a</sub> / \u0393<sub>f</sub> = ${delta_a.toFixed(2)}` +
+        `<br><span style="font-size:0.82em;color:#6b7280;">(${isOptimum ? 'Optimised \u03b4f' : 'Fixed \u03b4f'})</span>`;
+
+    const temp_prob_opt  = OptimumState_temporal(Gamma_e);
+    const freq_prob_opt  = OptimumState_frequency(Gamma_e, delta_a);
+    const marg_temp_opt  = OptimumState_temporal(Gamma_e, true);
+    const marg_freq_opt  = OptimumState_frequency(Gamma_e, delta_a, true);
+
+    const row_UnEnt       = findDataRow(current_df_UnEnt, Gamma_e, delta_a);
+    const OmegaA          = row_UnEnt.OmegaA;
+    const OmegaB          = row_UnEnt.OmegaB;
+    const Mu              = row_UnEnt.Mu;
+    const delta_f_UnEnt   = row_UnEnt.delta_f;
+
+    const temp_prob_un  = Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f_UnEnt);
+    const freq_prob_un  = Unentangled_frequency(OmegaA, OmegaB, 0, Mu, delta_f_UnEnt);
+    const marg_temp_un  = Unentangled_temporal(OmegaA, OmegaB, Mu, delta_f_UnEnt, true);
+    const marg_freq_un  = Unentangled_frequency(OmegaA, OmegaB, 0, Mu, delta_f_UnEnt, true);
+
+    const row_Ent         = findDataRow(current_df_Ent, Gamma_e, delta_a);
+    const OmegaP          = row_Ent.OmegaP;
+    const OmegaM          = row_Ent.OmegaM;
+    const t02             = row_Ent.Mu;
+    const delta_f_Ent     = row_Ent.delta_f;
+
+    const temp_prob_ent = Entangled_temporal(OmegaP, OmegaM, t02, 0, delta_f_Ent);
+    const freq_prob_ent = Entangled_frequency(OmegaP, OmegaM, 0, t02, delta_f_Ent, 0);
+    const marg_temp_ent = Entangled_temporal(OmegaP, OmegaM, t02, 0, delta_f_Ent, true);
+    const marg_freq_ent = Entangled_frequency(OmegaP, OmegaM, 0, t02, delta_f_Ent, 0, true);
+
+    createSubplots(
+        temp_prob_opt, freq_prob_opt, marg_temp_opt, marg_freq_opt,
+        temp_prob_un,  freq_prob_un,  marg_temp_un,  marg_freq_un,
+        temp_prob_ent, freq_prob_ent, marg_temp_ent, marg_freq_ent,
+        delta_a
+    );
+}
+
+// ============================================================================
+// CREATE SUBPLOTS
+// ============================================================================
+
+function createSubplots(
+    temp_prob_opt, freq_prob_opt, marg_temp_opt, marg_freq_opt,
+    temp_prob_un,  freq_prob_un,  marg_temp_un,  marg_freq_un,
+    temp_prob_ent, freq_prob_ent, marg_temp_ent, marg_freq_ent,
+    delta_a
+) {
+    // Common style tokens (matching Peak Data Visualizer)
+    const FONT_FAMILY   = 'Times New Roman, serif';
+    const FONT_SIZE_AX  = 13;
+    const FONT_SIZE_ANN = 14;
+    const COLORSCALE    = 'Viridis';          // ← changed from Plasma
+    const GRID_COLOR    = 'rgba(128,128,128,0.3)';
+    const PLOT_BG       = 'white';
+
+    const axisBase = {
+        showgrid: true,
+        zeroline: false,
+        gridcolor: GRID_COLOR,
+        tickfont:  { family: FONT_FAMILY, size: FONT_SIZE_AX },
+        titlefont: { family: FONT_FAMILY, size: FONT_SIZE_ANN }
+    };
+
+    const colorbarStyle = (xPos, yPos) => ({
+        x: xPos, y: yPos, len: 0.28,
+        tickfont:  { family: FONT_FAMILY, size: 10 },
+        titlefont: { family: FONT_FAMILY, size: 11 },
+        title: 'p(·)'
+    });
+
+    const marginalLineStyle = (color) => ({
+        type: 'scatter', mode: 'lines',
+        line: { color, width: 2 },
+        showlegend: false
+    });
+
+    const heatmapBase = (cbX, cbY) => ({
+        type: 'heatmap',
+        colorscale: COLORSCALE,
+        showscale: true,
+        colorbar: colorbarStyle(cbX, cbY)
+    });
+
+    const traces = [
+        // Row 1 — temporal marginals
+        { ...marginalLineStyle('#4f46e5'), x: T_opt,  y: marg_temp_opt, xaxis:'x1',  yaxis:'y1'  },
+        { ...marginalLineStyle('#4f46e5'), x: T_UnEn, y: marg_temp_ent, xaxis:'x2',  yaxis:'y2'  },
+        { ...marginalLineStyle('#4f46e5'), x: T_Ent,  y: marg_temp_un,  xaxis:'x3',  yaxis:'y3'  },
+        // Row 2 — temporal heatmaps
+        { ...heatmapBase(0.30, 0.68), z: temp_prob_opt, x: T_opt,  y: T_opt,  xaxis:'x4',  yaxis:'y4'  },
+        { ...heatmapBase(0.64, 0.68), z: temp_prob_ent, x: T_UnEn, y: T_UnEn, xaxis:'x5',  yaxis:'y5'  },
+        { ...heatmapBase(0.99, 0.68), z: temp_prob_un,  x: T_Ent,  y: T_Ent,  xaxis:'x6',  yaxis:'y6'  },
+        // Row 3 — frequency marginals
+        { ...marginalLineStyle('#e69f00'), x: W_opt,  y: marg_freq_opt, xaxis:'x7',  yaxis:'y7'  },
+        { ...marginalLineStyle('#e69f00'), x: W_UnEn, y: marg_freq_ent, xaxis:'x8',  yaxis:'y8'  },
+        { ...marginalLineStyle('#e69f00'), x: W_Ent,  y: marg_freq_un,  xaxis:'x9',  yaxis:'y9'  },
+        // Row 4 — frequency heatmaps
+        { ...heatmapBase(0.30, 0.21), z: freq_prob_opt, x: W_opt,  y: W_opt,  xaxis:'x10', yaxis:'y10' },
+        { ...heatmapBase(0.64, 0.21), z: freq_prob_ent, x: W_UnEn, y: W_UnEn, xaxis:'x11', yaxis:'y11' },
+        { ...heatmapBase(0.99, 0.21), z: freq_prob_un,  x: W_Ent,  y: W_Ent,  xaxis:'x12', yaxis:'y12' }
+    ];
+
+    const layout = {
+        width:  1400,
+        height: 1200,
+        margin: { l: 20, r: 20, t: 40, b: 30 },
+        showlegend:   false,
+        plot_bgcolor:  PLOT_BG,
+        paper_bgcolor: PLOT_BG,
+        font: { family: FONT_FAMILY },
+
+        // ── Y-axes ──
+        yaxis:   { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.05 },
+        yaxis2:  { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.39 },
+        yaxis3:  { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.74 },
+        yaxis4:  { ...axisBase, title: 't\u2082 \u0393_f',                        domain:[0.53,0.82] },
+        yaxis5:  { ...axisBase, title: 't\u2082 \u0393_f',                        domain:[0.53,0.82], side:'left', anchor:'free', position:0.39 },
+        yaxis6:  { ...axisBase, title: '(t\u2082 \u2212 \u03bc) \u0393_f',       domain:[0.53,0.82], side:'left', anchor:'free', position:0.74 },
+        yaxis7:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.05 },
+        yaxis8:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.39 },
+        yaxis9:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.74 },
+        yaxis10: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35] },
+        yaxis11: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35], side:'left', anchor:'free', position:0.39 },
+        yaxis12: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35], side:'left', anchor:'free', position:0.74 },
+
+        // ── X-axes ──
+        xaxis:   { ...axisBase, domain:[0.05,0.30], showticklabels:false },
+        xaxis2:  { ...axisBase, domain:[0.39,0.64], showticklabels:false },
+        xaxis3:  { ...axisBase, domain:[0.74,0.99], showticklabels:false },
+        xaxis4:  { ...axisBase, title:'t\u2081 \u0393_f',                  domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.53 },
+        xaxis5:  { ...axisBase, title:'t\u2081 \u0393_f',                  domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.53 },
+        xaxis6:  { ...axisBase, title:'(t\u2081 \u2212 \u03bc) \u0393_f',  domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.53 },
+        xaxis7:  { ...axisBase, domain:[0.05,0.30], showticklabels:false },
+        xaxis8:  { ...axisBase, domain:[0.39,0.64], showticklabels:false },
+        xaxis9:  { ...axisBase, domain:[0.74,0.99], showticklabels:false },
+        xaxis10: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.06 },
+        xaxis11: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.06 },
+        xaxis12: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.06 },
+
+        // ── Annotations ──
+        annotations: [
+            { text:'p(t\u2081,t\u2082)',           x:0.30, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'p(t\u2081,t\u2082)',           x:0.64, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'p(t\u2081,t\u2082)',           x:0.99, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.30, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.64, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.99, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'Optimum',                      x:0.16, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Entangled',                    x:0.51, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Unentangled',                  x:0.87, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Temporal domain',  x:0.0,  y:0.70, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 },
+            { text:'Frequency domain', x:0.0,  y:0.23, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 }
+        ],
+
+        // ── Reference lines on frequency heatmaps (white dashed) ──
+        shapes: [
+            // xaxis10 / yaxis10 — Optimum frequency
+            ...[[-0.5*delta_a, 0.5*delta_a]].flatMap(([lo, hi]) => [
+                { type:'line', x0:lo, x1:lo, y0:W_opt[0], y1:W_opt[W_opt.length-1],
+                  xref:'x10', yref:'y10', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:hi, x1:hi, y0:W_opt[0], y1:W_opt[W_opt.length-1],
+                  xref:'x10', yref:'y10', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_opt[0], x1:W_opt[W_opt.length-1], y0:lo, y1:lo,
+                  xref:'x10', yref:'y10', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_opt[0], x1:W_opt[W_opt.length-1], y0:hi, y1:hi,
+                  xref:'x10', yref:'y10', line:{color:'white',width:2,dash:'dash'} }
+            ]),
+            // xaxis11 / yaxis11 — Entangled frequency
+            ...[[-0.5*delta_a, 0.5*delta_a]].flatMap(([lo, hi]) => [
+                { type:'line', x0:lo, x1:lo, y0:W_UnEn[0], y1:W_UnEn[W_UnEn.length-1],
+                  xref:'x11', yref:'y11', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:hi, x1:hi, y0:W_UnEn[0], y1:W_UnEn[W_UnEn.length-1],
+                  xref:'x11', yref:'y11', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_UnEn[0], x1:W_UnEn[W_UnEn.length-1], y0:lo, y1:lo,
+                  xref:'x11', yref:'y11', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_UnEn[0], x1:W_UnEn[W_UnEn.length-1], y0:hi, y1:hi,
+                  xref:'x11', yref:'y11', line:{color:'white',width:2,dash:'dash'} }
+            ]),
+            // xaxis12 / yaxis12 — Unentangled frequency
+            ...[[-0.5*delta_a, 0.5*delta_a]].flatMap(([lo, hi]) => [
+                { type:'line', x0:lo, x1:lo, y0:W_Ent[0], y1:W_Ent[W_Ent.length-1],
+                  xref:'x12', yref:'y12', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:hi, x1:hi, y0:W_Ent[0], y1:W_Ent[W_Ent.length-1],
+                  xref:'x12', yref:'y12', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_Ent[0], x1:W_Ent[W_Ent.length-1], y0:lo, y1:lo,
+                  xref:'x12', yref:'y12', line:{color:'white',width:2,dash:'dash'} },
+                { type:'line', x0:W_Ent[0], x1:W_Ent[W_Ent.length-1], y0:hi, y1:hi,
+                  xref:'x12', yref:'y12', line:{color:'white',width:2,dash:'dash'} }
+            ])
+        ]
+    };
+
+    Plotly.react('heatmap-graph', traces, layout, { responsive: true, displayModeBar: true });
+}
+
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
