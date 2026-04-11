@@ -74,21 +74,31 @@
         /* ── Controls box ── */
         .controls-box {
             background: #f9fafb;
-            padding: 24px;
+            padding: 24px 32px;
             border-radius: 12px;
             border: 1px solid #e5e7eb;
             margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
         }
 
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            align-items: start;
+        .controls-checkbox-row {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .controls-sliders {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
         }
 
         /* ── Sliders ── */
-        .slider-container { margin-bottom: 4px; }
+        .slider-container { width: 100%; }
 
         .slider-header {
             display: flex;
@@ -270,15 +280,17 @@
 
         <!-- Controls -->
         <div class="controls-box" style="margin-top:16px;">
-            <div class="controls-grid">
 
-                <!-- Checkbox -->
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="optimum-deltaf-check" checked>
-                        <label for="optimum-deltaf-check">Optimum \(\delta_f\)</label>
-                    </div>
+            <!-- Checkbox row (top) -->
+            <div class="controls-checkbox-row">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="optimum-deltaf-check" checked>
+                    <label for="optimum-deltaf-check">Optimum \(\delta_f\)</label>
                 </div>
+            </div>
+
+            <!-- Sliders stacked (full width) -->
+            <div class="controls-sliders">
 
                 <!-- Gamma slider -->
                 <div class="slider-container">
@@ -301,7 +313,7 @@
             </div>
         </div>
 
-        <!-- Domain settings -->
+        <!-- Domain settings (bottom panel) -->
         <div class="domain-box">
             <h3>Domain Range Settings</h3>
             <div class="domain-row">
