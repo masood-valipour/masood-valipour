@@ -40,7 +40,7 @@
         }
 
         h1 {
-            font-size: 26px;
+            font-size: 32px;
             font-weight: bold;
             color: #1f2937;
             text-align: center;
@@ -64,7 +64,7 @@
         /* ── Parameter display ── */
         #param-display {
             font-family: 'Times New Roman', serif;
-            font-size: 17px;
+            font-size: 22px;
             text-align: center;
             color: #374151;
             padding: 10px 0 4px;
@@ -105,7 +105,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
-            font-size: 15px;
+            font-size: 20px;
             font-family: 'Times New Roman', serif;
             color: #374151;
         }
@@ -153,14 +153,14 @@
         }
 
         .checkbox-container input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             accent-color: #4f46e5;
             cursor: pointer;
         }
 
         .checkbox-container label {
-            font-size: 15px;
+            font-size: 20px;
             cursor: pointer;
             color: #3730a3;
             font-family: 'Times New Roman', serif;
@@ -176,7 +176,7 @@
         }
 
         .domain-box h3 {
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
             color: #1f2937;
             margin-bottom: 12px;
@@ -193,7 +193,7 @@
         }
 
         .domain-row label {
-            font-size: 14px;
+            font-size: 18px;
             color: #374151;
             font-family: 'Times New Roman', serif;
         }
@@ -203,27 +203,27 @@
             padding: 5px 8px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 18px;
             color: #1f2937;
             background: white;
             margin-left: 6px;
         }
 
         #update-domain {
-            padding: 7px 18px;
+            padding: 8px 22px;
             cursor: pointer;
             background: #4f46e5;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 18px;
             font-family: 'Times New Roman', serif;
             transition: background 0.15s;
         }
         #update-domain:hover { background: #4338ca; }
 
         #domain-display {
-            font-size: 13px;
+            font-size: 16px;
             color: #6b7280;
             font-style: italic;
             font-family: 'Times New Roman', serif;
@@ -854,9 +854,10 @@ function createSubplots(
 ) {
     // Common style tokens (matching Peak Data Visualizer)
     const FONT_FAMILY   = 'Times New Roman, serif';
-    const FONT_SIZE_AX  = 13;
-    const FONT_SIZE_ANN = 14;
-    const COLORSCALE    = 'Hot';               // hot_r = Hot reversed
+    const FONT_SIZE_AX  = 16;   // tick labels
+    const FONT_SIZE_TTL = 20;   // axis titles
+    const FONT_SIZE_ANN = 22;   // annotations (column headers, plot labels)
+    const COLORSCALE    = 'Hot';
     // Build reversed hot colorscale (hot_r)
     const HOT_R = [
         [0.00, 'rgb(255,255,255)'],
@@ -869,24 +870,52 @@ function createSubplots(
     const GRID_COLOR    = 'rgba(128,128,128,0.3)';
     const PLOT_BG       = 'white';
 
+    // ── Unicode building blocks ──────────────────────────────────────────────
+    // Greek
+    const ω   = '\u03c9';   // ω
+    const Γ   = '\u0393';   // Γ
+    const μ   = '\u03bc';   // μ
+    // Subscript digits & letters
+    const s1  = '\u2081';   // ₁
+    const s2  = '\u2082';   // ₂
+    // Normal (non-subscript) letters for subscript words — more reliable rendering
+    // We write them as plain text after the symbol, e.g. "ω fg"
+    const minus = '\u2212'; // −
+
+    // ── Axis label strings ───────────────────────────────────────────────────
+    // For frequency axes: replace ω_eg with (ω - ω_fg/2)
+    // Written as: (ω_i − ω_fg/2) / Γ_f
+    const LBL = {
+        Pt:       `P(t)`,
+        P_omega:  `P(${ω})`,
+        t2Gf:     `t${s2} \u00b7 ${Γ}f`,
+        t2muGf:   `(t${s2} ${minus} ${μ}) \u00b7 ${Γ}f`,
+        t1Gf:     `t${s1} \u00b7 ${Γ}f`,
+        t1muGf:   `(t${s1} ${minus} ${μ}) \u00b7 ${Γ}f`,
+        w2fg2:    `(${ω}${s2} ${minus} ${ω}fg/2) / ${Γ}f`,
+        w1fg2:    `(${ω}${s1} ${minus} ${ω}fg/2) / ${Γ}f`,
+        pt1t2:    `p(t${s1}, t${s2})`,
+        pw1w2:    `p(${ω}${s1}, ${ω}${s2})`,
+    };
+
     const axisBase = {
         showgrid: true,
         zeroline: false,
         gridcolor: GRID_COLOR,
         tickfont:  { family: FONT_FAMILY, size: FONT_SIZE_AX },
-        titlefont: { family: FONT_FAMILY, size: FONT_SIZE_ANN }
+        titlefont: { family: FONT_FAMILY, size: FONT_SIZE_TTL }
     };
 
     const colorbarStyle = (xPos, yPos) => ({
         x: xPos, y: yPos, len: 0.28,
-        tickfont:  { family: FONT_FAMILY, size: 10 },
-        titlefont: { family: FONT_FAMILY, size: 11 },
-        title: 'p(·)'
+        tickfont:  { family: FONT_FAMILY, size: 15 },
+        titlefont: { family: FONT_FAMILY, size: 17 },
+        title: 'p(\u00b7)'
     });
 
     const marginalLineStyle = (color) => ({
         type: 'scatter', mode: 'lines',
-        line: { color, width: 2 },
+        line: { color, width: 2.5 },
         showlegend: false
     });
 
@@ -926,46 +955,46 @@ function createSubplots(
         font: { family: FONT_FAMILY },
 
         // ── Y-axes ──
-        yaxis:   { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.05 },
-        yaxis2:  { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.39 },
-        yaxis3:  { ...axisBase, title: 'P(t)',                                    domain:[0.84,0.99], side:'left', anchor:'free', position:0.74 },
-        yaxis4:  { ...axisBase, title: 't\u2082 \u0393_f',                        domain:[0.53,0.82] },
-        yaxis5:  { ...axisBase, title: 't\u2082 \u0393_f',                        domain:[0.53,0.82], side:'left', anchor:'free', position:0.39 },
-        yaxis6:  { ...axisBase, title: '(t\u2082 \u2212 \u03bc) \u0393_f',       domain:[0.53,0.82], side:'left', anchor:'free', position:0.74 },
-        yaxis7:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.05 },
-        yaxis8:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.39 },
-        yaxis9:  { ...axisBase, title: 'P(\u03c9)',                               domain:[0.37,0.48], side:'left', anchor:'free', position:0.74 },
-        yaxis10: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35] },
-        yaxis11: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35], side:'left', anchor:'free', position:0.39 },
-        yaxis12: { ...axisBase, title: '(\u03c9\u2082 \u2212 \u03c9_eg)/\u0393_f', domain:[0.06,0.35], side:'left', anchor:'free', position:0.74 },
+        yaxis:   { ...axisBase, title: LBL.Pt,      domain:[0.84,0.99], side:'left', anchor:'free', position:0.05 },
+        yaxis2:  { ...axisBase, title: LBL.Pt,      domain:[0.84,0.99], side:'left', anchor:'free', position:0.39 },
+        yaxis3:  { ...axisBase, title: LBL.Pt,      domain:[0.84,0.99], side:'left', anchor:'free', position:0.74 },
+        yaxis4:  { ...axisBase, title: LBL.t2Gf,    domain:[0.53,0.82] },
+        yaxis5:  { ...axisBase, title: LBL.t2Gf,    domain:[0.53,0.82], side:'left', anchor:'free', position:0.39 },
+        yaxis6:  { ...axisBase, title: LBL.t2muGf,  domain:[0.53,0.82], side:'left', anchor:'free', position:0.74 },
+        yaxis7:  { ...axisBase, title: LBL.P_omega, domain:[0.37,0.48], side:'left', anchor:'free', position:0.05 },
+        yaxis8:  { ...axisBase, title: LBL.P_omega, domain:[0.37,0.48], side:'left', anchor:'free', position:0.39 },
+        yaxis9:  { ...axisBase, title: LBL.P_omega, domain:[0.37,0.48], side:'left', anchor:'free', position:0.74 },
+        yaxis10: { ...axisBase, title: LBL.w2fg2,   domain:[0.06,0.35] },
+        yaxis11: { ...axisBase, title: LBL.w2fg2,   domain:[0.06,0.35], side:'left', anchor:'free', position:0.39 },
+        yaxis12: { ...axisBase, title: LBL.w2fg2,   domain:[0.06,0.35], side:'left', anchor:'free', position:0.74 },
 
         // ── X-axes ──
         xaxis:   { ...axisBase, domain:[0.05,0.30], showticklabels:false },
         xaxis2:  { ...axisBase, domain:[0.39,0.64], showticklabels:false },
         xaxis3:  { ...axisBase, domain:[0.74,0.99], showticklabels:false },
-        xaxis4:  { ...axisBase, title:'t\u2081 \u0393_f',                  domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.53 },
-        xaxis5:  { ...axisBase, title:'t\u2081 \u0393_f',                  domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.53 },
-        xaxis6:  { ...axisBase, title:'(t\u2081 \u2212 \u03bc) \u0393_f',  domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.53 },
+        xaxis4:  { ...axisBase, title: LBL.t1Gf,   domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.53 },
+        xaxis5:  { ...axisBase, title: LBL.t1Gf,   domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.53 },
+        xaxis6:  { ...axisBase, title: LBL.t1muGf, domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.53 },
         xaxis7:  { ...axisBase, domain:[0.05,0.30], showticklabels:false },
         xaxis8:  { ...axisBase, domain:[0.39,0.64], showticklabels:false },
         xaxis9:  { ...axisBase, domain:[0.74,0.99], showticklabels:false },
-        xaxis10: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.06 },
-        xaxis11: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.06 },
-        xaxis12: { ...axisBase, title:'(\u03c9\u2081 \u2212 \u03c9_eg)/\u0393_f', domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.06 },
+        xaxis10: { ...axisBase, title: LBL.w1fg2,  domain:[0.05,0.30], side:'bottom', anchor:'free', position:0.06 },
+        xaxis11: { ...axisBase, title: LBL.w1fg2,  domain:[0.39,0.64], side:'bottom', anchor:'free', position:0.06 },
+        xaxis12: { ...axisBase, title: LBL.w1fg2,  domain:[0.74,0.99], side:'bottom', anchor:'free', position:0.06 },
 
         // ── Annotations ──
         annotations: [
-            { text:'p(t\u2081,t\u2082)',           x:0.30, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'p(t\u2081,t\u2082)',           x:0.64, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'p(t\u2081,t\u2082)',           x:0.99, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.30, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.64, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'p(\u03c9\u2081,\u03c9\u2082)', x:0.99, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
-            { text:'Optimum',                      x:0.16, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
-            { text:'Entangled',                    x:0.51, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
-            { text:'Unentangled',                  x:0.87, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+1,family:FONT_FAMILY,color:'#1f2937'} },
-            { text:'Temporal domain',  x:0.0,  y:0.70, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 },
-            { text:'Frequency domain', x:0.0,  y:0.23, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 }
+            { text: LBL.pt1t2, x:0.30, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text: LBL.pt1t2, x:0.64, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text: LBL.pt1t2, x:0.99, y:0.85, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text: LBL.pw1w2, x:0.30, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text: LBL.pw1w2, x:0.64, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text: LBL.pw1w2, x:0.99, y:0.39, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, xanchor:'left' },
+            { text:'Optimum',     x:0.16, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+2,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Entangled',   x:0.51, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+2,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Unentangled', x:0.87, y:1.01, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN+2,family:FONT_FAMILY,color:'#1f2937'} },
+            { text:'Temporal domain',  x:0.0, y:0.70, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 },
+            { text:'Frequency domain', x:0.0, y:0.23, xref:'paper', yref:'paper', showarrow:false, font:{size:FONT_SIZE_ANN,family:FONT_FAMILY}, textangle:-90 }
         ],
 
         // ── Reference lines on frequency heatmaps (white dashed) ──
