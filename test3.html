@@ -181,6 +181,7 @@
             color: #1f2937;
             margin-bottom: 12px;
             font-family: 'Times New Roman', serif;
+            text-align: center;
         }
 
         .domain-row {
@@ -188,6 +189,7 @@
             gap: 16px;
             align-items: center;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .domain-row label {
@@ -854,7 +856,16 @@ function createSubplots(
     const FONT_FAMILY   = 'Times New Roman, serif';
     const FONT_SIZE_AX  = 13;
     const FONT_SIZE_ANN = 14;
-    const COLORSCALE    = 'Viridis';          // ← changed from Plasma
+    const COLORSCALE    = 'Hot';               // hot_r = Hot reversed
+    // Build reversed hot colorscale (hot_r)
+    const HOT_R = [
+        [0.00, 'rgb(255,255,255)'],
+        [0.20, 'rgb(255,220,180)'],
+        [0.40, 'rgb(255,160,80)'],
+        [0.60, 'rgb(255,80,0)'],
+        [0.80, 'rgb(180,0,0)'],
+        [1.00, 'rgb(0,0,0)']
+    ];
     const GRID_COLOR    = 'rgba(128,128,128,0.3)';
     const PLOT_BG       = 'white';
 
@@ -881,7 +892,7 @@ function createSubplots(
 
     const heatmapBase = (cbX, cbY) => ({
         type: 'heatmap',
-        colorscale: COLORSCALE,
+        colorscale: HOT_R,
         showscale: true,
         colorbar: colorbarStyle(cbX, cbY)
     });
