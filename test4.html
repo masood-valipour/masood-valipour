@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Optimization of Entangled Two-Photon Absorption</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple-50: #EEEDFE;
+      --purple-200: #AFA9EC;
+      --purple-400: #7F77DD;
+      --purple-600: #534AB7;
+      --purple-800: #3C3489;
+      --purple-900: #26215C;
+      --teal-50: #E1F5EE;
+      --teal-400: #1D9E75;
+      --teal-600: #0F6E56;
+      --coral-400: #D85A30;
+      --coral-600: #993C1D;
+      --blue-50: #E6F1FB;
+      --blue-400: #378ADD;
+      --blue-800: #0C447C;
+      --gray-50: #F8F7F4;
+      --gray-100: #EFEFEB;
+      --gray-200: #DDDDD8;
+      --gray-400: #888780;
+      --gray-700: #444441;
+      --text-primary: #1a1a18;
+      --text-secondary: #4a4a46;
+      --text-muted: #888780;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.18);
+      --font-serif: 'EB Garamond', Georgia, serif;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      background: #fafaf8;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 56px;
+      background: rgba(250,250,248,0.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      color: var(--text-secondary);
+      letter-spacing: 0.01em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+
+    /* LAYOUT */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2.5rem;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 6rem 0 4rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(32px, 5.5vw, 58px);
+      font-weight: 400;
+      line-height: 1.15;
+      max-width: 720px;
+      margin-bottom: 2rem;
+      color: var(--text-primary);
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--purple-600);
+    }
+    .hero-desc {
+      font-size: 17px;
+      line-height: 1.85;
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      gap: 0 3rem;
+      width: fit-content;
+      border-top: 0.5px solid var(--border);
+      padding-top: 1.5rem;
+    }
+    .hero-meta-item .label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .hero-meta-item .value {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    .scroll-hint {
+      margin-top: 3.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+    .scroll-line {
+      width: 48px;
+      height: 1px;
+      background: var(--border-strong);
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      left: -48px;
+      top: 0;
+      width: 48px;
+      height: 1px;
+      background: var(--text-secondary);
+      animation: lineSlide 1.8s ease-in-out infinite;
+    }
+    @keyframes lineSlide {
+      0% { left: -48px; }
+      100% { left: 96px; }
+    }
+
+    /* SECTIONS */
+    .section {
+      padding: 6rem 0;
+      border-bottom: 0.5px solid var(--border);
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+    .section.visible { opacity: 1; transform: translateY(0); }
+
+    .section-tag {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .section h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 400;
+      margin-bottom: 1.25rem;
+      line-height: 1.2;
+    }
+    .section-intro {
+      font-size: 16px;
+      line-height: 1.85;
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    /* EQUATION BLOCK */
+    .eq-block {
+      border-left: 2px solid var(--purple-400);
+      padding: 1rem 1.75rem;
+      margin: 2rem 0;
+      background: var(--purple-50);
+      border-radius: 0 8px 8px 0;
+    }
+    .eq-block .eq-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .eq-block .eq {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      color: var(--purple-800);
+      font-style: italic;
+    }
+
+    /* CARDS */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .info-card {
+      background: white;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+    .info-card h3 {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    .info-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* PLOT FRAME */
+    .plot-frame {
+      background: white;
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .plot-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.01em;
+    }
+    .plot-caption {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-top: 1rem;
+      font-style: italic;
+      border-top: 0.5px solid var(--border);
+      padding-top: 0.75rem;
+    }
+
+    /* PARAMS GRID */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .param-card {
+      background: var(--gray-50);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+    .param-card .p-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    .param-card .p-val {
+      font-size: 22px;
+      font-weight: 400;
+      font-family: var(--font-serif);
+      color: var(--text-primary);
+    }
+    .param-card .p-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* TAGS */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .tag {
+      font-size: 12px;
+      padding: 4px 14px;
+      border-radius: 99px;
+      background: var(--purple-50);
+      color: var(--purple-800);
+      border: 0.5px solid var(--purple-200);
+    }
+
+    /* FOOTER */
+    .footer-section {
+      padding: 5rem 0 3rem;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+    .footer-section.visible { opacity: 1; transform: translateY(0); }
+    .footer-section h2 {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+    .footer-section p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.85;
+      max-width: 580px;
+      font-weight: 300;
+    }
+
+    svg text { font-family: var(--font-sans); }
+
+    @media (max-width: 640px) {
+      .two-col { grid-template-columns: 1fr; }
+      .params-grid { grid-template-columns: 1fr 1fr; }
+      .hero-meta { grid-template-columns: 1fr 1fr; gap: 1rem; }
+      nav { padding: 0 1.5rem; }
+      .nav-links { display: none; }
+      .container { padding: 0 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">ETPA · Optimization Study</div>
+  <ul class="nav-links">
+    <li><a href="#s1">Background</a></li>
+    <li><a href="#s2">JSA</a></li>
+    <li><a href="#s3">Landscape</a></li>
+    <li><a href="#s4">Temporal</a></li>
+    <li><a href="#s5">Methods</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Research Results · Quantum Optics</div>
+    <h1>Optimization of <em>Entangled<br>Two&#8209;Photon Absorption</em></h1>
+    <p class="hero-desc">
+      This page presents the key computational and theoretical results from our study on maximizing ETPA cross-sections through spectral and temporal engineering of entangled photon pairs. Scroll to explore each result in sequence.
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="label">Topic</div>
+        <div class="value">Nonlinear quantum optics</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Method</div>
+        <div class="value">Variational optimization</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Sample molecule</div>
+        <div class="value">Rhodamine B (model)</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Status</div>
+        <div class="value">Preliminary results</div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      scroll to explore
+    </div>
+  </section>
+
+  <!-- SECTION 1 -->
+  <section class="section" id="s1">
+    <div class="section-tag">01 · Background</div>
+    <h2>Why entangled photons?</h2>
+    <p class="section-intro">
+      Classical two-photon absorption (TPA) requires high peak intensities, typically from pulsed lasers. Entangled photon pairs can in principle achieve the same nonlinear response at drastically lower photon fluxes — a consequence of photon-pair correlations that bypass the quadratic intensity dependence of classical TPA.
+    </p>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Classical TPA</h3>
+        <p>Absorption probability scales as I². Requires ultrashort, high-energy pulses. Photons are statistically independent.</p>
+      </div>
+      <div class="info-card">
+        <h3>Entangled TPA (ETPA)</h3>
+        <p>Absorption can scale linearly with flux under ideal conditions. Time–energy entanglement encodes correlations that match molecular resonances.</p>
+      </div>
+    </div>
+    <div class="eq-block">
+      <div class="eq-label">ETPA rate (leading order)</div>
+      <div class="eq">R<sub>ETPA</sub> ∝ |∫∫ dω₁ dω₂ · f(ω₁,ω₂) · M(ω₁,ω₂)|²</div>
+    </div>
+    <p style="font-size:14px; color: var(--text-muted); line-height:1.7; margin-top: 0.5rem;">
+      where f(ω₁,ω₂) is the joint spectral amplitude of the entangled pair and M(ω₁,ω₂) is the two-photon transition matrix element of the target molecule.
+    </p>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="section" id="s2">
+    <div class="section-tag">02 · Result</div>
+    <h2>Joint spectral amplitude landscape</h2>
+    <p class="section-intro">
+      The joint spectral amplitude (JSA) encodes both spectral correlations and entanglement structure. The plot below shows a sample JSA for a degenerate SPDC source at 800 nm, before and after spectral filtering optimization.
+    </p>
+    <div class="plot-frame">
+      <div class="plot-title">Fig. 1 — Joint spectral amplitude |f(ω₁, ω₂)|² (sample data)</div>
+      <svg id="jsa-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+        <defs>
+          <linearGradient id="cbarJ" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="#E6F1FB"/>
+            <stop offset="50%" stop-color="#7F77DD"/>
+            <stop offset="100%" stop-color="#26215C"/>
+          </linearGradient>
+        </defs>
+        <rect x="50" y="20" width="280" height="260" fill="#fafaf8" stroke="#ddddd8" stroke-width="0.5"/>
+        <rect x="380" y="20" width="280" height="260" fill="#fafaf8" stroke="#ddddd8" stroke-width="0.5"/>
+        <!-- Left: circular (unoptimized) -->
+        <ellipse cx="190" cy="150" rx="85" ry="85" fill="#AFA9EC" opacity="0.25"/>
+        <ellipse cx="190" cy="150" rx="55" ry="55" fill="#7F77DD" opacity="0.3"/>
+        <ellipse cx="190" cy="150" rx="28" ry="28" fill="#534AB7" opacity="0.55"/>
+        <ellipse cx="190" cy="150" rx="10" ry="10" fill="#26215C" opacity="0.85"/>
+        <text x="190" y="298" text-anchor="middle" font-size="12" fill="#888780">Unoptimized source</text>
+        <text x="56" y="15" font-size="11" fill="#888780">ω₂</text>
+        <text x="318" y="292" font-size="11" fill="#888780">ω₁</text>
+        <!-- Right: elongated anti-correlated -->
+        <ellipse cx="520" cy="150" rx="95" ry="24" fill="#AFA9EC" opacity="0.25" transform="rotate(-40 520 150)"/>
+        <ellipse cx="520" cy="150" rx="64" ry="15" fill="#7F77DD" opacity="0.35" transform="rotate(-40 520 150)"/>
+        <ellipse cx="520" cy="150" rx="32" ry="7" fill="#534AB7" opacity="0.6" transform="rotate(-40 520 150)"/>
+        <ellipse cx="520" cy="150" rx="11" ry="3" fill="#26215C" opacity="0.88" transform="rotate(-40 520 150)"/>
+        <text x="520" y="298" text-anchor="middle" font-size="12" fill="#888780">Optimized (anti-correlated)</text>
+        <text x="386" y="15" font-size="11" fill="#888780">ω₂</text>
+        <text x="648" y="292" font-size="11" fill="#888780">ω₁</text>
+        <!-- colorbar -->
+        <rect x="672" y="60" width="10" height="180" fill="url(#cbarJ)" rx="2"/>
+        <text x="684" y="64" font-size="10" fill="#888780">max</text>
+        <text x="684" y="244" font-size="10" fill="#888780">0</text>
+      </svg>
+      <p class="plot-caption">Spectral anti-correlation (right) concentrates photon-pair probability along the energy-conservation diagonal ω₁+ω₂ = ω<sub>p</sub>, matching the two-photon resonance bandwidth of the target molecule. This is a schematic illustration — interactive version coming.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section class="section" id="s3">
+    <div class="section-tag">03 · Result</div>
+    <h2>Optimization landscape</h2>
+    <p class="section-intro">
+      We parameterize the entangled photon source by pump bandwidth σ<sub>p</sub> and crystal length L, then maximize the ETPA signal over this 2D parameter space. The landscape below is computed on a 40×40 grid (sample).
+    </p>
+    <div class="params-grid">
+      <div class="param-card">
+        <div class="p-label">Pump bandwidth range</div>
+        <div class="p-val">0.1–5</div>
+        <div class="p-unit">nm (FWHM)</div>
+      </div>
+      <div class="param-card">
+        <div class="p-label">Crystal length range</div>
+        <div class="p-val">0.5–20</div>
+        <div class="p-unit">mm</div>
+      </div>
+      <div class="param-card">
+        <div class="p-label">Max enhancement</div>
+        <div class="p-val">×8.4</div>
+        <div class="p-unit">vs. unoptimized baseline</div>
+      </div>
+      <div class="param-card">
+        <div class="p-label">Optimal pump BW</div>
+        <div class="p-val">0.83</div>
+        <div class="p-unit">nm FWHM</div>
+      </div>
+    </div>
+    <div class="plot-frame">
+      <div class="plot-title">Fig. 2 — ETPA signal enhancement vs. pump bandwidth &amp; crystal length (sample contour)</div>
+      <svg id="contour-svg" viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;"></svg>
+      <p class="plot-caption">The global maximum lies in a narrow ridge around σ<sub>p</sub> ≈ 0.83 nm. Longer crystals narrow the signal bandwidth but improve spectral correlation — a trade-off captured by the diagonal structure of the landscape.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section class="section" id="s4">
+    <div class="section-tag">04 · Result</div>
+    <h2>Temporal correlations &amp; entanglement time</h2>
+    <p class="section-intro">
+      Time–energy entangled pairs have a well-defined entanglement time T<sub>e</sub>. When T<sub>e</sub> matches the dephasing timescale of the molecular transition, ETPA is enhanced. The plot traces ETPA rate vs. T<sub>e</sub> for a model two-level system.
+    </p>
+    <div class="plot-frame">
+      <div class="plot-title">Fig. 3 — Normalized ETPA rate vs. entanglement time T<sub>e</sub> (sample curve)</div>
+      <svg id="rate-svg" viewBox="0 0 680 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;"></svg>
+      <p class="plot-caption">Peak ETPA occurs when T<sub>e</sub> ≈ T₂ (molecular dephasing time, dashed line). For T<sub>e</sub> ≫ T₂ the rate decays as 1/T<sub>e</sub>, recovering classical behavior. This is a sample trace — real molecular parameters will replace it.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section class="section" id="s5">
+    <div class="section-tag">05 · Methods</div>
+    <h2>Computational approach</h2>
+    <p class="section-intro">
+      The optimization combines analytical gradients derived from the ETPA perturbation theory kernel with numerical evaluation of the joint spectral amplitude over a discretized frequency grid.
+    </p>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Spectral grid</h3>
+        <p>512 × 512 frequency points centered at degeneracy. Evaluated using FFT-based convolution for the molecular response integral.</p>
+      </div>
+      <div class="info-card">
+        <h3>Optimizer</h3>
+        <p>L-BFGS-B with analytic Jacobian. Convergence within 80–120 iterations. Multiple random restarts to probe non-convex landscape.</p>
+      </div>
+      <div class="info-card">
+        <h3>Molecular model</h3>
+        <p>Sum-over-states expansion truncated at the three lowest excited states. Transition dipoles from TD-DFT (B3LYP/6-31G*).</p>
+      </div>
+      <div class="info-card">
+        <h3>Entanglement characterization</h3>
+        <p>Schmidt decomposition of the JSA. Entanglement entropy and Schmidt number K computed for each optimized source.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <section class="footer-section" id="sfooter">
+    <h2>References &amp; keywords</h2>
+    <p>This page will be updated as results are finalized. For questions or collaboration inquiries, please reach out via the project repository.</p>
+    <div class="tag-list">
+      <span class="tag">entangled two-photon absorption</span>
+      <span class="tag">SPDC</span>
+      <span class="tag">joint spectral amplitude</span>
+      <span class="tag">quantum nonlinear optics</span>
+      <span class="tag">entanglement time</span>
+      <span class="tag">variational optimization</span>
+      <span class="tag">Schmidt decomposition</span>
+      <span class="tag">time–energy entanglement</span>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<script>
+(function() {
+
+  /* ---------- CONTOUR PLOT ---------- */
+  function drawContour() {
+    const svg = document.getElementById('contour-svg');
+    if (!svg) return;
+    const W = 640, H = 260, ml = 58, mb = 45, mt = 20, mr = 40;
+    const pw = W - ml - mr, ph = H - mb - mt;
+    const nx = 32, ny = 26;
+    const purpleStops = ['#EEEDFE','#CECBF6','#AFA9EC','#7F77DD','#534AB7','#3C3489','#26215C'];
+
+    function signal(xi, yi) {
+      const x = xi / (nx - 1), y = yi / (ny - 1);
+      const cx = 0.22, cy = 0.55;
+      const d2 = Math.pow((x - cx) / 0.18, 2) + Math.pow((y - cy) / 0.22, 2);
+      return Math.exp(-d2) * 0.85 + 0.08 * Math.exp(-Math.pow((x-0.72)/0.28,2)) * Math.exp(-Math.pow((y-0.28)/0.22,2));
+    }
+
+    const cellW = pw / nx, cellH = ph / ny;
+    let html = `<g transform="translate(${ml},${mt})">`;
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const v = signal(i, ny - 1 - j);
+        const ci = Math.min(6, Math.floor(v * 7));
+        html += `<rect x="${(i*cellW).toFixed(1)}" y="${(j*cellH).toFixed(1)}" width="${(cellW+0.8).toFixed(1)}" height="${(cellH+0.8).toFixed(1)}" fill="${purpleStops[ci]}"/>`;
+      }
+    }
+    const nxt = 5, nyt = 4;
+    for (let i = 0; i <= nxt; i++) {
+      const xv = (i / nxt * 4.9 + 0.1).toFixed(1);
+      const xp = (i * pw / nxt).toFixed(1);
+      html += `<line x1="${xp}" y1="${ph}" x2="${xp}" y2="${ph+4}" stroke="#ddddd8" stroke-width="0.5"/>`;
+      html += `<text x="${xp}" y="${ph+16}" text-anchor="middle" font-size="11" fill="#888780">${xv}</text>`;
+    }
+    for (let j = 0; j <= nyt; j++) {
+      const yv = ((1 - j/nyt) * 19.5 + 0.5).toFixed(0);
+      const yp = (j * ph / nyt).toFixed(1);
+      html += `<line x1="-4" y1="${yp}" x2="0" y2="${yp}" stroke="#ddddd8" stroke-width="0.5"/>`;
+      html += `<text x="-8" y="${parseFloat(yp)+4}" text-anchor="end" font-size="11" fill="#888780">${yv}</text>`;
+    }
+    html += `<rect x="0" y="0" width="${pw}" height="${ph}" fill="none" stroke="#ddddd8" stroke-width="0.5"/>`;
+    html += `<text x="${pw/2}" y="${ph+34}" text-anchor="middle" font-size="12" fill="#888780">Pump bandwidth σp (nm)</text>`;
+    html += `<text x="-42" y="${ph/2}" text-anchor="middle" font-size="12" fill="#888780" transform="rotate(-90 -42 ${ph/2})">Crystal length (mm)</text>`;
+
+    const ridgeY = (1 - 0.55) * ph;
+    html += `<line x1="0" y1="${ridgeY.toFixed(1)}" x2="${pw}" y2="${ridgeY.toFixed(1)}" stroke="#D85A30" stroke-width="1.2" stroke-dasharray="5,3" opacity="0.8"/>`;
+    html += `<text x="6" y="${ridgeY - 6}" font-size="11" fill="#D85A30">optimum ridge</text>`;
+    html += `</g>`;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = `<defs><linearGradient id="cbarP" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#26215C"/><stop offset="50%" stop-color="#534AB7"/><stop offset="100%" stop-color="#EEEDFE"/></linearGradient></defs>` + html;
+    svg.innerHTML += `<rect x="${ml+pw+10}" y="${mt}" width="12" height="${ph}" fill="url(#cbarP)" rx="2"/>`;
+    svg.innerHTML += `<text x="${ml+pw+24}" y="${mt+10}" font-size="10" fill="#888780">high</text>`;
+    svg.innerHTML += `<text x="${ml+pw+24}" y="${mt+ph}" font-size="10" fill="#888780">low</text>`;
+  }
+
+  /* ---------- RATE CURVE ---------- */
+  function drawRate() {
+    const svg = document.getElementById('rate-svg');
+    if (!svg) return;
+    const W = 640, H = 220, ml = 58, mb = 45, mt = 20, mr = 20;
+    const pw = W - ml - mr, ph = H - mb - mt;
+    const n = 300, T2 = 0.32;
+
+    function rate(t) {
+      if (t < 0.005) return 0;
+      const env = Math.exp(-t / T2) / (t + 0.02);
+      const osc = 0.5 + 0.5 * Math.cos(7 * Math.PI * t);
+      return Math.max(0, env * (0.55 + 0.45 * osc));
+    }
+
+    const xs = [], ys = [];
+    let maxY = 0;
+    for (let i = 1; i <= n; i++) {
+      const t = i / n;
+      const r = rate(t);
+      xs.push(t); ys.push(r);
+      if (r > maxY) maxY = r;
+    }
+
+    let path = '';
+    for (let i = 0; i < n; i++) {
+      const px = ml + xs[i] * pw;
+      const py = mt + ph - (ys[i] / maxY) * ph;
+      path += (i === 0 ? 'M' : 'L') + `${px.toFixed(1)},${py.toFixed(1)}`;
+    }
+
+    const areaPath = path + ` L${ml+pw},${mt+ph} L${ml},${mt+ph} Z`;
+    const t2x = (ml + T2 * pw).toFixed(1);
+
+    let html = `<path d="${areaPath}" fill="#534AB7" opacity="0.1"/>`;
+    html += `<path d="${path}" fill="none" stroke="#534AB7" stroke-width="2"/>`;
+    html += `<line x1="${t2x}" y1="${mt}" x2="${t2x}" y2="${mt+ph}" stroke="#D85A30" stroke-width="1.2" stroke-dasharray="4,3"/>`;
+    html += `<text x="${parseFloat(t2x)+5}" y="${mt+14}" font-size="11" fill="#D85A30">T₂ (dephasing)</text>`;
+
+    const nxt = 5, nyt = 4;
+    for (let i = 0; i <= nxt; i++) {
+      const xp = (ml + i * pw / nxt).toFixed(1);
+      const xv = (i / nxt).toFixed(1);
+      html += `<line x1="${xp}" y1="${mt+ph}" x2="${xp}" y2="${mt+ph+4}" stroke="#ddddd8" stroke-width="0.5"/>`;
+      html += `<text x="${xp}" y="${mt+ph+15}" text-anchor="middle" font-size="11" fill="#888780">${xv}</text>`;
+    }
+    for (let j = 0; j <= nyt; j++) {
+      const yp = (mt + j * ph / nyt).toFixed(1);
+      const yv = (1 - j/nyt).toFixed(2);
+      html += `<line x1="${ml-4}" y1="${yp}" x2="${ml}" y2="${yp}" stroke="#ddddd8" stroke-width="0.5"/>`;
+      html += `<text x="${ml-8}" y="${parseFloat(yp)+4}" text-anchor="end" font-size="11" fill="#888780">${yv}</text>`;
+    }
+    html += `<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="none" stroke="#ddddd8" stroke-width="0.5"/>`;
+    html += `<text x="${ml+pw/2}" y="${mt+ph+36}" text-anchor="middle" font-size="12" fill="#888780">Entanglement time Tₑ (normalized)</text>`;
+    html += `<text x="${ml-44}" y="${mt+ph/2}" text-anchor="middle" font-size="12" fill="#888780" transform="rotate(-90 ${ml-44} ${mt+ph/2})">ETPA rate (normalized)</text>`;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = html;
+  }
+
+  /* ---------- SCROLL OBSERVER ---------- */
+  function initObserver() {
+    const els = document.querySelectorAll('.section, .footer-section');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.07 });
+    els.forEach(el => io.observe(el));
+  }
+
+  drawContour();
+  drawRate();
+  initObserver();
+})();
+</script>
+</body>
+</html>
