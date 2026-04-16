@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Optimization of Entangled Two-Photon Absorption</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$','$'],['\\(','\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Math.js (for complex arithmetic in Section 1) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+
+  <!-- Plotly (Section 1) -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+  <!-- Chart.js (Sections 2 & 3) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════ */
+    :root {
+      --serif:       'EB Garamond', Georgia, serif;
+      --sans:        'DM Sans', system-ui, sans-serif;
+
+      /* Palette — unified across all three plots */
+      --bg:          #f7f6f2;
+      --surface:     #ffffff;
+      --surface-alt: #f2f1ec;
+      --border:      rgba(0,0,0,0.09);
+      --border-med:  rgba(0,0,0,0.16);
+
+      --ink:         #1a1917;
+      --ink-2:       #4a4844;
+      --ink-3:       #8a8784;
+
+      --accent:      #534AB7;   /* purple — replaces indigo #4f46e5 */
+      --accent-lt:   #EEEDFE;
+      --accent-mid:  #7F77DD;
+
+      --gold:        #c98a00;   /* replaces #e69f00 — slightly richer */
+      --sky:         #3a7fc1;   /* replaces #56b4e9 */
+      --coral:       #c94030;   /* replaces #dc2626 */
+      --cobalt:      #2a55c0;   /* replaces #1d4ed8 */
+
+      --nav-h:       56px;
+      --radius-lg:   14px;
+      --radius-md:   8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════
+       NAV
+    ═══════════════════════════════════════════════ */
+    nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 200;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      background: rgba(247,246,242,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border-med);
+    }
+
+    .nav-logo {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--ink-2);
+      letter-spacing: 0.01em;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-links a {
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--ink-3);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: 99px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .nav-links a:hover {
+      background: var(--accent-lt);
+      color: var(--accent);
+    }
+
+    /* ═══════════════════════════════════════════════
+       PAGE WRAPPER
+    ═══════════════════════════════════════════════ */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    /* ═══════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 7rem 0 4rem;
+      border-bottom: 0.5px solid var(--border-med);
+    }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 1.4rem;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(30px, 5vw, 54px);
+      font-weight: 400;
+      line-height: 1.15;
+      max-width: 760px;
+      margin-bottom: 1.75rem;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-desc {
+      font-size: 17px;
+      line-height: 1.9;
+      color: var(--ink-2);
+      max-width: 640px;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      border-top: 0.5px solid var(--border-med);
+      padding-top: 1.5rem;
+    }
+
+    .meta-item .label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 3px;
+    }
+
+    .meta-item .value {
+      font-size: 14px;
+      color: var(--ink-2);
+    }
+
+    .scroll-hint {
+      margin-top: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--ink-3);
+    }
+
+    .scroll-line {
+      width: 52px;
+      height: 1px;
+      background: var(--border-med);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      left: -52px; top: 0;
+      width: 52px; height: 1px;
+      background: var(--accent-mid);
+      animation: lineSlide 2s ease-in-out infinite;
+    }
+
+    @keyframes lineSlide {
+      0%   { left: -52px; }
+      100% { left: 104px; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       SCROLL SECTIONS
+    ═══════════════════════════════════════════════ */
+    .scroll-section {
+      padding: 5.5rem 0;
+      border-bottom: 0.5px solid var(--border-med);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+
+    .scroll-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-tag {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 0.6rem;
+    }
+
+    .section-tag span {
+      display: inline-block;
+      background: var(--accent-lt);
+      color: var(--accent);
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 10px;
+      margin-left: 8px;
+      letter-spacing: 0.06em;
+    }
+
+    .section h2 {
+      font-family: var(--serif);
+      font-size: clamp(22px, 3vw, 36px);
+      font-weight: 400;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .section-intro {
+      font-size: 15.5px;
+      line-height: 1.85;
+      color: var(--ink-2);
+      max-width: 700px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    /* ═══════════════════════════════════════════════
+       PLOT CARD (shared across all sections)
+    ═══════════════════════════════════════════════ */
+    .plot-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .plot-card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-2);
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.01em;
+    }
+
+    .plot-caption {
+      font-size: 13px;
+      color: var(--ink-3);
+      line-height: 1.7;
+      margin-top: 1rem;
+      font-style: italic;
+      border-top: 0.5px solid var(--border);
+      padding-top: 0.75rem;
+    }
+
+    /* ═══════════════════════════════════════════════
+       CONTROLS — unified slider style
+    ═══════════════════════════════════════════════ */
+    .controls-panel {
+      background: var(--surface-alt);
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .slider-group {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      font-family: var(--serif);
+      font-size: 17px;
+      color: var(--ink-2);
+    }
+
+    .slider-val {
+      font-weight: 500;
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      border-radius: 5px;
+      appearance: none;
+      background: var(--border-med);
+      cursor: pointer;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 4px var(--accent-lt);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-3);
+      margin-top: 4px;
+      font-family: var(--serif);
+    }
+
+    /* Checkbox pill */
+    .check-pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--accent-lt);
+      border: 0.5px solid var(--accent-mid);
+      padding: 8px 16px;
+      border-radius: 99px;
+      width: fit-content;
+      cursor: pointer;
+    }
+
+    .check-pill input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .check-pill label {
+      font-family: var(--serif);
+      font-size: 16px;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Domain row */
+    .domain-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .domain-row label {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--ink-2);
+    }
+
+    .domain-row input[type="number"] {
+      width: 76px;
+      padding: 5px 8px;
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-family: var(--serif);
+      color: var(--ink);
+      background: var(--surface);
+      margin-left: 6px;
+    }
+
+    .btn-update {
+      padding: 7px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-update:hover { background: #3C3489; }
+
+    .domain-note {
+      font-size: 13px;
+      color: var(--ink-3);
+      font-style: italic;
+    }
+
+    /* Param display */
+    .param-display {
+      font-family: var(--serif);
+      font-size: 17px;
+      text-align: center;
+      color: var(--ink-2);
+      padding: 8px 0 4px;
+      line-height: 1.6;
+    }
+
+    /* Loading / error */
+    .loading-msg {
+      text-align: center;
+      padding: 3rem;
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--ink-3);
+    }
+
+    .error-msg {
+      display: none;
+      color: var(--coral);
+      background: #fee2e2;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SECTION 2 — Three-chart grid
+    ═══════════════════════════════════════════════ */
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .three-col { grid-template-columns: 1fr; }
+    }
+
+    .mini-plot-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border-med);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+    }
+
+    .mini-plot-title {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 400;
+      text-align: center;
+      color: var(--ink);
+      margin-bottom: 1rem;
+    }
+
+    .chart-wrapper {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: 1fr auto;
+      height: 360px;
+    }
+
+    .y-axis-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: var(--serif);
+      font-size: 15px;
+      padding-right: 8px;
+      color: var(--ink-2);
+    }
+
+    .x-axis-label {
+      grid-column: 2;
+      text-align: center;
+      font-family: var(--serif);
+      font-size: 15px;
+      margin-top: 4px;
+      color: var(--ink-2);
+    }
+
+    .canvas-holder {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ═══════════════════════════════════════════════
+       INFO BOXES (methodology notes)
+    ═══════════════════════════════════════════════ */
+    .info-box {
+      background: var(--surface-alt);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.75rem;
+      font-size: 14px;
+      color: var(--ink-2);
+      line-height: 1.75;
+    }
+
+    .info-box h3 {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-top: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .info-box h3:first-child { margin-top: 0; }
+
+    .info-box ul {
+      padding-left: 1.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .info-box li { margin-bottom: 0.35rem; }
+
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      background: var(--accent-lt);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       EQUATION BLOCKS
+    ═══════════════════════════════════════════════ */
+    .eq-block {
+      border-left: 2px solid var(--accent-mid);
+      padding: 0.9rem 1.6rem;
+      margin: 2rem 0;
+      background: var(--accent-lt);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    }
+
+    .eq-label {
+      font-size: 11px;
+      color: var(--ink-3);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .eq {
+      font-family: var(--serif);
+      font-size: 18px;
+      color: #3C3489;
+      font-style: italic;
+    }
+
+    /* ═══════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════ */
+    .footer-section {
+      padding: 4rem 0 2rem;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .footer-section.visible { opacity: 1; transform: translateY(0); }
+
+    .footer-section h2 {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+
+    .footer-section p {
+      font-size: 15px;
+      color: var(--ink-2);
+      line-height: 1.85;
+      max-width: 600px;
+      font-weight: 300;
+      margin-bottom: 1.5rem;
+    }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+    .tag {
+      font-size: 12px;
+      padding: 4px 13px;
+      border-radius: 99px;
+      background: var(--accent-lt);
+      color: #3C3489;
+      border: 0.5px solid var(--accent-mid);
+    }
+
+    /* ═══════════════════════════════════════════════
+       DIVIDERS / HELPERS
+    ═══════════════════════════════════════════════ */
+    .gap-sm { margin-bottom: 0.75rem; }
+    .gap-md { margin-bottom: 1.25rem; }
+    .gap-lg { margin-bottom: 2rem; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      .page { padding: 0 1rem 4rem; }
+      .controls-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     NAV
+══════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo">ETPA · Optimization Study</div>
+  <ul class="nav-links">
+    <li><a href="#s0">Introduction</a></li>
+    <li><a href="#s1">Two-photon States</a></li>
+    <li><a href="#s2">Peak Positions</a></li>
+    <li><a href="#s3">Optimum Peak</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════════ -->
+  <section class="hero" id="s0">
+    <div class="hero-eyebrow">Research Results · Quantum Nonlinear Optics</div>
+    <h1>Optimization of <em>Entangled<br>Two-Photon Absorption</em></h1>
+    <p class="hero-desc">
+      A comparative study of two-photon state probability distributions in the temporal and frequency domains for three photon-pair architectures: the optimum state, time-energy entangled pairs, and unentangled (classical) pairs. Each section presents interactive visualizations controlled by the physical parameters of the system.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <div class="label">Domain</div>
+        <div class="value">Nonlinear quantum optics</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">States compared</div>
+        <div class="value">Optimum · Entangled · Unentangled</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">Parameters</div>
+        <div class="value">Γ<sub>e</sub>/Γ<sub>f</sub> · δ<sub>a</sub>/Γ<sub>f</sub></div>
+      </div>
+      <div class="meta-item">
+        <div class="label">Status</div>
+        <div class="value">Interactive — requires local DataSets/</div>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      scroll to explore
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 1 — Two-photon State Probabilities (6 plots + 2 sliders)
+  ══════════════════════════════════════════════ -->
+  <section class="scroll-section section" id="s1">
+    <div class="section-tag">01 · Main result <span>6 panels</span></div>
+    <h2>Two-photon State Probability Distributions</h2>
+    <p class="section-intro">
+      For each photon-pair architecture, we compute the joint two-photon probability distribution \(p(t_1, t_2)\) and \(p(\omega_1, \omega_2)\) together with their marginals \(P(t)\) and \(P(\omega)\). The slider for \(\Gamma_e/\Gamma_f\) and \(\delta_a/\Gamma_f\) controls which parameter row is displayed. The checkbox toggles between optimised and fixed \(\delta_f\).
+    </p>
+
+    <div class="eq-block">
+      <div class="eq-label">Two-photon absorption rate (leading order)</div>
+      <div class="eq">R<sub>ETPA</sub> ∝ |∫∫ dω<sub>1</sub> dω<sub>2</sub> · f(ω<sub>1</sub>,ω<sub>2</sub>) · M(ω<sub>1</sub>,ω<sub>2</sub>)|²</div>
+    </div>
+
+    <!-- Loading / error -->
+    <div id="s1-loading" class="loading-msg">Loading datasets…</div>
+    <div id="s1-error" class="error-msg"></div>
+
+    <div id="s1-content" style="display:none;">
+      <!-- Plot -->
+      <div class="plot-card">
+        <div class="plot-card-title">
+          Fig. 1 — Joint probability distributions and marginals for Optimum, Entangled, and Unentangled states (temporal &amp; frequency domains)
+        </div>
+        <div id="heatmap-graph"></div>
+      </div>
+
+      <!-- Param display -->
+      <div id="param-display" class="param-display gap-md">—</div>
+
+      <!-- Controls -->
+      <div class="controls-panel">
+        <!-- Checkbox -->
+        <div class="check-pill">
+          <input type="checkbox" id="optimum-deltaf-check" checked>
+          <label for="optimum-deltaf-check">Optimum \(\delta_f\)</label>
+        </div>
+
+        <!-- Sliders -->
+        <div class="controls-row">
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>\(\Gamma_e / \Gamma_f\)</span>
+              <span class="slider-val" id="gamma-value">0.0000</span>
+            </div>
+            <input type="range" id="gamma-slider" min="0" max="0" step="1" value="0">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>\(\delta_a / \Gamma_f\)</span>
+              <span class="slider-val" id="delta-value">0.00</span>
+            </div>
+            <input type="range" id="delta-slider" min="0" max="0" step="1" value="0">
+          </div>
+        </div>
+
+        <!-- Domain -->
+        <div class="domain-row">
+          <label>Domain range: <input type="number" id="domain-range" value="5" step="0.5" min="0.5" max="50"></label>
+          <button class="btn-update" id="update-domain">Update</button>
+          <span id="domain-display" class="domain-note">Optimum [−5, 0], others [−5, 5]</span>
+        </div>
+      </div>
+
+      <div class="plot-caption">
+        Each column corresponds to one photon-pair architecture. Rows: temporal marginal P(t), temporal joint distribution p(t₁, t₂), frequency marginal P(ω), and frequency joint distribution p(ω₁, ω₂). White dashed lines in the frequency heatmaps mark the intermediate-state resonances ω<sub>eg</sub> and ω<sub>fe</sub>.
+      </div>
+    </div><!-- /#s1-content -->
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 2 — Peak positions, three states
+  ══════════════════════════════════════════════ -->
+  <section class="scroll-section section" id="s2">
+    <div class="section-tag">02 · Spectral structure <span>3 panels</span></div>
+    <h2>Peak Positions of the Marginal Frequency Distributions</h2>
+    <p class="section-intro">
+      The peak positions \(\omega_\text{peak}\) of the single-photon marginal distribution \(P(\omega)\) are plotted as functions of \(\Gamma_e/\Gamma_f\) for each state. Two peaks may emerge as the intermediate-state decay rate changes. Reference lines show the bare resonances \(\omega_{fe}\) and \(\omega_{eg}\).
+    </p>
+
+    <div id="s2-loading" class="loading-msg">Loading datasets…</div>
+    <div id="s2-error" class="error-msg"></div>
+
+    <div id="s2-content" style="display:none;">
+      <div class="three-col">
+        <!-- Optimum -->
+        <div class="mini-plot-card">
+          <div class="mini-plot-title">Optimum state</div>
+          <div class="chart-wrapper">
+            <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
+            <div class="canvas-holder"><canvas id="chartOpt"></canvas></div>
+            <div class="x-axis-label">\( \Gamma_e / \Gamma_f \)</div>
+          </div>
+        </div>
+        <!-- Entangled -->
+        <div class="mini-plot-card">
+          <div class="mini-plot-title">Entangled state</div>
+          <div class="chart-wrapper">
+            <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
+            <div class="canvas-holder"><canvas id="chartEnt"></canvas></div>
+            <div class="x-axis-label">\( \Gamma_e / \Gamma_f \)</div>
+          </div>
+        </div>
+        <!-- Unentangled -->
+        <div class="mini-plot-card">
+          <div class="mini-plot-title">Unentangled state</div>
+          <div class="chart-wrapper">
+            <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
+            <div class="canvas-holder"><canvas id="chartUnEnt"></canvas></div>
+            <div class="x-axis-label">\( \Gamma_e / \Gamma_f \)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-panel">
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>\(\delta_a / \Gamma_f\)</span>
+            <span class="slider-val" id="s2-delta-val">0.0</span>
+          </div>
+          <input type="range" id="s2-delta-slider" min="0" max="25" step="0.5" value="0">
+          <div class="slider-ticks"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span></div>
+        </div>
+      </div>
+
+      <div class="plot-caption">
+        Peak 1 and Peak 2 (where present) are shown in <span style="color:var(--gold);font-weight:500;">gold</span> and <span style="color:var(--sky);font-weight:500;">sky blue</span> respectively. The <span style="color:var(--coral);font-weight:500;">red dashed</span> and <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> horizontal lines mark ω<sub>fe</sub>/Γ<sub>f</sub> and ω<sub>eg</sub>/Γ<sub>f</sub>. Data from <code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, <code>peak_data_UnEnt.json</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 3 — Optimum peak position only
+  ══════════════════════════════════════════════ -->
+  <section class="scroll-section section" id="s3">
+    <div class="section-tag">03 · Optimum state detail <span>1 panel</span></div>
+    <h2>Peak Position of the Optimum-State Marginal Distribution</h2>
+    <p class="section-intro">
+      A focused view of the optimum-state frequency marginal peak positions derived analytically from Eq. (33) of the draft. Root-finding of the derivative locates the extrema as a function of \(\Gamma_e/\Gamma_f\) for the selected detuning \(\delta_a/\Gamma_f\).
+    </p>
+
+    <div class="eq-block">
+      <div class="eq-label">Optimum-state frequency marginal (Eq. 33)</div>
+      <div class="eq">P(ω) = Γ<sub>e</sub>(Γ<sub>e</sub>+Γ<sub>f</sub>)(Γ<sub>e</sub>+Γ<sub>f</sub>/4) + … / [4π((ω−ω<sub>eg</sub>)²+Γ<sub>e</sub>²/4)((ω−ω<sub>fe</sub>)²+(Γ<sub>e</sub>+Γ<sub>f</sub>)²/4)]</div>
+    </div>
+
+    <div id="s3-loading" class="loading-msg">Loading dataset…</div>
+    <div id="s3-error" class="error-msg"></div>
+
+    <div id="s3-content" style="display:none;">
+      <div class="plot-card">
+        <div class="plot-card-title">Fig. 3 — Optimum-state peak positions vs. Γ<sub>e</sub>/Γ<sub>f</sub></div>
+        <div class="chart-wrapper" style="height:420px;">
+          <div class="y-axis-label">\( (\omega - \omega_{fg}/2 ) /\Gamma_f \)</div>
+          <div class="canvas-holder"><canvas id="chartS3"></canvas></div>
+          <div class="x-axis-label">\( \Gamma_e / \Gamma_f \)</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-panel">
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>\(\delta_a / \Gamma_f\)</span>
+            <span class="slider-val" id="s3-delta-val">10.0</span>
+          </div>
+          <input type="range" id="s3-delta-slider" min="0" max="100" step="0.25" value="10">
+          <div class="slider-ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        </div>
+      </div>
+
+      <div class="plot-caption">
+        Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">sky blue</span>) are roots of dP(ω)/dω = 0 computed numerically. The <span style="color:var(--coral);font-weight:500;">red dashed</span> line marks ω<sub>fe</sub>/Γ<sub>f</sub> = δ<sub>a</sub>/(2Γ<sub>f</sub>); the <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> line marks ω<sub>eg</sub>/Γ<sub>f</sub> = −δ<sub>a</sub>/(2Γ<sub>f</sub>). Data from <code>peak_data.json</code>.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       NOTES / METHODS
+  ══════════════════════════════════════════════ -->
+  <section class="scroll-section section" id="notes">
+    <div class="section-tag">04 · Methods &amp; notes</div>
+    <h2>Computational notes</h2>
+    <p class="section-intro">
+      All visualizations run client-side; no server is required beyond a local file host for the JSON datasets. The JavaScript implementations of the probability functions mirror the analytical expressions derived in the accompanying paper.
+    </p>
+
+    <div class="info-box gap-lg">
+      <h3>Section 1 — Two-photon probability distributions</h3>
+      <p>Calculated on a 200×200 grid using explicit meshgrid evaluation. Complex arithmetic is handled via <code>math.js</code>. The Plotly layout uses a 4-row × 3-column subplot structure. Heatmaps use a reversed Hot colorscale. Grid size and domain can be adjusted via the domain control panel.</p>
+      <ul>
+        <li><strong>Optimum state:</strong> Analytical expressions in temporal and frequency domains with the two-photon resonance at \(\omega_{fg}\).</li>
+        <li><strong>Entangled state:</strong> Gaussian–Gaussian joint spectral amplitude parameterised by pump bandwidth \(\Omega_P\) and correlation bandwidth \(\Omega_M\), with optional delay \(t_{02}\).</li>
+        <li><strong>Unentangled state:</strong> Symmetrised product state of two independent Gaussian wave-packets \(\psi_A\) and \(\psi_B\).</li>
+      </ul>
+      <p>Parameters per slider combination are loaded from four pre-computed JSON files in <code>DataSets/</code>.</p>
+
+      <h3>Section 2 — Peak positions, three states</h3>
+      <p>Roots of the derivative of the marginal distribution \(P(\omega)\) are computed numerically. Each dataset (<code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, <code>peak_data_UnEnt.json</code>) contains pre-calculated peak positions over a grid of \((\Gamma_e/\Gamma_f,\, \delta_a/\Gamma_f)\) values. The slider selects the nearest available \(\delta_a\) row with tolerance 0.5.</p>
+
+      <h3>Section 3 — Optimum peak positions (full detuning range)</h3>
+      <p>Same root-finding methodology applied to the closed-form expression of the optimum-state marginal (Eq. 33 of the draft). The slider covers \(\delta_a/\Gamma_f \in [0, 100]\) with 0.25 step resolution. Data source: <code>peak_data.json</code>.</p>
+
+      <h3>Libraries &amp; dependencies</h3>
+      <ul>
+        <li><code>Plotly 2.27</code> — Section 1 heatmap subplot</li>
+        <li><code>Chart.js 4.4</code> — Sections 2 &amp; 3 line charts</li>
+        <li><code>math.js 11.11</code> — Complex-number arithmetic</li>
+        <li><code>MathJax 3</code> — Inline LaTeX rendering</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════ -->
+  <section class="footer-section" id="sfooter">
+    <h2>Keywords &amp; references</h2>
+    <p>This page will be updated as results are finalised. The theoretical framework and computational models are based on the accompanying manuscript (DOI to be linked).</p>
+    <div class="tag-list">
+      <span class="tag">entangled two-photon absorption</span>
+      <span class="tag">ETPA cross-section</span>
+      <span class="tag">SPDC</span>
+      <span class="tag">joint spectral amplitude</span>
+      <span class="tag">Schmidt decomposition</span>
+      <span class="tag">time–energy entanglement</span>
+      <span class="tag">marginal distribution</span>
+      <span class="tag">optimum state</span>
+      <span class="tag">variational optimization</span>
+      <span class="tag">quantum nonlinear optics</span>
+    </div>
+  </section>
+
+</div><!-- /.page -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ═════════════════════════════════════════════
+   SCROLL OBSERVER
+═════════════════════════════════════════════ */
+(function() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.scroll-section, .footer-section').forEach(el => io.observe(el));
+})();
+
+/* ═════════════════════════════════════════════
+   SHARED COLOR TOKENS (JS mirror of CSS vars)
+═════════════════════════════════════════════ */
+const C = {
+  accent:  '#534AB7',
+  gold:    '#c98a00',
+  sky:     '#3a7fc1',
+  coral:   '#c94030',
+  cobalt:  '#2a55c0',
+  ink2:    '#4a4844',
+  ink3:    '#8a8784',
+  surface: '#ffffff',
+  border:  'rgba(0,0,0,0.09)',
+  serif:   'EB Garamond, Georgia, serif',
+};
+
+const HOT_R = [
+  [0.00,'rgb(255,255,255)'],
+  [0.20,'rgb(255,220,180)'],
+  [0.40,'rgb(255,160,80)'],
+  [0.60,'rgb(255,80,0)'],
+  [0.80,'rgb(180,0,0)'],
+  [1.00,'rgb(0,0,0)']
+];
+
+/* ═════════════════════════════════════════════
+   SECTION 1 — Two-photon probability heatmaps
+═════════════════════════════════════════════ */
+(function S1() {
+
+  const SCALE = 1.4;
+  const N_T   = 200;
+  const N_W   = 200;
+
+  let df_UnEnt_Opt = null, df_Ent_Opt = null;
+  let df_UnEnt_Fixed = null, df_Ent_Fixed = null;
+  let Gamma_values = [], Delta_values = [];
+  let T_opt, W_opt, T_UnEn, W_UnEn, T_Ent, W_Ent;
+  let domainRange = 5;
+
+  function linspace(a, b, n) {
+    const step = (b - a) / (n - 1);
+    return Array.from({length: n}, (_, i) => a + step * i);
+  }
+
+  function meshgrid(x, y) {
+    const X = [], Y = [];
+    for (let i = 0; i < y.length; i++) {
+      X.push([...x]);
+      Y.push(new Array(x.length).fill(y[i]));
+    }
+    return [X, Y];
+  }
+
+  function ew2D(a1, a2, f) {
+    return a1.map((row, i) => row.map((v, j) => f(v, a2[i][j])));
+  }
+
+  function ew1D(arr, f) { return arr.map(f); }
+
+  function initGrids() {
+    T_opt  = linspace(-domainRange, 0, N_T);
+    W_opt  = linspace(-domainRange, domainRange, N_W);
+    T_UnEn = linspace(-domainRange, domainRange, N_T);
+    W_UnEn = linspace(-domainRange, domainRange, N_W);
+    T_Ent  = linspace(-domainRange, domainRange, N_T);
+    W_Ent  = linspace(-domainRange, domainRange, N_W);
+    const el = document.getElementById('domain-display');
+    if (el) el.textContent = `Optimum [−${domainRange}, 0], others [−${domainRange}, ${domainRange}]`;
+  }
+
+  /* ── Optimum state ── */
+  function OptTemporal(Ge, marginal) {
+    const tStar = Math.max(...T_opt), Gf = 1;
+    if (marginal) {
+      return ew1D(T_opt, t => {
+        const e1 = Math.exp((Gf - Ge) * tStar + Ge * t);
+        const e2 = Math.exp(Gf * t);
+        const d  = Gf - Ge;
+        let p = d !== 0 ? (e1 - e2) / d : e1 * (tStar - t);
+        p += e2 / Ge;
+        return p * (Ge * Gf * Math.exp(-Gf * tStar)) / 2;
+      });
+    }
+    const [T1, T2] = meshgrid(T_opt, T_opt);
+    const K = (Ge * Gf * Math.exp(-Gf * tStar)) / 2;
+    return ew2D(T1, T2, (t1, t2) => {
+      const c1 = (t1 < t2 && t2 < tStar) ? 1 : 0;
+      const c2 = (t2 < t1 && t1 < tStar) ? 1 : 0;
+      return K * (Math.exp((Gf - Ge) * t2 + Ge * t1) * c1 +
+                  Math.exp((Gf - Ge) * t1 + Ge * t2) * c2);
+    });
+  }
+
+  function OptFrequency(Ge, da, marginal) {
+    const Gf = 1, tStar = 0;
+    const weg = -0.5 * da, wfe = 0.5 * da;
+    const abs2 = z => math.pow(math.abs(z), 2);
+    if (marginal) {
+      return ew1D(W_opt, w => {
+        let p = Ge*(Ge+Gf)*(Ge+Gf/4) + Ge*(wfe-weg)**2 + Gf*(w-weg)**2;
+        p /= 4*Math.PI*((w-weg)**2+Ge**2/4)*((w-wfe)**2+(Ge+Gf)**2/4);
+        return p;
+      });
+    }
+    const [W1, W2] = meshgrid(W_opt, W_opt);
+    const PHI = (w1, w2) => {
+      const d1 = math.add(math.complex(Ge/2,0), math.complex(0, w1-weg));
+      const d2 = math.add(math.complex(Ge/2,0), math.complex(0, w2-weg));
+      let phi = math.add(math.divide(1,d1), math.divide(1,d2));
+      const ph = (w1+w2-wfe-weg)*tStar;
+      phi = math.multiply(phi, math.complex(Math.cos(ph), Math.sin(ph)));
+      phi = math.multiply(phi, Math.sqrt(Ge*Gf));
+      const ds = math.add(math.complex(Gf/2,0), math.complex(0, w1+w2-weg-wfe));
+      phi = math.divide(phi, ds);
+      return math.multiply(phi, 1/(4*Math.PI));
+    };
+    return ew2D(W2, W1, (w2,w1) => 2*abs2(PHI(w1,w2)));
+  }
+
+  /* ── Unentangled state ── */
+  function UnEntTemporal(OA, OB, Mu, df, marginal) {
+    const MuB=Mu, MuA=0, wgf=0;
+    const wB=0.5*(wgf+df), wA=0.5*(wgf-df);
+    const abs2 = z => math.pow(math.abs(z),2);
+    const PsiA = t => {
+      const f=Math.pow(OA**2/(2*Math.PI),0.25)*Math.exp(-OA**2*(t-MuA)**2/4);
+      return math.complex(f*Math.cos(-wA*t), f*Math.sin(-wA*t));
+    };
+    const PsiB = t => {
+      const f=Math.pow(OB**2/(2*Math.PI),0.25)*Math.exp(-OB**2*(t-MuB)**2/4);
+      return math.complex(f*Math.cos(-wB*t), f*Math.sin(-wB*t));
+    };
+    let N=Math.exp(-((MuB-MuA)**2*OA**2*OB**2+4*(wB-wA)**2)/(2*OA**2+2*OB**2));
+    N=4*(1+2*OA*OB*N/(OA**2+OB**2));
+    if (marginal) {
+      return ew1D(T_UnEn.map(t=>t+MuB), t => {
+        const Xe=Math.exp((OA**2*OB**2*(MuB-MuA)**2+4*(wB-wA)**2)/(-4*(OA**2+OB**2)));
+        const Xm=Math.sqrt(2*OA*OB/(OA**2+OB**2))*Xe;
+        const Xp=-(wB-wA)*(MuA*OA**2+MuB*OB**2)/(OA**2+OB**2);
+        const X=math.complex(Xm*Math.cos(Xp), Xm*Math.sin(Xp));
+        const pA=PsiA(t), pB=PsiB(t);
+        let P=math.add(math.multiply(math.multiply(math.conj(pA),pB),X),
+                        math.multiply(math.multiply(math.conj(pB),pA),math.conj(X)));
+        P=math.add(P, math.complex(abs2(pA)+abs2(pB),0));
+        return math.abs(math.multiply(P, 2/N));
+      });
+    }
+    const [T1,T2]=meshgrid(T_UnEn.map(t=>t+MuB), T_UnEn.map(t=>t+MuB));
+    const PHI=(t2,t1)=>math.multiply(math.add(math.multiply(PsiA(t1),PsiB(t2)),
+                                                math.multiply(PsiA(t2),PsiB(t1))),
+                                      1/Math.sqrt(N));
+    return ew2D(T2,T1,(t2,t1)=>2*abs2(PHI(t2,t1)));
+  }
+
+  function UnEntFrequency(OA, OB, MuA=0, MuB=0, df=0, marginal) {
+    const wgf=0, wB=0.5*(wgf+df), wA=0.5*(wgf-df);
+    const abs2=z=>math.pow(math.abs(z),2);
+    const PsiA=w=>{const f=Math.pow(2/(OA**2*Math.PI),0.25)*Math.exp(-(w-wA)**2/OA**2);const ph=MuA*(w-wA);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
+    const PsiB=w=>{const f=Math.pow(2/(OB**2*Math.PI),0.25)*Math.exp(-(w-wB)**2/OB**2);const ph=MuB*(w-wB);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
+    let N=Math.exp(-(MuB**2*OA**2*OB**2+4*(wB-wA)**2)/(2*OA**2+2*OB**2));
+    N=4*(1+2*OA*OB*N/(OA**2+OB**2));
+    if (marginal) {
+      return ew1D(W_UnEn, w1=>{
+        let A=math.add(math.multiply(math.complex(0,MuB-MuA),1),-2*(wA-wB)/OB**2);
+        A=math.multiply(math.pow(A,2),OA**2*OB**2);
+        A=math.divide(A,4*(OA**2+OB**2));
+        A=math.add(A,math.complex(0,MuB*(wA-wB)));
+        A=math.subtract(A,(wA-wB)**2/OB**2);
+        A=math.multiply(math.exp(A),Math.sqrt(2*OA*OB/(OA**2+OB**2)));
+        A=math.conj(A);
+        const pA=PsiA(w1),pB=PsiB(w1);
+        let p=math.add(math.multiply(math.multiply(math.conj(pA),pB),A),math.conj(math.multiply(math.multiply(math.conj(pA),pB),A)));
+        p=math.add(p,math.complex(abs2(pA)+abs2(pB),0));
+        return math.abs(math.multiply(p,2/N));
+      });
+    }
+    const [W1,W2]=meshgrid(W_UnEn,W_UnEn);
+    const PHI=(w2,w1)=>math.multiply(math.add(math.multiply(PsiA(w1),PsiB(w2)),math.multiply(PsiA(w2),PsiB(w1))),1/Math.sqrt(N));
+    return ew2D(W2,W1,(w2,w1)=>2*abs2(PHI(w2,w1)));
+  }
+
+  /* ── Entangled state ── */
+  function EntTemporal(OP, OM, t02=0, t01=0, df=0, marginal) {
+    const MuP=t02+t01, MuM=t02-t01, wgf=0;
+    const w02=0.5*(wgf+df), w01=0.5*(wgf-df), dW=w02-w01;
+    const abs2=z=>math.pow(math.abs(z),2);
+    let N=Math.exp(-OM**2*MuM**2/4-dW**2/OM**2)+1;
+    N*=8*Math.PI/(OP*OM);
+    if (marginal) {
+      return ew1D(T_Ent.map(t=>t), t=>{
+        const A=OP**2/4, B=OM**2/4;
+        let P=2*Math.exp(-A*B*(2*t-MuP)**2/(A+B)-B*MuM**2-dW**2/(4*A+4*B))*Math.cos(A*dW*(2*t-MuP)/(A+B));
+        P+=Math.exp(-A*B*(2*t-MuP+MuM)**2/(A+B));
+        P+=Math.exp(-A*B*(2*t-MuP-MuM)**2/(A+B));
+        return P*Math.sqrt(Math.PI/(A+B))*2/N;
+      });
+    }
+    const [T1,T2]=meshgrid(T_Ent.map(t=>t+MuP),T_Ent.map(t=>t+MuP));
+    const PHI=(t2,t1)=>{
+      const e1r=Math.exp(-OM**2*(t2-t1-MuM)**2/8);const ph1=-(w01*t1+w02*t2);
+      const e2r=Math.exp(-OM**2*(t1-t2-MuM)**2/8);const ph2=-(w01*t2+w02*t1);
+      let phi=math.add(math.complex(e1r*Math.cos(ph1),e1r*Math.sin(ph1)),math.complex(e2r*Math.cos(ph2),e2r*Math.sin(ph2)));
+      return math.multiply(phi,Math.exp(-OP**2*(t2+t1-MuP)**2/8)/Math.sqrt(N));
+    };
+    return ew2D(T2,T1,(t2,t1)=>2*abs2(PHI(t2,t1)));
+  }
+
+  function EntFrequency(OP, OM, t01=0, t02=0, df=0, wgf=0, marginal) {
+    const MuP=t02+t01, MuM=t02-t01;
+    const abs2=z=>math.pow(math.abs(z),2);
+    let N=Math.exp(-OM**2*MuM**2/4-df**2/OM**2)+1;
+    N*=8*Math.PI/(OP*OM);
+    if (marginal) {
+      return ew1D(W_Ent, w=>{
+        let p=Math.exp(-(2*w-wgf+df)**2/(OP**2+OM**2))+Math.exp(-(2*w-wgf-df)**2/(OP**2+OM**2));
+        p+=2*Math.exp(-(2*w-wgf)**2/(OP**2+OM**2)-OM**2*OP**2*MuM**2/(4*OP**2+4*OM**2)-df**2/OM**2)*Math.cos((2*w-wgf)*OM**2*MuM/(OP**2+OM**2));
+        p*=4/(N*OM*OP)*Math.sqrt(Math.PI)/Math.sqrt(OP**2+OM**2);
+        return 2*p;
+      });
+    }
+    const [W1,W2]=meshgrid(W_Ent,W_Ent);
+    const PHI=(w2,w1)=>{
+      const D=w2-w1, D0=df, S=w2+w1, S0=wgf;
+      const e1r=Math.exp(-(D-D0)**2/(2*OM**2));const p1=MuM*(D-D0)/2;
+      const e2r=Math.exp(-(D+D0)**2/(2*OM**2));const p2=-MuM*(D+D0)/2;
+      let phi=math.add(math.complex(e1r*Math.cos(p1),e1r*Math.sin(p1)),math.complex(e2r*Math.cos(p2),e2r*Math.sin(p2)));
+      const sr=Math.exp(-(S-S0)**2/(2*OP**2));const sp=MuP*(S-S0)/2;
+      phi=math.multiply(phi,math.complex(sr*Math.cos(sp),sr*Math.sin(sp)));
+      return math.multiply(phi,2/(OM*OP*Math.sqrt(N)));
+    };
+    return ew2D(W2,W1,(w2,w1)=>2*abs2(PHI(w2,w1)));
+  }
+
+  /* ── Row finding ── */
+  function findRow(df, Ge, da) {
+    for (let r of df) {
+      if (Math.abs(r.Gamma_e-Ge)<1e-10 && Math.abs(r.delta_a-da)<1e-10) return r;
+    }
+    return null;
+  }
+
+  /* ── Plotly layout builder ── */
+  function buildLayout(da) {
+    const ω='\u03c9', Γ='\u0393', s1='\u2081', s2='\u2082', m='\u2212';
+    const F = C.serif;
+    const ax = { showgrid:true, zeroline:false, gridcolor:'rgba(120,118,115,0.2)',
+                  tickfont:{family:F,size:13}, titlefont:{family:F,size:15}, plot_bgcolor:'white' };
+
+    const cb = (x,y) => ({ x, y, len:0.22, tickfont:{family:F,size:12},
+                            titlefont:{family:F,size:13}, title:'p(·)' });
+
+    const domains = {
+      c1:[0.05,0.30], c2:[0.38,0.63], c3:[0.71,0.96],
+      r1:[0.84,0.99], r2:[0.52,0.82], r3:[0.36,0.49], r4:[0.04,0.34]
+    };
+
+    return {
+      width: Math.min(1400, window.innerWidth - 40),
+      height: 1150,
+      margin:{l:20,r:20,t:50,b:20},
+      showlegend: false,
+      plot_bgcolor: 'white',
+      paper_bgcolor: 'white',
+      font:{family:F},
+
+      yaxis:   {...ax, title:'P(t)',                domain:domains.r1},
+      yaxis2:  {...ax, title:'P(t)',                domain:domains.r1, anchor:'free', position:0.38},
+      yaxis3:  {...ax, title:'P(t)',                domain:domains.r1, anchor:'free', position:0.71},
+      yaxis4:  {...ax, title:`t${s2}·${Γ}f`,       domain:domains.r2},
+      yaxis5:  {...ax, title:`t${s2}·${Γ}f`,       domain:domains.r2, anchor:'free', position:0.38},
+      yaxis6:  {...ax, title:`(t${s2}${m}μ)·${Γ}f`, domain:domains.r2, anchor:'free', position:0.71},
+      yaxis7:  {...ax, title:`P(${ω})`,             domain:domains.r3},
+      yaxis8:  {...ax, title:`P(${ω})`,             domain:domains.r3, anchor:'free', position:0.38},
+      yaxis9:  {...ax, title:`P(${ω})`,             domain:domains.r3, anchor:'free', position:0.71},
+      yaxis10: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4},
+      yaxis11: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4, anchor:'free', position:0.38},
+      yaxis12: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4, anchor:'free', position:0.71},
+
+      xaxis:   {...ax, domain:domains.c1, showticklabels:false},
+      xaxis2:  {...ax, domain:domains.c2, showticklabels:false},
+      xaxis3:  {...ax, domain:domains.c3, showticklabels:false},
+      xaxis4:  {...ax, title:`t${s1}·${Γ}f`, domain:domains.c1, anchor:'free', position:0.52},
+      xaxis5:  {...ax, title:`t${s1}·${Γ}f`, domain:domains.c2, anchor:'free', position:0.52},
+      xaxis6:  {...ax, title:`(t${s1}${m}μ)·${Γ}f`, domain:domains.c3, anchor:'free', position:0.52},
+      xaxis7:  {...ax, domain:domains.c1, showticklabels:false},
+      xaxis8:  {...ax, domain:domains.c2, showticklabels:false},
+      xaxis9:  {...ax, domain:domains.c3, showticklabels:false},
+      xaxis10: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c1, anchor:'free', position:0.04},
+      xaxis11: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c2, anchor:'free', position:0.04},
+      xaxis12: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c3, anchor:'free', position:0.04},
+
+      annotations: [
+        {text:'Optimum',     x:0.17, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:18,family:F,color:C.ink2}},
+        {text:'Entangled',   x:0.50, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:18,family:F,color:C.ink2}},
+        {text:'Unentangled', x:0.84, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:18,family:F,color:C.ink2}},
+        {text:'Temporal',    x:-0.01, y:0.68, xref:'paper', yref:'paper', showarrow:false, font:{size:15,family:F}, textangle:-90},
+        {text:'Frequency',   x:-0.01, y:0.20, xref:'paper', yref:'paper', showarrow:false, font:{size:15,family:F}, textangle:-90},
+        // heatmap labels
+        {text:`p(t${s1},t${s2})`, x:0.30, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+        {text:`p(t${s1},t${s2})`, x:0.63, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+        {text:`p(t${s1},t${s2})`, x:0.96, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+        {text:`p(ω${s1},ω${s2})`, x:0.30, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+        {text:`p(ω${s1},ω${s2})`, x:0.63, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+        {text:`p(ω${s1},ω${s2})`, x:0.96, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:16,family:F}},
+      ],
+
+      shapes: makeRefLines(da),
+    };
+  }
+
+  function makeRefLines(da) {
+    const lo = -0.5*da, hi = 0.5*da;
+    const lineStyle = {color:'white', width:2, dash:'dash'};
+    const axes = [
+      {xr:'x10', yr:'y10', xarr:W_opt,  yarr:W_opt},
+      {xr:'x11', yr:'y11', xarr:W_UnEn, yarr:W_UnEn},
+      {xr:'x12', yr:'y12', xarr:W_Ent,  yarr:W_Ent},
+    ];
+    const shapes = [];
+    axes.forEach(({xr,yr,xarr,yarr}) => {
+      const xmin=xarr[0], xmax=xarr[xarr.length-1];
+      const ymin=yarr[0], ymax=yarr[yarr.length-1];
+      [lo,hi].forEach(v => {
+        shapes.push({type:'line',x0:v,x1:v,y0:ymin,y1:ymax,xref:xr,yref:yr,line:lineStyle});
+        shapes.push({type:'line',x0:xmin,x1:xmax,y0:v,y1:v,xref:xr,yref:yr,line:lineStyle});
+      });
+    });
+    return shapes;
+  }
+
+  function updatePlots() {
+    const gIdx = parseInt(document.getElementById('gamma-slider').value);
+    const dIdx = parseInt(document.getElementById('delta-slider').value);
+    const isOpt = document.getElementById('optimum-deltaf-check').checked;
+
+    const dfU = isOpt ? df_UnEnt_Opt : df_UnEnt_Fixed;
+    const dfE = isOpt ? df_Ent_Opt   : df_Ent_Fixed;
+
+    const Ge = Gamma_values[gIdx];
+    const da = Delta_values[dIdx];
+
+    document.getElementById('param-display').innerHTML =
+      `Γ<sub>e</sub> / Γ<sub>f</sub> = ${Ge.toFixed(4)}&ensp;·&ensp;δ<sub>a</sub> / Γ<sub>f</sub> = ${da.toFixed(2)}` +
+      `<span style="font-size:0.8em;color:var(--ink-3);margin-left:1em;">(${isOpt?'optimised':'fixed'} δ<sub>f</sub>)</span>`;
+
+    const to = OptTemporal(Ge), fo = OptFrequency(Ge, da);
+    const mto = OptTemporal(Ge, true), mfo = OptFrequency(Ge, da, true);
+
+    const rU = findRow(dfU, Ge, da);
+    const OA=rU.OmegaA, OB=rU.OmegaB, Mu=rU.Mu, dfU_val=rU.delta_f;
+    const tu = UnEntTemporal(OA,OB,Mu,dfU_val), fu = UnEntFrequency(OA,OB,0,Mu,dfU_val);
+    const mtu = UnEntTemporal(OA,OB,Mu,dfU_val,true), mfu = UnEntFrequency(OA,OB,0,Mu,dfU_val,true);
+
+    const rE = findRow(dfE, Ge, da);
+    const OP=rE.OmegaP, OM=rE.OmegaM, t02=rE.Mu, dfE_val=rE.delta_f;
+    const te = EntTemporal(OP,OM,t02,0,dfE_val), fe = EntFrequency(OP,OM,0,t02,dfE_val,0);
+    const mte = EntTemporal(OP,OM,t02,0,dfE_val,true), mfe = EntFrequency(OP,OM,0,t02,dfE_val,0,true);
+
+    const marg = {type:'scatter', mode:'lines', showlegend:false, line:{color:C.accent, width:2}};
+    const heat  = (cbX,cbY) => ({type:'heatmap', colorscale:HOT_R, showscale:true,
+                                  colorbar:{x:cbX,y:cbY,len:0.20,
+                                    tickfont:{family:C.serif,size:11},
+                                    titlefont:{family:C.serif,size:12}, title:'p'}});
+
+    const traces = [
+      {...marg, x:T_opt,  y:mto,  xaxis:'x1',  yaxis:'y1'},
+      {...marg, x:T_Ent,  y:mte,  xaxis:'x2',  yaxis:'y2', line:{color:C.gold,  width:2}},
+      {...marg, x:T_UnEn, y:mtu,  xaxis:'x3',  yaxis:'y3', line:{color:C.sky,   width:2}},
+      {...heat(0.31,0.67), z:to, x:T_opt,  y:T_opt,  xaxis:'x4',  yaxis:'y4'},
+      {...heat(0.64,0.67), z:te, x:T_Ent,  y:T_Ent,  xaxis:'x5',  yaxis:'y5'},
+      {...heat(0.97,0.67), z:tu, x:T_UnEn, y:T_UnEn, xaxis:'x6',  yaxis:'y6'},
+      {...marg, x:W_opt,  y:mfo,  xaxis:'x7',  yaxis:'y7'},
+      {...marg, x:W_Ent,  y:mfe,  xaxis:'x8',  yaxis:'y8', line:{color:C.gold,  width:2}},
+      {...marg, x:W_UnEn, y:mfu,  xaxis:'x9',  yaxis:'y9', line:{color:C.sky,   width:2}},
+      {...heat(0.31,0.19), z:fo, x:W_opt,  y:W_opt,  xaxis:'x10', yaxis:'y10'},
+      {...heat(0.64,0.19), z:fe, x:W_Ent,  y:W_Ent,  xaxis:'x11', yaxis:'y11'},
+      {...heat(0.97,0.19), z:fu, x:W_UnEn, y:W_UnEn, xaxis:'x12', yaxis:'y12'},
+    ];
+
+    Plotly.react('heatmap-graph', traces, buildLayout(da), {responsive:true, displayModeBar:true});
+  }
+
+  async function init() {
+    try {
+      const [d1,d2,d3,d4] = await Promise.all([
+        fetch('./DataSets/HeatMap_deltas_UnEnt_Delay.json').then(r=>r.json()),
+        fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay.json').then(r=>r.json()),
+        fetch('./DataSets/HeatMap_deltas_UnEnt_Delay_deltaF0.json').then(r=>r.json()),
+        fetch('./DataSets/HeatMap_deltas_Entangled_No-Delay_deltaF0.json').then(r=>r.json()),
+      ]);
+      df_UnEnt_Opt=d1; df_Ent_Opt=d2; df_UnEnt_Fixed=d3; df_Ent_Fixed=d4;
+
+      const gs=new Set(d1.map(r=>r.Gamma_e)), ds=new Set(d1.map(r=>r.delta_a));
+      Gamma_values=[...gs].sort((a,b)=>a-b);
+      Delta_values=[...ds].sort((a,b)=>a-b);
+
+      initGrids();
+
+      const gSl=document.getElementById('gamma-slider');
+      const dSl=document.getElementById('delta-slider');
+      gSl.max=Gamma_values.length-1;
+      dSl.max=Delta_values.length-1;
+      document.getElementById('gamma-value').textContent=Gamma_values[0].toFixed(4);
+      document.getElementById('delta-value').textContent=Delta_values[0].toFixed(2);
+
+      gSl.addEventListener('input', e=>{
+        document.getElementById('gamma-value').textContent=Gamma_values[parseInt(e.target.value)].toFixed(4);
+        updatePlots();
+      });
+      dSl.addEventListener('input', e=>{
+        document.getElementById('delta-value').textContent=Delta_values[parseInt(e.target.value)].toFixed(2);
+        updatePlots();
+      });
+      document.getElementById('optimum-deltaf-check').addEventListener('change', updatePlots);
+      document.getElementById('update-domain').addEventListener('click', ()=>{
+        const v=parseFloat(document.getElementById('domain-range').value);
+        if(v>0&&v<=50){domainRange=v;initGrids();updatePlots();}
+      });
+
+      document.getElementById('s1-loading').style.display='none';
+      document.getElementById('s1-content').style.display='block';
+      updatePlots();
+
+      if(window.MathJax) MathJax.typesetPromise([document.getElementById('s1-content')]);
+    } catch(err) {
+      document.getElementById('s1-loading').style.display='none';
+      const e=document.getElementById('s1-error');
+      e.style.display='block';
+      e.innerHTML=`<strong>Section 1 — data load error:</strong> ${err.message}. Ensure DataSets/ folder is served alongside this file.`;
+    }
+  }
+
+  init();
+})(); /* end S1 */
+
+/* ═════════════════════════════════════════════
+   SECTIONS 2 & 3 — Chart.js peak plots
+   Shared utilities
+═════════════════════════════════════════════ */
+const superscript = n => {
+  const m={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  return n.toString().split('').map(c=>m[c]||c).join('');
+};
+
+function makeRefLabelPlugin(sliderSelector) {
+  return {
+    id: 'refLineLabels',
+    afterDraw(chart) {
+      const { ctx, chartArea:{right,top,bottom}, scales:{y} } = chart;
+      const da = parseFloat(document.querySelector(sliderSelector).value);
+      const refY = da / 2;
+      const labels = [
+        {text:`ω_fe (${refY.toFixed(2)})`,  yVal:refY,  color:C.coral,  off:14},
+        {text:`ω_eg (${(-refY).toFixed(2)})`, yVal:-refY, color:C.cobalt, off:-9},
+      ];
+      ctx.save();
+      ctx.font = `13px ${C.serif}`;
+      ctx.textAlign = 'right';
+      labels.forEach(l => {
+        const yp = y.getPixelForValue(l.yVal);
+        if (yp > top && yp < bottom) {
+          ctx.fillStyle = l.color;
+          ctx.fillText(l.text, right - 4, yp + l.off);
+        }
+      });
+      ctx.restore();
+    }
+  };
+}
+
+function filterByDelta(data, da, tol=0.5) {
+  const map = new Map();
+  data.forEach(p => {
+    const dist = Math.abs(p.delta_a - da);
+    if (dist < tol) {
+      if (!map.has(p.Gamma_e) || dist < map.get(p.Gamma_e).dist)
+        map.set(p.Gamma_e, {data:p, dist});
+    }
+  });
+  return [...map.values()].map(v=>v.data).sort((a,b)=>a.Gamma_e-b.Gamma_e);
+}
+
+function computeYRange(sortedData, refY) {
+  let vals = [];
+  sortedData.forEach(d => d.peaks.forEach(p => { if (p!=null) vals.push(p); }));
+  vals.push(refY, -refY);
+  const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn;
+  if (rng===0) return [mn-0.5, mx+0.5];
+  return [mn-rng*0.1, mx+rng*0.1];
+}
+
+function buildChartDatasets(sortedData, da) {
+  const refY = da / 2;
+  const refStyle = {fill:false, pointRadius:0, borderWidth:1.5, borderDash:[5,4], spanGaps:true};
+  const maxPeaks = Math.max(...sortedData.map(d=>d.peaks.length));
+  const peakColors = [C.gold, C.sky];
+  const ds = [
+    {...refStyle, label:'+δ/2', data:[{x:0.01,y:refY},{x:100,y:refY}], borderColor:C.coral},
+    {...refStyle, label:'-δ/2', data:[{x:0.01,y:-refY},{x:100,y:-refY}], borderColor:C.cobalt},
+  ];
+  for (let i=0; i<maxPeaks; i++) {
+    ds.push({
+      label:`Peak ${i+1}`,
+      data: sortedData.map(d=>({x:d.Gamma_e, y:d.peaks[i]??null})),
+      borderColor: peakColors[i%peakColors.length],
+      backgroundColor: peakColors[i%peakColors.length],
+      borderWidth:2, pointRadius:2, pointHoverRadius:4, spanGaps:false
+    });
+  }
+  return ds;
+}
+
+function makeChartOptions(yMin, yMax, sliderSel) {
+  const tf = {family:C.serif, size:12};
+  return {
+    responsive:true, maintainAspectRatio:false, animation:{duration:0},
+    layout:{padding:0},
+    scales:{
+      x:{type:'logarithmic', min:0.01, max:100, title:{display:false},
+         ticks:{font:tf, color:C.ink2,
+           callback(v){const l=Math.log10(v); return Number.isInteger(l)?'10'+superscript(l):null;}}},
+      y:{min:yMin, max:yMax, title:{display:false}, ticks:{font:tf, color:C.ink2}}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{enabled:true, position:'nearest', mode:'index', intersect:false,
+        titleFont:{family:C.serif}, bodyFont:{family:C.serif},
+        callbacks:{
+          title(ti){return [`Γₑ/Γf = ${ti[0].parsed.x.toFixed(4)}`];},
+          label(ctx){
+            const l=ctx.dataset.label||'';
+            if(l.startsWith('+')||l.startsWith('-')) return `Ref: ${l} = ${ctx.parsed.y.toFixed(4)}`;
+            return `${l}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(4):'N/A'}`;
+          }
+        }},
+      refLineLabels:{}
+    }
+  };
+}
+
+/* ═════════════════════════════════════════════
+   SECTION 2 — Three-state peak positions
+═════════════════════════════════════════════ */
+(function S2() {
+  const URLS = {
+    opt:   './DataSets/peak_data_Opt.json',
+    ent:   './DataSets/peak_data_Ent.json',
+    unent: './DataSets/peak_data_UnEnt.json',
+  };
+  let allData = {opt:[],ent:[],unent:[]};
+  let charts  = {opt:null,ent:null,unent:null};
+  const canvasMap = {opt:'chartOpt', ent:'chartEnt', unent:'chartUnEnt'};
+  const plugin = makeRefLabelPlugin('#s2-delta-slider');
+
+  function updateAll() {
+    const da = parseFloat(document.getElementById('s2-delta-slider').value);
+    ['opt','ent','unent'].forEach(key => {
+      const sorted = filterByDelta(allData[key], da);
+      if (!sorted.length) return;
+      const refY = da/2;
+      const [yMin,yMax] = computeYRange(sorted, refY);
+      const datasets = buildChartDatasets(sorted, da);
+
+      if (charts[key]) {
+        charts[key].data.datasets = datasets;
+        charts[key].options.scales.y.min = yMin;
+        charts[key].options.scales.y.max = yMax;
+        charts[key].update('none');
+      } else {
+        const ctx = document.getElementById(canvasMap[key]).getContext('2d');
+        charts[key] = new Chart(ctx, {
+          type:'line', data:{datasets},
+          options: makeChartOptions(yMin, yMax, '#s2-delta-slider'),
+          plugins:[plugin]
+        });
+      }
+    });
+  }
+
+  async function init() {
+    try {
+      const [d1,d2,d3] = await Promise.all(
+        Object.values(URLS).map(u=>fetch(u).then(r=>r.json()))
+      );
+      allData.opt=d1; allData.ent=d2; allData.unent=d3;
+      document.getElementById('s2-loading').style.display='none';
+      document.getElementById('s2-content').style.display='block';
+      updateAll();
+      if(window.MathJax) MathJax.typesetPromise([document.getElementById('s2-content')]);
+    } catch(err) {
+      document.getElementById('s2-loading').style.display='none';
+      const e=document.getElementById('s2-error');
+      e.style.display='block';
+      e.innerHTML=`<strong>Section 2 — data load error:</strong> ${err.message}`;
+    }
+  }
+
+  document.getElementById('s2-delta-slider').addEventListener('input', function() {
+    document.getElementById('s2-delta-val').textContent=parseFloat(this.value).toFixed(1);
+    updateAll();
+  });
+
+  init();
+})(); /* end S2 */
+
+/* ═════════════════════════════════════════════
+   SECTION 3 — Optimum peak (single chart)
+═════════════════════════════════════════════ */
+(function S3() {
+  const URL3 = './DataSets/peak_data.json';
+  let allData = [];
+  let chart3  = null;
+  const plugin = makeRefLabelPlugin('#s3-delta-slider');
+
+  function update() {
+    const da = parseFloat(document.getElementById('s3-delta-slider').value);
+    const sorted = filterByDelta(allData, da);
+    if (!sorted.length) return;
+    const refY = da/2;
+    const [yMin,yMax] = computeYRange(sorted, refY);
+    const datasets = buildChartDatasets(sorted, da);
+
+    if (chart3) {
+      chart3.data.datasets = datasets;
+      chart3.options.scales.y.min = yMin;
+      chart3.options.scales.y.max = yMax;
+      chart3.update('none');
+    } else {
+      const ctx = document.getElementById('chartS3').getContext('2d');
+      chart3 = new Chart(ctx, {
+        type:'line', data:{datasets},
+        options: makeChartOptions(yMin, yMax, '#s3-delta-slider'),
+        plugins:[plugin]
+      });
+    }
+  }
+
+  async function init() {
+    try {
+      allData = await fetch(URL3).then(r=>r.json());
+      document.getElementById('s3-loading').style.display='none';
+      document.getElementById('s3-content').style.display='block';
+      update();
+      if(window.MathJax) MathJax.typesetPromise([document.getElementById('s3-content')]);
+    } catch(err) {
+      document.getElementById('s3-loading').style.display='none';
+      const e=document.getElementById('s3-error');
+      e.style.display='block';
+      e.innerHTML=`<strong>Section 3 — data load error:</strong> ${err.message}`;
+    }
+  }
+
+  document.getElementById('s3-delta-slider').addEventListener('input', function() {
+    document.getElementById('s3-delta-val').textContent=parseFloat(this.value).toFixed(1);
+    update();
+  });
+
+  init();
+})(); /* end S3 */
+</script>
+</body>
+</html>
