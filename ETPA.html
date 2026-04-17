@@ -1130,8 +1130,8 @@ const HOT_R = [
   function UnEntFrequency(OA, OB, MuA=0, MuB=0, df=0, marginal) {
     const wgf=0, wB=0.5*(wgf+df), wA=0.5*(wgf-df);
     const abs2=z=>math.pow(math.abs(z),2);
-    const PsiA=w=>{const f=Math.pow(2/(OA**2*Math.PI),0.25)*Math.exp(-(w-wA)**2/OA**2);const ph=MuA*(w-wA);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
-    const PsiB=w=>{const f=Math.pow(2/(OB**2*Math.PI),0.25)*Math.exp(-(w-wB)**2/OB**2);const ph=MuB*(w-wB);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
+    const PsiA=w=>{const f=Math.pow(2/(OA**2*Math.PI),0.25)*Math.exp(-((w-wA)**2)/OA**2);const ph=MuA*(w-wA);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
+    const PsiB=w=>{const f=Math.pow(2/(OB**2*Math.PI),0.25)*Math.exp(-((w-wB)**2)/OB**2);const ph=MuB*(w-wB);return math.complex(f*Math.cos(ph),f*Math.sin(ph));};
     let N=Math.exp(-(MuB**2*OA**2*OB**2+4*(wB-wA)**2)/(2*OA**2+2*OB**2));
     N=4*(1+2*OA*OB*N/(OA**2+OB**2));
     if (marginal) {
@@ -1187,8 +1187,8 @@ const HOT_R = [
     N*=8*Math.PI/(OP*OM);
     if (marginal) {
       return ew1D(W_Ent, w=>{
-        let p=Math.exp(-(2*w-wgf+df)**2/(OP**2+OM**2))+Math.exp(-(2*w-wgf-df)**2/(OP**2+OM**2));
-        p+=2*Math.exp(-(2*w-wgf)**2/(OP**2+OM**2)-(OM**2)*(OP**2)*MuM**2/(4*OP**2+4*OM**2)-(df**2)/OM**2)*Math.cos((2*w-wgf)*(OM**2)*MuM/(OP**2+OM**2));
+        let p=Math.exp(-((2*w-wgf+df)**2)/(OP**2+OM**2))+Math.exp(-((2*w-wgf-df)**2)/(OP**2+OM**2));
+        p+=2*Math.exp(-((2*w-wgf)**2)/(OP**2+OM**2)-(OM**2)*(OP**2)*MuM**2/(4*OP**2+4*OM**2)-(df**2)/OM**2)*Math.cos((2*w-wgf)*(OM**2)*MuM/(OP**2+OM**2));
         p*=4/(N*OM*OP)*Math.sqrt(Math.PI)/Math.sqrt(OP**2+OM**2);
         return 2*p;
       });
@@ -1196,10 +1196,10 @@ const HOT_R = [
     const [W1,W2]=meshgrid(W_Ent,W_Ent);
     const PHI=(w2,w1)=>{
       const D=w2-w1, D0=df, S=w2+w1, S0=wgf;
-      const e1r=Math.exp(-(D-D0)**2/(2*OM**2));const p1=MuM*(D-D0)/2;
-      const e2r=Math.exp(-(D+D0)**2/(2*OM**2));const p2=-MuM*(D+D0)/2;
+      const e1r=Math.exp(-((D-D0)**2)/(2*OM**2));const p1=MuM*(D-D0)/2;
+      const e2r=Math.exp(-((D+D0)**2)/(2*OM**2));const p2=-MuM*(D+D0)/2;
       let phi=math.add(math.complex(e1r*Math.cos(p1),e1r*Math.sin(p1)),math.complex(e2r*Math.cos(p2),e2r*Math.sin(p2)));
-      const sr=Math.exp(-(S-S0)**2/(2*OP**2));const sp=MuP*(S-S0)/2;
+      const sr=Math.exp(-((S-S0)**2)/(2*OP**2));const sp=MuP*(S-S0)/2;
       phi=math.multiply(phi,math.complex(sr*Math.cos(sp),sr*Math.sin(sp)));
       return math.multiply(phi,2/(OM*OP*Math.sqrt(N)));
     };
