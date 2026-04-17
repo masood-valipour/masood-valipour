@@ -1098,11 +1098,11 @@ const HOT_R = [
     const wB=0.5*(wgf+df), wA=0.5*(wgf-df);
     const abs2 = z => math.pow(math.abs(z),2);
     const PsiA = t => {
-      const f=Math.pow(OA**2/(2*Math.PI),0.25)*Math.exp(-OA**2*(t-MuA)**2/4);
+      const f=Math.pow(OA**2/(2*Math.PI),0.25)*Math.exp(-(OA**2)*(t-MuA)**2/4);
       return math.complex(f*Math.cos(-wA*t), f*Math.sin(-wA*t));
     };
     const PsiB = t => {
-      const f=Math.pow(OB**2/(2*Math.PI),0.25)*Math.exp(-OB**2*(t-MuB)**2/4);
+      const f=Math.pow(OB**2/(2*Math.PI),0.25)*Math.exp(-(OB**2)*(t-MuB)**2/4);
       return math.complex(f*Math.cos(-wB*t), f*Math.sin(-wB*t));
     };
     let N=Math.exp(-((MuB-MuA)**2*OA**2*OB**2+4*(wB-wA)**2)/(2*OA**2+2*OB**2));
@@ -1159,12 +1159,12 @@ const HOT_R = [
     const MuP=t02+t01, MuM=t02-t01, wgf=0;
     const w02=0.5*(wgf+df), w01=0.5*(wgf-df), dW=w02-w01;
     const abs2=z=>math.pow(math.abs(z),2);
-    let N=Math.exp(-(OM**2)*MuM**2/4-(dW**2)/(OM**2))+1;
+    let N=Math.exp(-(OM**2)*MuM**2/4-(dW**2)/OM**2)+1;
     N*=8*Math.PI/(OP*OM);
     if (marginal) {
       return ew1D(T_Ent.map(t=>t), t=>{
         const A=OP**2/4, B=OM**2/4;
-        let P=2*Math.exp(-A*B*(2*t-MuP)**2/(A+B)-B*MuM**2-(dW**2)/(4*A+4*B))*Math.cos(A*dW*(2*t-MuP)/(A+B));
+        let P=2*Math.exp(-A*B*(2*t-MuP)**2/(A+B)-B*(MuM**2)-(dW**2)/(4*A+4*B))*Math.cos(A*dW*(2*t-MuP)/(A+B));
         P+=Math.exp(-A*B*(2*t-MuP+MuM)**2/(A+B));
         P+=Math.exp(-A*B*(2*t-MuP-MuM)**2/(A+B));
         return P*Math.sqrt(Math.PI/(A+B))*2/N;
@@ -1183,12 +1183,12 @@ const HOT_R = [
   function EntFrequency(OP, OM, t01=0, t02=0, df=0, wgf=0, marginal) {
     const MuP=t02+t01, MuM=t02-t01;
     const abs2=z=>math.pow(math.abs(z),2);
-    let N=Math.exp(-(OM**2)*MuM**2/4-(df**2)/(OM**2))+1;
+    let N=Math.exp(-(OM**2)*MuM**2/4-(df**2)/OM**2)+1;
     N*=8*Math.PI/(OP*OM);
     if (marginal) {
       return ew1D(W_Ent, w=>{
-        let p=Math.exp(-((2*w-wgf+df)**2)/(OP**2+OM**2))+Math.exp(-((2*w-wgf-df)**2)/(OP**2+OM**2));
-        p+=2*Math.exp(-((2*w-wgf)**2)/(OP**2+OM**2)-(OM**2)*(OP**2)*MuM**2/(4*OP**2+4*OM**2)-(df**2)/(OM**2))*Math.cos((2*w-wgf)*OM**2*MuM/(OP**2+OM**2));
+        let p=Math.exp(-(2*w-wgf+df)**2/(OP**2+OM**2))+Math.exp(-(2*w-wgf-df)**2/(OP**2+OM**2));
+        p+=2*Math.exp(-(2*w-wgf)**2/(OP**2+OM**2)-(OM**2)*(OP**2)*MuM**2/(4*OP**2+4*OM**2)-(df**2)/OM**2)*Math.cos((2*w-wgf)*(OM**2)*MuM/(OP**2+OM**2));
         p*=4/(N*OM*OP)*Math.sqrt(Math.PI)/Math.sqrt(OP**2+OM**2);
         return 2*p;
       });
