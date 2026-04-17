@@ -121,7 +121,7 @@
        PAGE WRAPPER
     ═══════════════════════════════════════════════ */
     .page {
-      max-width: 1600px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 0 2.5rem 5rem;
     }
@@ -283,7 +283,7 @@
       border-radius: var(--radius-lg);
       padding: 1.75rem;
       margin-bottom: 1.25rem;
-      overflow: hidden;
+      overflow-x: auto;   /* scroll horizontally on narrow screens */
     }
 
     .plot-card-title {
@@ -391,24 +391,25 @@
     .check-pill {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 6px;
       background: var(--accent-lt);
       border: 0.5px solid var(--accent-mid);
-      padding: 8px 16px;
+      padding: 5px 11px;
       border-radius: 99px;
       width: fit-content;
       cursor: pointer;
+      align-self: center;
     }
 
     .check-pill input[type="checkbox"] {
-      width: 16px; height: 16px;
+      width: 13px; height: 13px;
       accent-color: var(--accent);
       cursor: pointer;
     }
 
     .check-pill label {
       font-family: var(--serif);
-      font-size: 16px;
+      font-size: 13px;
       color: var(--accent);
       cursor: pointer;
     }
@@ -419,6 +420,7 @@
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .domain-row label {
@@ -457,9 +459,20 @@
       font-size: 13px;
       color: var(--ink-3);
       font-style: italic;
+      width: 100%;
+      text-align: center;
     }
 
-    /* Param display */
+    /* Param display row */
+    .param-display-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding: 4px 0;
+    }
+
     .param-display {
       font-family: var(--serif);
       font-size: 17px;
@@ -751,22 +764,22 @@
       <!-- Plot -->
       <div class="plot-card">
         <div class="plot-card-title">
-          Fig. 1 — Joint probability distributions and marginals for Optimum, Entangled, and Unentangled states (temporal &amp; frequency domains)
+          Fig. 1 — Joint probability distributions and marginals for defined states (temporal &amp; frequency domains)
         </div>
         <div id="heatmap-graph"></div>
       </div>
 
-      <!-- Param display -->
-      <div id="param-display" class="param-display gap-md">—</div>
-
-      <!-- Controls -->
-      <div class="controls-panel">
-        <!-- Checkbox -->
+      <!-- Param display + checkbox inline -->
+      <div class="param-display-row">
+        <div id="param-display" class="param-display gap-md">—</div>
         <div class="check-pill">
           <input type="checkbox" id="optimum-deltaf-check" checked>
           <label for="optimum-deltaf-check">Optimum \(\delta_f\)</label>
         </div>
+      </div>
 
+      <!-- Controls -->
+      <div class="controls-panel">
         <!-- Sliders -->
         <div class="controls-row">
           <div class="slider-group">
@@ -1012,7 +1025,7 @@ const C = {
 };
 
 const HOT_R = [
-  [0.00,'rgb(255,255,255)'],
+  [0.00,'rgb(246,246,246)'],
   [0.20,'rgb(255,220,180)'],
   [0.40,'rgb(255,160,80)'],
   [0.60,'rgb(255,80,0)'],
@@ -1238,75 +1251,75 @@ const HOT_R = [
   }
 
   /* ── Plotly layout builder ── */
-  function getContainerWidth() {
-    const el = document.getElementById('heatmap-graph');
-    return el ? el.offsetWidth : window.innerWidth;
-  }
+  const PLOT_W = 1050;  /* fixed — never reflows on browser zoom */
+
 
   function buildLayout(da) {
     const ω='\u03c9', Γ='\u0393', s1='\u2081', s2='\u2082', m='\u2212';
     const F = C.serif;
-    const W = getContainerWidth();
-    const fs  = W < 700 ? 10 : W < 1000 ? 12 : 13;
-    const fst = W < 700 ? 11 : W < 1000 ? 13 : 15;
+    const W = PLOT_W;
+    const fs  = 13;
+    const fst = 17;
     const ax = { showgrid:true, zeroline:false, gridcolor:'rgba(120,118,115,0.2)',
-                  tickfont:{family:F,size:fs}, titlefont:{family:F,size:fst}, plot_bgcolor:'white' };
+                  tickfont:{family:F,size:fs}, titlefont:{family:F,size:fst}, plot_bgcolor:'white',
+                  ticks:'inside' };
 
-    const cb = (x,y) => ({ x, y, len:0.22, tickfont:{family:F,size:fs},
-                            titlefont:{family:F,size:fst}, title:'p' });
+    const cb = (x,y,l) => ({ x, y, len:l||0.36, thickness:18,
+                             tickfont:{family:F,size:fs},
+                             titlefont:{family:F,size:fst}, title:'p' });
 
     const domains = {
-      c1:[0.05,0.30], c2:[0.38,0.63], c3:[0.71,0.96],
-      r1:[0.84,0.99], r2:[0.52,0.82], r3:[0.36,0.49], r4:[0.04,0.34]
+      c1:[0.05,0.30], c2:[0.38,0.63], c3:[0.71,.96],
+      r1:[0.85,0.99], r2:[0.53,0.83], r3:[0.30,0.44], r4:[0.00,0.27]
     };
 
     return {
       width: W,
-      height: Math.round(W * 0.95),
-      margin:{l:20,r:20,t:50,b:20},
+      height: Math.round(W * 0.65),
+      margin:{l:60,r:20,t:50,b:20},
       showlegend: false,
       plot_bgcolor: 'white',
       paper_bgcolor: 'white',
       font:{family:F},
 
-      yaxis:   {...ax, title:'P(t)',                domain:domains.r1},
-      yaxis2:  {...ax, title:'P(t)',                domain:domains.r1, anchor:'free', position:0.38},
-      yaxis3:  {...ax, title:'P(t)',                domain:domains.r1, anchor:'free', position:0.71},
-      yaxis4:  {...ax, title:`t${s2}·${Γ}f`,       domain:domains.r2},
-      yaxis5:  {...ax, title:`t${s2}·${Γ}f`,       domain:domains.r2, anchor:'free', position:0.38},
-      yaxis6:  {...ax, title:`(t${s2}${m}μ)·${Γ}f`, domain:domains.r2, anchor:'free', position:0.71},
-      yaxis7:  {...ax, title:`P(${ω})`,             domain:domains.r3},
-      yaxis8:  {...ax, title:`P(${ω})`,             domain:domains.r3, anchor:'free', position:0.38},
-      yaxis9:  {...ax, title:`P(${ω})`,             domain:domains.r3, anchor:'free', position:0.71},
-      yaxis10: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4},
-      yaxis11: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4, anchor:'free', position:0.38},
-      yaxis12: {...ax, title:`(${ω}${s2}${m}${ω}fg/2)/${Γ}f`, domain:domains.r4, anchor:'free', position:0.71},
+      yaxis:   {...ax,  title:'P(t)',                                                        domain:domains.r1},
+      yaxis2:  {...ax,  title:'',                                                            domain:domains.r1, anchor:'x2'},
+      yaxis3:  {...ax,  title:'',                                                            domain:domains.r1, anchor:'x3'},
+      yaxis4:  {...ax,  title:{text:`(t<sub>2</sub>${m}μ)·${Γ}<sub>f</sub>`,                 standoff:0}, domain:domains.r2},
+      yaxis5:  {...ax,  title:'',                                                            domain:domains.r2, anchor:'x5', },
+      yaxis6:  {...ax,  title:'',                                                            domain:domains.r2, anchor:'x6', },
+      yaxis7:  {...ax,  title:`P(${ω})`,                                                     domain:domains.r3},
+      yaxis8:  {...ax,  title:'',                                                                   domain:domains.r3, anchor:'x8'},
+      yaxis9:  {...ax,  title:'',                                                                   domain:domains.r3, anchor:'x9'},
+      yaxis10: {...ax,  title:{text:`(${ω}<sub>2</sub>${m}${ω}<sub>fg</sub>/2)/${Γ}<sub>f</sub>`, standoff:0}, domain:domains.r4},
+      yaxis11: {...ax,  title:'',                                                                   domain:domains.r4, anchor:'x11'},
+      yaxis12: {...ax,  title:'',                                                                   domain:domains.r4, anchor:'x12'},
 
       xaxis:   {...ax, domain:domains.c1, showticklabels:false},
       xaxis2:  {...ax, domain:domains.c2, showticklabels:false},
       xaxis3:  {...ax, domain:domains.c3, showticklabels:false},
-      xaxis4:  {...ax, title:`t${s1}·${Γ}f`, domain:domains.c1, anchor:'free', position:0.52},
-      xaxis5:  {...ax, title:`t${s1}·${Γ}f`, domain:domains.c2, anchor:'free', position:0.52},
-      xaxis6:  {...ax, title:`(t${s1}${m}μ)·${Γ}f`, domain:domains.c3, anchor:'free', position:0.52},
+      xaxis4:  {...ax, title:{text:`(t<sub>1</sub>${m}μ)·${Γ}<sub>f</sub>`,              standoff:0}, domain:domains.c1, anchor:'y4'},
+      xaxis5:  {...ax, title:{text:`(t<sub>1</sub>${m}μ)·${Γ}<sub>f</sub>`,              standoff:0}, domain:domains.c2, anchor:'y5'},
+      xaxis6:  {...ax, title:{text:`(t<sub>1</sub>${m}μ)·${Γ}<sub>f</sub>`,              standoff:0}, domain:domains.c3, anchor:'y6'},
       xaxis7:  {...ax, domain:domains.c1, showticklabels:false},
       xaxis8:  {...ax, domain:domains.c2, showticklabels:false},
       xaxis9:  {...ax, domain:domains.c3, showticklabels:false},
-      xaxis10: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c1, anchor:'free', position:0.04},
-      xaxis11: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c2, anchor:'free', position:0.04},
-      xaxis12: {...ax, title:`(${ω}${s1}${m}${ω}fg/2)/${Γ}f`, domain:domains.c3, anchor:'free', position:0.04},
+      xaxis10: {...ax, title:{text:`(${ω}<sub>1</sub>${m}${ω}<sub>fg</sub>/2)/${Γ}<sub>f</sub>`, standoff:0}, domain:domains.c1, anchor:'y10'},
+      xaxis11: {...ax, title:{text:`(${ω}<sub>1</sub>${m}${ω}<sub>fg</sub>/2)/${Γ}<sub>f</sub>`, standoff:0}, domain:domains.c2, anchor:'y11'},
+      xaxis12: {...ax, title:{text:`(${ω}<sub>1</sub>${m}${ω}<sub>fg</sub>/2)/${Γ}<sub>f</sub>`, standoff:0}, domain:domains.c3, anchor:'y12'},
 
       annotations: [
-        {text:'Optimum',     x:0.17, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
-        {text:'Entangled',   x:0.50, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
-        {text:'Unentangled', x:0.84, y:1.02, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
-        {text:'Temporal',    x:-0.01, y:0.68, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F}, textangle:-90},
-        {text:'Frequency',   x:-0.01, y:0.20, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F}, textangle:-90},
-        {text:`p(t${s1},t${s2})`, x:0.30, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
-        {text:`p(t${s1},t${s2})`, x:0.63, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
-        {text:`p(t${s1},t${s2})`, x:0.96, y:0.84, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
-        {text:`p(ω${s1},ω${s2})`, x:0.30, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
-        {text:`p(ω${s1},ω${s2})`, x:0.63, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
-        {text:`p(ω${s1},ω${s2})`, x:0.96, y:0.37, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F}},
+        {text:'State I',         x:0.16,  y:1.05, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
+        {text:'State II',        x:0.50,  y:1.05, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
+        {text:'State III',       x:0.87,  y:1.05, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+3,family:F,color:C.ink2}},
+        {text:'Temporal domain',  x:-0.05, y:0.76, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F,color:'#333'}, textangle:-90},
+        {text:'Frequency domain', x:-0.05, y:0.22, xref:'paper', yref:'paper', showarrow:false, font:{size:fst+1,family:F,color:'#333'}, textangle:-90},
+        {text:`p(t<sub>1</sub>,t<sub>2</sub>)`,           x:0.28, y:0.87, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
+        {text:`p(t<sub>1</sub>,t<sub>2</sub>)`,           x:0.67, y:0.87, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
+        {text:`p(t<sub>1</sub>,t<sub>2</sub>)`,           x:0.999, y:0.87, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
+        {text:`p(${ω}<sub>1</sub>,${ω}<sub>2</sub>)`,    x:0.28, y:0.27, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
+        {text:`p(${ω}<sub>1</sub>,${ω}<sub>2</sub>)`,    x:0.67, y:0.27, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
+        {text:`p(${ω}<sub>1</sub>,${ω}<sub>2</sub>)`,    x:1.02, y:0.27, xref:'paper', yref:'paper', showarrow:false, font:{size:fst,family:F,color:'#555'}},
       ],
 
       shapes: makeRefLines(da),
@@ -1315,7 +1328,7 @@ const HOT_R = [
 
   function makeRefLines(da) {
     const lo = -0.5*da, hi = 0.5*da;
-    const lineStyle = {color:'white', width:2, dash:'dash'};
+    const lineStyle = {color:'black', width:1, dash:'dash'};
     const axes = [
       {xr:'x10', yr:'y10', xarr:W_opt,  yarr:W_opt},
       {xr:'x11', yr:'y11', xarr:W_UnEn, yarr:W_UnEn},
@@ -1345,8 +1358,7 @@ const HOT_R = [
     const da = Delta_values[dIdx];
 
     document.getElementById('param-display').innerHTML =
-      `Γ<sub>e</sub> / Γ<sub>f</sub> = ${Ge.toFixed(4)}&ensp;·&ensp;δ<sub>a</sub> / Γ<sub>f</sub> = ${da.toFixed(2)}` +
-      `<span style="font-size:0.8em;color:var(--ink-3);margin-left:1em;">(${isOpt?'optimised':'fixed'} δ<sub>f</sub>)</span>`;
+      `Γ<sub>e</sub> / Γ<sub>f</sub> = ${Ge.toFixed(4)}&ensp;·&ensp;δ<sub>a</sub> / Γ<sub>f</sub> = ${da.toFixed(2)}`;
 
     const to = OptTemporal(Ge), fo = OptFrequency(Ge, da);
     const mto = OptTemporal(Ge, true), mfo = OptFrequency(Ge, da, true);
@@ -1361,25 +1373,29 @@ const HOT_R = [
     const te = EntTemporal(OP,OM,t02,0,dfE_val), fe = EntFrequency(OP,OM,0,t02,dfE_val,0);
     const mte = EntTemporal(OP,OM,t02,0,dfE_val,true), mfe = EntFrequency(OP,OM,0,t02,dfE_val,0,true);
 
-    const marg = {type:'scatter', mode:'lines', showlegend:false, line:{color:C.accent, width:2}};
-    const heat  = (cbX,cbY) => ({type:'heatmap', colorscale:HOT_R, showscale:true,
-                                  colorbar:{x:cbX,y:cbY,len:0.20,
-                                    tickfont:{family:C.serif,size:11},
-                                    titlefont:{family:C.serif,size:12}, title:'p'}});
+    const margT = (col) => ({type:'scatter', mode:'lines', showlegend:false, line:{color:col, width:2}});
+    const margF = (col) => ({type:'scatter', mode:'lines', showlegend:false, line:{color:col, width:2}});
+    const cbT = 0.68;   // temporal heatmap row center
+    const cbF = 0.125;  // frequency heatmap row center
+    const cbFs = 13;
+    const heat = (cbX,cbY) => ({type:'heatmap', colorscale:HOT_R, showscale:true,
+                                 colorbar:{x:cbX, y:cbY, len:0.33, thickness:12,
+                                   tickfont:{family:C.serif,size:cbFs},
+                                   titlefont:{family:C.serif,size:cbFs}}});
 
     const traces = [
-      {...marg, x:T_opt,  y:mto,  xaxis:'x1',  yaxis:'y1'},
-      {...marg, x:T_Ent,  y:mte,  xaxis:'x2',  yaxis:'y2', line:{color:C.gold,  width:2}},
-      {...marg, x:T_UnEn, y:mtu,  xaxis:'x3',  yaxis:'y3', line:{color:C.sky,   width:2}},
-      {...heat(0.31,0.67), z:to, x:T_opt,  y:T_opt,  xaxis:'x4',  yaxis:'y4'},
-      {...heat(0.64,0.67), z:te, x:T_Ent,  y:T_Ent,  xaxis:'x5',  yaxis:'y5'},
-      {...heat(0.97,0.67), z:tu, x:T_UnEn, y:T_UnEn, xaxis:'x6',  yaxis:'y6'},
-      {...marg, x:W_opt,  y:mfo,  xaxis:'x7',  yaxis:'y7'},
-      {...marg, x:W_Ent,  y:mfe,  xaxis:'x8',  yaxis:'y8', line:{color:C.gold,  width:2}},
-      {...marg, x:W_UnEn, y:mfu,  xaxis:'x9',  yaxis:'y9', line:{color:C.sky,   width:2}},
-      {...heat(0.31,0.19), z:fo, x:W_opt,  y:W_opt,  xaxis:'x10', yaxis:'y10'},
-      {...heat(0.64,0.19), z:fe, x:W_Ent,  y:W_Ent,  xaxis:'x11', yaxis:'y11'},
-      {...heat(0.97,0.19), z:fu, x:W_UnEn, y:W_UnEn, xaxis:'x12', yaxis:'y12'},
+      {...margT('#1a3a7a'), x:T_opt,  y:mto,  xaxis:'x1',  yaxis:'y1'},
+      {...margT('#1a3a7a'), x:T_Ent,  y:mte,  xaxis:'x2',  yaxis:'y2'},
+      {...margT('#1a3a7a'), x:T_UnEn, y:mtu,  xaxis:'x3',  yaxis:'y3'},
+      {...heat(0.295,cbT), z:to, x:T_opt,  y:T_opt,  xaxis:'x4',  yaxis:'y4'},
+      {...heat(0.625,cbT), z:te, x:T_Ent,  y:T_Ent,  xaxis:'x5',  yaxis:'y5'},
+      {...heat(0.955,cbT), z:tu, x:T_UnEn, y:T_UnEn, xaxis:'x6',  yaxis:'y6'},
+      {...margF('#8b1a1a'), x:W_opt,  y:mfo,  xaxis:'x7',  yaxis:'y7'},
+      {...margF('#8b1a1a'), x:W_Ent,  y:mfe,  xaxis:'x8',  yaxis:'y8'},
+      {...margF('#8b1a1a'), x:W_UnEn, y:mfu,  xaxis:'x9',  yaxis:'y9'},
+      {...heat(0.295,cbF), z:fo, x:W_opt,  y:W_opt,  xaxis:'x10', yaxis:'y10'},
+      {...heat(0.625,cbF), z:fe, x:W_Ent,  y:W_Ent,  xaxis:'x11', yaxis:'y11'},
+      {...heat(0.955,cbF), z:fu, x:W_UnEn, y:W_UnEn, xaxis:'x12', yaxis:'y12'},
     ];
 
     Plotly.react('heatmap-graph', traces, buildLayout(da), {responsive:false, displayModeBar:true});
@@ -1420,7 +1436,7 @@ const HOT_R = [
     document.getElementById('s1-content').style.display='block';
     updatePlots();
 
-    if(window.MathJax) MathJax.typesetPromise([document.getElementById('s1-content')]);
+    if(window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([document.getElementById('s1-content')]);
   }
 
   init();
@@ -1503,16 +1519,30 @@ function buildChartDatasets(sortedData, da) {
   return ds;
 }
 
+function niceTickStep(range, maxTicks) {
+  const rough = range / maxTicks;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / mag;
+  const nice = norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10;
+  return nice * mag;
+}
+
 function makeChartOptions(yMin, yMax, sliderSel) {
   const tf = {family:C.serif, size:12};
+  const MAX_Y_TICKS = 6;
+  const step = niceTickStep(yMax - yMin, MAX_Y_TICKS);
+  const snappedMin = Math.floor(yMin / step) * step;
+  const snappedMax = Math.ceil(yMax / step) * step;
   return {
     responsive:true, maintainAspectRatio:false, animation:{duration:0},
     layout:{padding:0},
     scales:{
       x:{type:'logarithmic', min:0.01, max:100, title:{display:false},
-         ticks:{font:tf, color:C.ink2,
+         ticks:{font:tf, color:C.ink2, maxTicksLimit:6, autoSkip:true,
            callback(v){const l=Math.log10(v); return Number.isInteger(l)?'10'+superscript(l):null;}}},
-      y:{min:yMin, max:yMax, title:{display:false}, ticks:{font:tf, color:C.ink2}}
+      y:{min:snappedMin, max:snappedMax, title:{display:false},
+         ticks:{font:tf, color:C.ink2, stepSize:step, maxTicksLimit:MAX_Y_TICKS,
+           callback(v){return +v.toFixed(4);}}}
     },
     plugins:{
       legend:{display:false},
@@ -1550,10 +1580,14 @@ function makeChartOptions(yMin, yMax, sliderSel) {
       const [yMin,yMax] = computeYRange(sorted, refY);
       const datasets = buildChartDatasets(sorted, da);
 
+      const step = niceTickStep(yMax - yMin, 6);
+      const snappedMin = Math.floor(yMin / step) * step;
+      const snappedMax = Math.ceil(yMax / step) * step;
       if (charts[key]) {
         charts[key].data.datasets = datasets;
-        charts[key].options.scales.y.min = yMin;
-        charts[key].options.scales.y.max = yMax;
+        charts[key].options.scales.y.min = snappedMin;
+        charts[key].options.scales.y.max = snappedMax;
+        charts[key].options.scales.y.ticks.stepSize = step;
         charts[key].update('none');
       } else {
         const ctx = document.getElementById(canvasMap[key]).getContext('2d');
@@ -1571,7 +1605,7 @@ function makeChartOptions(yMin, yMax, sliderSel) {
     document.getElementById('s2-loading').style.display='none';
     document.getElementById('s2-content').style.display='block';
     updateAll();
-    if(window.MathJax) MathJax.typesetPromise([document.getElementById('s2-content')]);
+    if(window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([document.getElementById('s2-content')]);
   }
 
   document.getElementById('s2-delta-slider').addEventListener('input', function() {
@@ -1599,10 +1633,14 @@ function makeChartOptions(yMin, yMax, sliderSel) {
     const [yMin,yMax] = computeYRange(sorted, refY);
     const datasets = buildChartDatasets(sorted, da);
 
+    const step = niceTickStep(yMax - yMin, 6);
+    const snappedMin = Math.floor(yMin / step) * step;
+    const snappedMax = Math.ceil(yMax / step) * step;
     if (chart3) {
       chart3.data.datasets = datasets;
-      chart3.options.scales.y.min = yMin;
-      chart3.options.scales.y.max = yMax;
+      chart3.options.scales.y.min = snappedMin;
+      chart3.options.scales.y.max = snappedMax;
+      chart3.options.scales.y.ticks.stepSize = step;
       chart3.update('none');
     } else {
       const ctx = document.getElementById('chartS3').getContext('2d');
@@ -1619,7 +1657,7 @@ function makeChartOptions(yMin, yMax, sliderSel) {
     document.getElementById('s3-loading').style.display='none';
     document.getElementById('s3-content').style.display='block';
     update();
-    if(window.MathJax) MathJax.typesetPromise([document.getElementById('s3-content')]);
+    if(window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([document.getElementById('s3-content')]);
   }
 
   document.getElementById('s3-delta-slider').addEventListener('input', function() {
@@ -1630,23 +1668,7 @@ function makeChartOptions(yMin, yMax, sliderSel) {
   init();
 })(); /* end S3 */
 
-/* ═════════════════════════════════════════════
-   WINDOW RESIZE — redraw Plotly at new width
-═════════════════════════════════════════════ */
-(function() {
-  let resizeTimer;
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function() {
-      // Re-trigger updatePlots if S1 is loaded
-      const btn = document.getElementById('gamma-slider');
-      if (btn && document.getElementById('s1-content').style.display !== 'none') {
-        // dispatch a synthetic input event to reuse existing updatePlots logic
-        btn.dispatchEvent(new Event('input'));
-      }
-    }, 150);
-  });
-})();
+/* resize listener removed — figure has fixed pixel dimensions */
 </script>
 </body>
 </html>
