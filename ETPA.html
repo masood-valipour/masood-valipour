@@ -569,7 +569,49 @@
       min-width: 0;
       overflow: hidden;
     }
-
+.state-blocks {
+  display: grid;
+  grid-template-columns: 1fr; 
+  /* grid-template-columns: repeat(3, 1fr);   */
+  gap: 1rem;
+  margin: 2rem 0 2.5rem;
+}
+.state-block {
+  background: var(--accent-lt);
+  border: 0.5px solid var(--accent-mid);
+  border-radius: var(--border-radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+.state-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  border-bottom: 0.5px solid var(--accent-mid);
+  padding-bottom: 0.5rem;
+}
+.state-label {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: #3C3489;
+}
+.state-ref {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  border-bottom: 0.5px dashed var(--accent-mid);
+}
+.state-ref:hover { color: #26215C; }
+.state-formula {
+  font-size: 16px;
+  color: #3C3489;
+  overflow-x: auto;
+}
+@media (max-width: 750px) {
+  .state-blocks { grid-template-columns: 1fr; }
+}
     /* ═══════════════════════════════════════════════
        INFO BOXES (methodology notes)
     ═══════════════════════════════════════════════ */
@@ -751,11 +793,58 @@
       For each photon-pair architecture, we compute the joint two-photon probability distribution \(p(t_1, t_2)\) and \(p(\omega_1, \omega_2)\) together with their marginals \(P(t)\) and \(P(\omega)\). The slider for \(\Gamma_e/\Gamma_f\) and \(\delta_a/\Gamma_f\) controls which parameter row is displayed. The checkbox toggles between optimised and fixed \(\delta_f\).
     </p>
 
-    <div class="eq-block">
-      <div class="eq-label">Two-photon absorption rate (leading order)</div>
-      <!-- <div class="eq">R<sub>ETPA</sub> ∝ |∫∫ dω<sub>1</sub> dω<sub>2</sub> · f(ω<sub>1</sub>,ω<sub>2</sub>) · M(ω<sub>1</sub>,ω<sub>2</sub>)|²</div> -->
+  <div class="state-blocks">
+
+    <div class="state-block">
+      <div class="state-header">
+        <span class="state-label">State I</span>
+        <a class="state-ref" href="#">Eq.&thinsp;(19) &middot; p.&thinsp;4</a>
+      </div>
+      <div class="state-formula">
+        \[
+          \Phi_{\rm opt}(t_1,t_2)=
+          \frac{e^{\frac{1}{2}\Gamma_{f} t_2
+                -\frac{1}{2}\Gamma_{e}(t_2-t_{1})
+                -i\omega_{fe}t_2-i\omega_{eg}t_1}}
+              {\sqrt{\mathcal{N}_{\rm opt}}}
+          \,\Theta(t-t_2)\,\Theta(t_2-t_1)\,\Theta(t_1-t_0)
+        \]
+      </div>
     </div>
 
+    <div class="state-block">
+      <div class="state-header">
+        <span class="state-label">State II</span>
+        <a class="state-ref" href="#">Eq.&thinsp;(39) &middot; p.&thinsp;9</a>
+      </div>
+      <div class="state-formula">
+        \[
+          \Phi(t_1,t_2)=\sqrt{\frac{\Omega_{+}\Omega_{-}}{2\pi}}
+          \exp\!\left\{
+            -\frac{\Omega_{+}^2}{8}(t_1+t_2-\mu)^2
+            -\frac{\Omega_{-}^2}{8}\bigl(t_1-(t_2-\mu)\bigr)^2
+            -i\omega_{01}t_1-i\omega_{02}t_2
+          \right\}
+        \]
+      </div>
+    </div>
+
+    <div class="state-block">
+      <div class="state-header">
+        <span class="state-label">State III</span>
+        <a class="state-ref" href="#">Eq.&thinsp;(29) &middot; p.&thinsp;5</a>
+      </div>
+      <div class="state-formula">
+        \[
+          \Phi_{\rm sym}(t_1,t_2)=
+          \frac{1}{2\sqrt{\mathcal{N}}}
+          \bigl[\psi_{a}(t_1)\psi_{b}(t_2)
+              +\psi_{b}(t_1)\psi_{a}(t_2)\bigr]
+        \]
+      </div>
+    </div>
+
+  </div>
     <!-- Loading / error -->
     <div id="s1-loading" class="loading-msg">Loading datasets…</div>
     <div id="s1-error" class="error-msg"></div>
