@@ -797,7 +797,7 @@
 
     <div class="state-block">
       <div class="state-header">
-        <span class="state-label">State I</span>
+        <span class="state-label">State I (Optimal)</span>
         <a class="state-ref" href="#">Eq.&thinsp;(19) &middot; p.&thinsp;4</a>
       </div>
       <div class="state-formula">
@@ -910,7 +910,72 @@
     <p class="section-intro">
       The peak positions \(\omega_\text{peak}\) of the single-photon marginal distribution \(P(\omega)\) are plotted as functions of \(\Gamma_e/\Gamma_f\) for each state. Two peaks may emerge as the intermediate-state decay rate changes. Reference lines show the bare resonances \(\omega_{fe}\) and \(\omega_{eg}\).
     </p>
+<div class="state-blocks">
 
+  <div class="state-block">
+    <div class="state-header">
+      <span class="state-label">State I (Optimal)— marginal distribution</span>
+      <a class="state-ref" href="#">Eq.&thinsp;(27) &middot; p.&thinsp;5</a>
+    </div>
+    <div class="state-formula">
+      \[
+        p(\omega)=\frac{\Gamma_{e}(\Gamma_{e}+\Gamma_{f})\!\left(\Gamma_{e}+\tfrac{1}{4}\Gamma_{f}\right)
+                       +\Gamma_{e}(\omega_{fe}-\omega_{eg})^2
+                       +\Gamma_{f}(\omega-\omega_{eg})^2}
+                      {4\pi
+                       \left[(\omega-\omega_{eg})^2+\tfrac{\Gamma_{e}^2}{4}\right]
+                       \left[(\omega-\omega_{fe})^2+\tfrac{(\Gamma_{e}+\Gamma_{f})^2}{4}\right]}
+      \]
+    </div>
+  </div>
+
+  <div class="state-block">
+    <div class="state-header">
+      <span class="state-label">State II — marginal distribution</span>
+      <a class="state-ref" href="#">Eq.&thinsp;(44) &middot; p.&thinsp;9</a>
+    </div>
+    <div class="state-formula">
+      \[
+        p(\omega)=
+        \frac{1}{\sqrt{\pi(\Omega_{+}^2+\Omega_{-}^2)}\,\mathcal{N}}
+        \Biggl\{
+          e^{-\frac{4(\omega-\omega_{01})^2}{\Omega_{+}^2+\Omega_{-}^2}}
+          +e^{-\frac{4(\omega-\omega_{02})^2}{\Omega_{+}^2+\Omega_{-}^2}}
+          +2e^{-\frac{4(\omega-\bar{\omega})^2}{\Omega_{+}^2+\Omega_{-}^2}
+               -\Omega^2\mu^2
+               -\frac{\delta_f^2}{\Omega_{-}^2}}
+          \cos\!\left[\frac{2\Omega_{-}^2\mu}{\Omega_{+}^2+\Omega_{-}^2}(\omega-\bar{\omega})\right]
+        \Biggr\}
+      \]
+    </div>
+  </div>
+
+  <div class="state-block">
+    <div class="state-header">
+      <span class="state-label">State III — marginal distribution</span>
+      <a class="state-ref" href="#">Eq.&thinsp;(37) &middot; p.&thinsp;6</a>
+    </div>
+    <div class="state-formula">
+      \[
+        p(\omega)=\frac{1}{2\mathcal{N}}
+        \left\{
+          \left|\tilde{\psi}_{a}(\omega)\right|^2
+          +\left|\tilde{\psi}_{b}(\omega)\right|^2
+          +2\,\mathrm{Re}\!\left(\tilde{\psi}_{a}^{*}(\omega)\,\tilde{\psi}_{b}(\omega)\,x\right)
+        \right\}
+      \]
+      \[
+        x=\sqrt{\tfrac{2\Omega_a\Omega_b}{\Omega_a^2+\Omega_b^2}}
+        \exp\!\left\{
+          -\tfrac{\Omega_a^2\Omega_b^2\mu^2+4\delta_f^2
+                  -4i\delta_f(\mu_a\Omega_a^2+\mu_b\Omega_b^2)}
+                 {4(\Omega_a^2+\Omega_b^2)}
+        \right\}
+      \]
+    </div>
+  </div>
+
+</div>
     <div id="s2-loading" class="loading-msg">Loading datasets…</div>
     <div id="s2-error" class="error-msg"></div>
 
@@ -918,7 +983,7 @@
       <div class="three-col">
         <!-- Optimum -->
         <div class="mini-plot-card">
-          <div class="mini-plot-title">Optimum state</div>
+          <div class="mini-plot-title">State I</div>
           <div class="chart-wrapper">
             <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
             <div class="canvas-holder"><canvas id="chartOpt"></canvas></div>
@@ -927,7 +992,7 @@
         </div>
         <!-- Entangled -->
         <div class="mini-plot-card">
-          <div class="mini-plot-title">Entangled state</div>
+          <div class="mini-plot-title">State II</div>
           <div class="chart-wrapper">
             <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
             <div class="canvas-holder"><canvas id="chartEnt"></canvas></div>
@@ -936,7 +1001,7 @@
         </div>
         <!-- Unentangled -->
         <div class="mini-plot-card">
-          <div class="mini-plot-title">Unentangled state</div>
+          <div class="mini-plot-title">State III</div>
           <div class="chart-wrapper">
             <div class="y-axis-label">\( (\omega - \omega_{fg}/2) /\Gamma_f \)</div>
             <div class="canvas-holder"><canvas id="chartUnEnt"></canvas></div>
@@ -973,10 +1038,27 @@
       A focused view of the optimum-state frequency marginal peak positions derived analytically from Eq. (33) of the draft. Root-finding of the derivative locates the extrema as a function of \(\Gamma_e/\Gamma_f\) for the selected detuning \(\delta_a/\Gamma_f\).
     </p>
 
-    <div class="eq-block">
+    <!-- <div class="eq-block">
       <div class="eq-label">Optimum-state frequency marginal (Eq. 33)</div>
       <div class="eq">P(ω) = Γ<sub>e</sub>(Γ<sub>e</sub>+Γ<sub>f</sub>)(Γ<sub>e</sub>+Γ<sub>f</sub>/4) + … / [4π((ω−ω<sub>eg</sub>)²+Γ<sub>e</sub>²/4)((ω−ω<sub>fe</sub>)²+(Γ<sub>e</sub>+Γ<sub>f</sub>)²/4)]</div>
-    </div>
+    </div> -->
+
+    <div class="state-block" style="margin: 2rem 0;">
+  <div class="state-header">
+    <span class="state-label">Marginal distribution of State I (optimal)</span>
+    <a class="state-ref" href="#">Eq.&thinsp;(27) &middot; p.&thinsp;5</a>
+  </div>
+  <div class="state-formula">
+    \[
+      p(\omega)=\frac{\Gamma_{e}(\Gamma_{e}+\Gamma_{f})\!\left(\Gamma_{e}+\tfrac{1}{4}\Gamma_{f}\right)
+                     +\Gamma_{e}(\omega_{fe}-\omega_{eg})^2
+                     +\Gamma_{f}(\omega-\omega_{eg})^2}
+                    {4\pi
+                     \left[(\omega-\omega_{eg})^2+\tfrac{\Gamma_{e}^2}{4}\right]
+                     \left[(\omega-\omega_{fe})^2+\tfrac{(\Gamma_{e}+\Gamma_{f})^2}{4}\right]}
+    \]
+  </div>
+</div>
 
     <div id="s3-loading" class="loading-msg">Loading dataset…</div>
     <div id="s3-error" class="error-msg"></div>
@@ -1580,8 +1662,8 @@ function filterByDelta(data, da, tol=0.5) {
 
 function computeYRange(sortedData, refY) {
   let vals = [];
-  sortedData.forEach(d => d.peaks.forEach(p => { if (p!=null) vals.push(p); }));
   vals.push(refY, -refY);
+  sortedData.forEach(d => d.peaks.forEach(p => { if (p!=null) vals.push(p); }));
   const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn;
   if (rng===0) return [mn-0.5, mx+0.5];
   return [mn-rng*0.1, mx+rng*0.1];
@@ -1669,14 +1751,14 @@ function makeChartOptions(yMin, yMax, sliderSel) {
       const [yMin,yMax] = computeYRange(sorted, refY);
       const datasets = buildChartDatasets(sorted, da);
 
-      const step = niceTickStep(yMax - yMin, 6);
-      const snappedMin = Math.floor(yMin / step) * step;
-      const snappedMax = Math.ceil(yMax / step) * step;
+      // const step = niceTickStep(yMax - yMin, 6);
+      // const snappedMin = Math.floor(yMin / step) * step;
+      // const snappedMax = Math.ceil(yMax / step) * step;
       if (charts[key]) {
         charts[key].data.datasets = datasets;
-        charts[key].options.scales.y.min = snappedMin;
-        charts[key].options.scales.y.max = snappedMax;
-        charts[key].options.scales.y.ticks.stepSize = step;
+        charts[key].options.scales.y.min = yMin;
+        charts[key].options.scales.y.max = yMax;
+        charts[key].options.scales.y.ticks.stepSize = undefined;
         charts[key].update('none');
       } else {
         const ctx = document.getElementById(canvasMap[key]).getContext('2d');
@@ -1709,49 +1791,126 @@ function makeChartOptions(yMin, yMax, sliderSel) {
    SECTION 3 — Optimum peak (single chart)
 ═════════════════════════════════════════════ */
 (function S3() {
-  /* URL3 removed — data embedded inline */
   let allData = [];
   let chart3  = null;
   const plugin = makeRefLabelPlugin('#s3-delta-slider');
 
-  function update() {
+  function update(animate = false) {
     const da = parseFloat(document.getElementById('s3-delta-slider').value);
-    const sorted = filterByDelta(allData, da);
-    if (!sorted.length) return;
-    const refY = da/2;
-    const [yMin,yMax] = computeYRange(sorted, refY);
-    const datasets = buildChartDatasets(sorted, da);
+    const tolerance = 0.5;
 
-    const step = niceTickStep(yMax - yMin, 6);
-    const snappedMin = Math.floor(yMin / step) * step;
-    const snappedMax = Math.ceil(yMax / step) * step;
+    // Filter — same logic as original
+    const filtered = allData.filter(p => Math.abs(p.delta_a - da) < tolerance);
+    if (!filtered.length) return;
+
+    const map = new Map();
+    filtered.forEach(p => {
+      const dist = Math.abs(p.delta_a - da);
+      if (!map.has(p.Gamma_e) || dist < map.get(p.Gamma_e).dist)
+        map.set(p.Gamma_e, {data:p, dist});
+    });
+    const sorted = [...map.values()].map(v=>v.data).sort((a,b)=>a.Gamma_e-b.Gamma_e);
+    if (!sorted.length) return;
+
+    const refY = da / 2;
+
+    // Dynamic Y range including reference lines
+    let vals = [];
+    sorted.forEach(d => d.peaks.forEach(p => { if (p!=null) vals.push(p); }));
+    vals.push(refY, -refY);
+    const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn;
+    let yMin, yMax;
+    if (rng === 0) { yMin = mn-0.5; yMax = mx+0.5; }
+    else { yMin = mn - rng*0.1; yMax = mx + rng*0.1; }
+
+    const maxPeaks = Math.max(...sorted.map(d=>d.peaks.length));
+    const colors = [C.gold, C.sky];
+    const refStyle = {fill:false, pointRadius:0, borderWidth:1.5, borderDash:[5,5], spanGaps:true};
+
+    const datasets = [
+      {...refStyle, label:'+δ/2', data:[{x:0.01,y:refY},{x:100,y:refY}], borderColor:C.coral},
+      {...refStyle, label:'-δ/2', data:[{x:0.01,y:-refY},{x:100,y:-refY}], borderColor:C.cobalt},
+    ];
+    for (let i=0; i<maxPeaks; i++) {
+      datasets.push({
+        label:`Peak ${i+1}`,
+        data: sorted.map(d=>({x:d.Gamma_e, y:d.peaks[i]??null})),
+        borderColor: colors[i%colors.length],
+        backgroundColor: colors[i%colors.length],
+        borderWidth:2, pointRadius:3, pointHoverRadius:5, spanGaps:false
+      });
+    }
+
+    const tf = {family:C.serif, size:12};
+
     if (chart3) {
       chart3.data.datasets = datasets;
-      chart3.options.scales.y.min = snappedMin;
-      chart3.options.scales.y.max = snappedMax;
-      chart3.options.scales.y.ticks.stepSize = step;
-      chart3.update('none');
+      chart3.options.scales.y.min = yMin;
+      chart3.options.scales.y.max = yMax;
+      chart3.update(animate ? 'default' : 'none');
     } else {
       const ctx = document.getElementById('chartS3').getContext('2d');
       chart3 = new Chart(ctx, {
-        type:'line', data:{datasets},
-        options: makeChartOptions(yMin, yMax, '#s3-delta-slider'),
+        type:'line',
+        data:{datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false, animation:{duration:0},
+          layout:{padding:0},
+          scales:{
+            x:{type:'logarithmic', min:0.01, max:100, title:{display:false},
+               ticks:{font:tf, color:C.ink2,
+                 callback(v){const l=Math.log10(v); return Number.isInteger(l)?'10'+superscript(l):null;}}},
+            y:{min:yMin, max:yMax, title:{display:false}, ticks:{font:tf, color:C.ink2}}
+          },
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              enabled:true, position:'nearest', mode:'index', intersect:false,
+              titleFont:{family:C.serif}, bodyFont:{family:C.serif},
+              callbacks:{
+                title(ti){return [`\u0393\u2091/\u0393f = ${ti[0].parsed.x.toFixed(4)}`];},
+                label(ctx){
+                  const l=ctx.dataset.label||'';
+                  if(l.startsWith('+')||l.startsWith('-')) return `Ref: ${l} = ${ctx.parsed.y.toFixed(4)}`;
+                  return `${l}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(4):'N/A'}`;
+                }
+              }
+            },
+            refLineLabels:{}
+          }
+        },
         plugins:[plugin]
       });
     }
   }
 
-  function init() {
-    allData = DATA_PEAK_OPT;
+  // function init() {
+  //   allData = DATA_PEAK_OPT;
+  //   document.getElementById('s3-loading').style.display='none';
+  //   document.getElementById('s3-content').style.display='block';
+  //   update(true);
+  //   if(window.MathJax && typeof MathJax.typesetPromise === 'function')
+  //     MathJax.typesetPromise([document.getElementById('s3-content')]);
+  // }
+  async function init() {
+  try {
+    allData = await fetch('./DataSets/peak_data.json').then(r=>r.json());
     document.getElementById('s3-loading').style.display='none';
     document.getElementById('s3-content').style.display='block';
-    update();
-    if(window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([document.getElementById('s3-content')]);
+    update(true);
+    if(window.MathJax && typeof MathJax.typesetPromise === 'function')
+      MathJax.typesetPromise([document.getElementById('s3-content')]);
+  } catch(err) {
+    document.getElementById('s3-loading').style.display='none';
+    const e=document.getElementById('s3-error');
+    e.style.display='block';
+    e.innerHTML=`<strong>Section 3 — data load error:</strong> ${err.message}`;
   }
+}
 
   document.getElementById('s3-delta-slider').addEventListener('input', function() {
     document.getElementById('s3-delta-val').textContent=parseFloat(this.value).toFixed(1);
-    update();
+    update(false);
   });
 
   init();
