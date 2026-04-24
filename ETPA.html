@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Optimization of Indistinguishable Two-Photon Absorption</title>
+  <title>ETPA · Indistinguishable Two-Photon Absorption</title>
 
   <!-- Fonts -->
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="icon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
@@ -92,7 +92,7 @@
 
     .nav-logo {
       font-family: var(--serif);
-      font-size: 15px;
+      font-size: 25px;
       color: var(--ink-2);
       letter-spacing: 0.01em;
     }
@@ -165,7 +165,7 @@
       font-size: 17px;
       line-height: 1.9;
       color: var(--ink-2);
-      max-width: 640px;
+      max-width: 1000px;
       margin-bottom: 3rem;
       font-weight: 300;
     }
@@ -218,6 +218,80 @@
       animation: lineSlide 2s ease-in-out infinite;
     }
 
+      .hero-inner {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 2rem;
+      width: 100%;
+    }
+
+    .hero-text {
+      flex: 1;
+      min-width: 0;
+      /* max-width: 640px; */
+    }
+
+    .hero-image {
+      flex: 0 0 auto;
+      width: 220px;
+      display: flex;
+      margin-top: 8rem;
+      align-items: center;
+      justify-content: center;
+    }
+.hero-float-img {
+  float: right;
+  width: 220px;
+  margin: 0 0 1.5rem 2.5rem;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+    .hero-image img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+    }
+    .hero-subheading {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 400;
+      margin: 2rem 0 0.75rem;
+      color: var(--ink);
+    }
+
+    .hero-note {
+      background:  var(--accent-lt);
+      border-left: 3px solid var(--accent-mid);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0 2rem;
+      font-size: 14px;
+      color: var(--ink-2);
+      line-height: 1.75;
+    }
+
+    .hero-note a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 0.5px dashed var(--accent-mid);
+    }
+
+    .hero-note a:hover { color: #26215C; }
+
+    .hero-note p { margin-bottom: 0.75rem; }
+
+
+    @media (max-width: 700px) {
+      .hero-inner {
+        flex-direction: column;
+      }
+      .hero-image {
+        width: 100%;
+        margin-top: 0;
+        position: static;
+      }
+    }
     @keyframes lineSlide {
       0%   { left: -52px; }
       100% { left: 104px; }
@@ -288,7 +362,7 @@
     }
 
     .plot-card-title {
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--ink-2);
       margin-bottom: 1.25rem;
@@ -296,7 +370,7 @@
     }
 
     .plot-caption {
-      font-size: 13px;
+      font-size: 15px;
       color: var(--ink-3);
       line-height: 1.7;
       margin-top: 1rem;
@@ -718,6 +792,71 @@
       border: 0.5px solid var(--accent-mid);
     }
 
+
+
+  /* ═══════════════════════════════════════════════
+        Authors
+    ═══════════════════════════════════════════════ */
+    .authors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.author-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border-med);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.author-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.author-affil {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.author-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.author-links a {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 0.5px dashed var(--accent-mid);
+  width: fit-content;
+}
+
+.author-links a:hover { color: #26215C; }
+
+.affiliations {
+  background: var(--surface-alt);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.8;
+}
+
+.affiliations p { margin-bottom: 0.4rem; }
+.affiliations p:last-child { margin-bottom: 0; }
+
+
+
     /* ═══════════════════════════════════════════════
        DIVIDERS / HELPERS
     ═══════════════════════════════════════════════ */
@@ -739,13 +878,14 @@
      NAV
 ══════════════════════════════════════════════════ -->
 <nav>
-  <div class="nav-logo">ETPA · Optimization Study</div>
+  <div class="nav-logo">ETPA · Indistinguishable Two-Photon Absorption</div>
   <ul class="nav-links">
-    <li><a href="#s0">Introduction</a></li>
-    <li><a href="#joint-probability">Two-photon States</a></li>
+    <li><a href="#Introduction">Introduction</a></li>
+    <li><a href="#joint-probability">Joint Probability</a></li>
     <li><a href="#peak-positions">Peak Positions</a></li>
     <li><a href="#optimum-peak">Optimum Peak</a></li>
-    <li><a href="#notes">Notes</a></li>
+    <li><a href="#authors">Authors</a></li>
+    <li><a href="https://doi.org/10.1103/PhysRevA.111.033709" target="_blank" rel="noopener noreferrer">Distinguishable Photons</a></li>
   </ul>
 </nav>
 
@@ -754,41 +894,143 @@
   <!-- ══════════════════════════════════════════════
        HERO
   ══════════════════════════════════════════════ -->
-  <section class="hero" id="s0">
-    <div class="hero-eyebrow">Research Results · Quantum Nonlinear Optics</div>
-    <h1>Optimization of <em>Indistinguishable<br>Two-Photon Absorption</em></h1>
-    <p class="hero-desc">
-      A comparative study of two-photon state probability distributions in the temporal and frequency domains for three photon-pair architectures: the optimum state, time-energy entangled pairs, and unentangled (classical) pairs. Each section presents interactive visualizations controlled by the physical parameters of the system.
-    </p>
-    <div class="hero-meta">
-      <div class="meta-item">
-        <div class="label">Domain</div>
-        <div class="value">Nonlinear quantum optics</div>
+  <!-- <section class="hero" id="s0">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Research Results · Quantum Nonlinear Optics</div>
+      <h1>Optimization of <em>Indistinguishable<br>Two-Photon Absorption</em></h1>
+      <p class="hero-desc">
+        A comparative study of two-photon state probability distributions in the temporal and frequency domains for three photon-pair architectures: the optimum state, time-energy entangled pairs, and unentangled (classical) pairs. Each section presents interactive visualizations controlled by the physical parameters of the system.
+      </p>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <div class="label">Domain</div>
+          <div class="value">Nonlinear quantum optics</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">States compared</div>
+          <div class="value">Optimum · Entangled · Unentangled</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Parameters</div>
+          <div class="value">Γ<sub>e</sub>/Γ<sub>f</sub> · δ<sub>a</sub>/Γ<sub>f</sub></div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Status</div>
+          <div class="value">Fully self-contained — no server needed</div>
+        </div>
       </div>
-      <div class="meta-item">
-        <div class="label">States compared</div>
-        <div class="value">Optimum · Entangled · Unentangled</div>
-      </div>
-      <div class="meta-item">
-        <div class="label">Parameters</div>
-        <div class="value">Γ<sub>e</sub>/Γ<sub>f</sub> · δ<sub>a</sub>/Γ<sub>f</sub></div>
-      </div>
-      <div class="meta-item">
-        <div class="label">Status</div>
-        <div class="value">Fully self-contained — no server needed</div>
+      <div class="scroll-hint">
+        <div class="scroll-line"></div>
+        scroll to explore
       </div>
     </div>
-    <div class="scroll-hint">
-      <div class="scroll-line"></div>
-      scroll to explore
+
+    <div class="hero-image">
+      <img src="three_level.png" alt="Three-level system diagram"/>
     </div>
-  </section>
+  </div>
+</section> -->
+
+<section class="hero" id="Introduction">
+  <div class="hero-inner">
+
+    <div class="hero-text">
+      <div class="hero-eyebrow">Introduction</div>
+      <h1>Optimization of <em>Indistinguishable<br>Two-Photon Absorption</em></h1>
+      <img src="three_level.png" alt="Three-level system" class="hero-float-img"/>
+      <p class="hero-desc">
+        We investigate the excitation of a three-level ladder-type atom by a unidirectional field containing a pair of indistinguishable photons.
+         Starting from an analytical expression for the two-photon absorption probability, 
+         we determine the two-photon state that maximizes the population of the upper atomic state. 
+         We show that in the limit of an infinitely long pulse, perfect excitation is possible. 
+         The mathematically optimal state is identified as the time-reversed counterpart of the two-photon state emitted in spontaneous cascade decay.
+      </p>
+
+      <p class="hero-desc">
+        We then compare this ideal excitation strategy with experimentally accessible families of states, analyzing how the optimal conditions depend on the ratio of atomic decay rates and on the separation of the atomic transition frequencies. Crucially, for indistinguishable photons described by Gaussian pulses, quantum interference may shift the maxima of the marginal spectral distribution away from the atomic resonances, qualitatively modifying the optimal excitation strategy.
+      </p>
+
+      <h2 class="hero-subheading">The Core Model</h2>
+
+      <p class="hero-desc">
+        For the three-level system shown in the diagram, the probability of successful two-photon excitation at time \(t\) is:
+      </p>
+
+      <div class="state-block" style="margin: 1.25rem 0;">
+      <div class="state-header">
+        <span class="state-label">Two-photon excitation probability</span>
+        <a class="state-ref" href="#">Eq.&thinsp;(14) &middot; p.&thinsp;3</a>
+      </div>
+      <div class="state-formula">
+        \[
+          P_{f}(t)= 4\Gamma_{e}\Gamma_{f}e^{-\Gamma_{f}t}
+          \left|\int_{t_0}^{t}dt_2\,
+            e^{\left(i\omega_{fe}+\frac{1}{2}(\Gamma_{f}-\Gamma_{e})\right)t_2}
+            \int_{t_0}^{t_2}dt_1\,
+            e^{\left(i\omega_{eg}+\frac{\Gamma_{e}}{2}\right)t_1}
+            \Phi_{\rm sym}(t_1,t_2)
+          \right|^2
+        \]
+        </div>
+       </div>
+
+      <p class="hero-desc">
+        Here \(\Gamma_e\) and \(\Gamma_f\) are the decay rates of the intermediate and final states. 
+        The atomic transition frequencies are \(\omega_{eg}\) and \(\omega_{fe}\). 
+        Throughout the interactive sections, the atomic detuning is \(\delta_a = \omega_{fe} - \omega_{eg}\). 
+        Also \(\mu\) is the delay between the mean arrival time of the two photons.
+        Three specific state architectures are studied: the optimal state and two variants of Gaussian states. 
+        Their mathematical definitions are presented within their respective interactive sections.
+      </p>
+
+      <div class="hero-note">
+        <p>
+          <strong>Note:</strong> This platform is a supplementary interactive guide. We highly encourage reading the main manuscript alongside this website to fully understand the theoretical derivations.
+        </p>
+        <p style="margin-bottom:0;">
+          For our previous foundational work on <strong>distinguishable</strong> photons, please refer to:
+          <a href="#" target="_blank" rel="noopener noreferrer">Phys. Rev. A (Insert Citation/DOI)</a>.
+        </p>
+      </div>
+
+      <!-- <div class="hero-meta">
+        <div class="meta-item">
+          <div class="label">Domain</div>
+          <div class="value">Nonlinear quantum optics</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">States compared</div>
+          <div class="value">State I · State II · State III</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Parameters</div>
+          <div class="value">Γ<sub>e</sub>/Γ<sub>f</sub> · δ<sub>a</sub>/Γ<sub>f</sub></div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Status</div>
+          <div class="value">Manuscript in preparation</div>
+        </div>
+      </div> -->
+
+      <div class="scroll-hint">
+        <div class="scroll-line"></div>
+        scroll to explore
+      </div>
+    </div>
+
+    <!-- <div class="hero-image">
+      <img src="three_level.png" alt="Three-level ladder system diagram"/>
+    </div> -->
+
+  </div>
+</section>
 
   <!-- ══════════════════════════════════════════════
        SECTION 1 — Two-photon State Probabilities (6 plots + 2 sliders)
   ══════════════════════════════════════════════ -->
   <section class="scroll-section section" id="joint-probability">
-    <div class="section-tag">01 · Main result <span>6 panels</span></div>
+    <div class="section-tag">01 · Joint Probability </div>
     <h2>Two-photon State Probability Distributions</h2>
     <p class="section-intro">
       For each photon-pair architecture, we compute the joint two-photon probability distribution \(p(t_1, t_2)\) and \(p(\omega_1, \omega_2)\) together with their marginals \(P(t)\) and \(P(\omega)\). The slider for \(\Gamma_e/\Gamma_f\) and \(\delta_a/\Gamma_f\) controls which parameter row is displayed. The checkbox toggles between optimised and fixed \(\delta_f\).
@@ -796,22 +1038,28 @@
 
   <div class="state-blocks">
 
-    <div class="state-block">
-      <div class="state-header">
-        <span class="state-label">State I (Optimal)</span>
-        <a class="state-ref" href="#">Eq.&thinsp;(19) &middot; p.&thinsp;4</a>
-      </div>
-      <div class="state-formula">
-        \[
-          \Phi_{\rm opt}(t_1,t_2)=
-          \frac{e^{\frac{1}{2}\Gamma_{f} t_2
-                -\frac{1}{2}\Gamma_{e}(t_2-t_{1})
-                -i\omega_{fe}t_2-i\omega_{eg}t_1}}
-              {\sqrt{\mathcal{N}_{\rm opt}}}
-          \,\Theta(t-t_2)\,\Theta(t_2-t_1)\,\Theta(t_1-t_0)
-        \]
-      </div>
-    </div>
+<div class="state-block">
+  <div class="state-header">
+    <span class="state-label">State I (Optimal)</span>
+    <a class="state-ref" href="#">Eq.&thinsp;(19) &middot; p.&thinsp;4</a>
+  </div>
+  <div class="state-formula">
+    \[
+      \Phi_{\rm opt}(t_1,t_2)=
+      \frac{e^{\frac{1}{2}\Gamma_{f} t_2
+            -\frac{1}{2}\Gamma_{e}(t_2-t_{1})
+            -i\omega_{fe}t_2-i\omega_{eg}t_1}}
+          {\sqrt{\mathcal{N}_{\rm opt}}}
+      \,\Theta(t^*-t_2)\,\Theta(t_2-t_1)\,\Theta(t_1-t_0)
+    \]
+    \[
+      \text{where } \Theta(x) = \begin{cases} 1 & x \ge 0 \\ 0 & x < 0 \end{cases}
+    \]
+    \[
+      \text{With } t_0 \to -\infty, \text{ the normalization is simply } \mathcal{N}_{\rm opt} = \frac{1}{\Gamma_e \Gamma_f}    \]
+
+  </div>
+</div>
 
     <div class="state-block">
       <div class="state-header">
@@ -827,6 +1075,9 @@
             -i\omega_{01}t_1-i\omega_{02}t_2
           \right\}
         \]
+        \[
+        \delta_f = \omega_{02} - \omega_{01}
+        \]
       </div>
     </div>
 
@@ -841,6 +1092,15 @@
           \frac{1}{2\sqrt{\mathcal{N}}}
           \bigl[\psi_{a}(t_1)\psi_{b}(t_2)
               +\psi_{b}(t_1)\psi_{a}(t_2)\bigr]
+        \]
+        \[
+       \text{where }\quad \psi_{a,b}(t)=\left(\frac{\Omega_{a,b}^2}{2\pi}\right)^{1/4}\exp\left[-\frac{\Omega_{a,b}^2}{4}(t-\mu_{a,b})^2-i\omega_{a,b}t\right]
+        \]
+        \[
+        \text{and} \quad \mathcal{N} = 1+\frac{2\Omega_a\Omega_b}{\Omega_a^2+\Omega_b^2} \exp\left[-\frac{\mu^2\Omega_a^2\Omega_b^2+4\delta_{f}^2}{2(\Omega_a^2+\Omega_b^2)}\right]
+        \]
+        \[
+        \delta_f = \omega_b - \omega_a
         \]
       </div>
     </div>
@@ -897,7 +1157,11 @@
       </div>
 
       <div class="plot-caption">
-        Each column corresponds to one photon-pair architecture. Rows: temporal marginal P(t), temporal joint distribution p(t₁, t₂), frequency marginal P(ω), and frequency joint distribution p(ω₁, ω₂). White dashed lines in the frequency heatmaps mark the intermediate-state resonances ω<sub>eg</sub> and ω<sub>fe</sub>.
+        Each column corresponds to one photon-pair state.
+        Rows: temporal marginal \(P(t)\), temporal joint distribution \(p(t_1, t_2)\),
+        frequency marginal \(P(\omega)\), and frequency joint distribution \(p(\omega_1, \omega_2)\).
+        Dashed lines in the frequency heatmaps mark the intermediate-state resonances
+        \(\omega_{eg}\) and \(\omega_{fe}\).
       </div>
     </div><!-- /#s1-content -->
   </section>
@@ -906,7 +1170,7 @@
        SECTION 2 — Peak positions, three states
   ══════════════════════════════════════════════ -->
   <section class="scroll-section section" id="peak-positions">
-    <div class="section-tag">02 · Spectral structure <span>3 panels</span></div>
+    <div class="section-tag">02 · Marginal Peak Positions </div>
     <h2>Peak Positions of the Marginal Frequency Distributions</h2>
     <p class="section-intro">
       The peak positions \(\omega_\text{peak}\) of the single-photon marginal distribution \(P(\omega)\) are plotted as functions of \(\Gamma_e/\Gamma_f\) for each state. Two peaks may emerge as the intermediate-state decay rate changes. Reference lines show the bare resonances \(\omega_{fe}\) and \(\omega_{eg}\).
@@ -940,14 +1204,19 @@
         p(\omega)=
         \frac{1}{\sqrt{\pi(\Omega_{+}^2+\Omega_{-}^2)}\,\mathcal{N}}
         \Biggl\{
-          e^{-\frac{4(\omega-\omega_{01})^2}{\Omega_{+}^2+\Omega_{-}^2}}
-          +e^{-\frac{4(\omega-\omega_{02})^2}{\Omega_{+}^2+\Omega_{-}^2}}
-          +2e^{-\frac{4(\omega-\bar{\omega})^2}{\Omega_{+}^2+\Omega_{-}^2}
+          \exp\!\left(-\frac{4(\omega-\omega_{01})^2}{\Omega_{+}^2+\Omega_{-}^2}\right)
+          +\exp\!\left(-\frac{4(\omega-\omega_{02})^2}{\Omega_{+}^2+\Omega_{-}^2}\right)
+          +2\exp\!\left(-\frac{4(\omega-\bar{\omega})^2}{\Omega_{+}^2+\Omega_{-}^2}
                -\Omega^2\mu^2
-               -\frac{\delta_f^2}{\Omega_{-}^2}}
+               -\frac{\delta_f^2}{\Omega_{-}^2}\right)
           \cos\!\left[\frac{2\Omega_{-}^2\mu}{\Omega_{+}^2+\Omega_{-}^2}(\omega-\bar{\omega})\right]
         \Biggr\}
       \]
+      \[
+      \text{Where}\quad \bar{\omega} = \frac{1}{2}(\omega_{01}+\omega_{02}), \quad
+             \Omega^2 = \frac{\Omega_{+}^2\Omega_{-}^2}{\Omega_{+}^2+\Omega_{-}^2}
+      \]
+      \[\delta_f = \omega_{02} - \omega_{01}   \]
     </div>
   </div>
 
@@ -966,13 +1235,14 @@
         \right\}
       \]
       \[
-        x=\sqrt{\tfrac{2\Omega_a\Omega_b}{\Omega_a^2+\Omega_b^2}}
+        x=\sqrt{\frac{2\Omega_a\Omega_b}{\Omega_a^2+\Omega_b^2}}
         \exp\!\left\{
-          -\tfrac{\Omega_a^2\Omega_b^2\mu^2+4\delta_f^2
+          -\frac{\Omega_a^2\Omega_b^2\mu^2+4\delta_f^2
                   -4i\delta_f(\mu_a\Omega_a^2+\mu_b\Omega_b^2)}
                  {4(\Omega_a^2+\Omega_b^2)}
         \right\}
       \]
+      
     </div>
   </div>
 
@@ -1023,8 +1293,21 @@
         </div>
       </div>
 
-      <div class="plot-caption">
+      <!-- <div class="plot-caption">
         Peak 1 and Peak 2 (where present) are shown in <span style="color:var(--gold);font-weight:500;">gold</span> and <span style="color:var(--sky);font-weight:500;">sky blue</span> respectively. The <span style="color:var(--coral);font-weight:500;">red dashed</span> and <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> horizontal lines mark ω<sub>fe</sub>/Γ<sub>f</sub> and ω<sub>eg</sub>/Γ<sub>f</sub>. Data from <code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, <code>peak_data_UnEnt.json</code>.
+      </div> -->
+      <div class="plot-caption">
+        Peak 1 and Peak 2 (where present) are shown in 
+        <span style="color:var(--gold);font-weight:500;">gold</span> 
+        and 
+        <span style="color:var(--sky);font-weight:500;">sky blue</span> 
+        respectively. The 
+        <span style="color:var(--coral);font-weight:500;">red dashed</span> 
+        horizontal line marks \(\frac{\omega_{fe}}{\Gamma_f} = \frac{\delta_a}{2\Gamma_f}\) 
+        and the 
+        <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> 
+        horizontal line marks \(\frac{\omega_{eg}}{\Gamma_f} = -\frac{\delta_a}{2\Gamma_f}\). 
+       
       </div>
     </div>
   </section>
@@ -1033,7 +1316,7 @@
        SECTION 3 — Optimum peak position only
   ══════════════════════════════════════════════ -->
   <section class="scroll-section section" id="optimum-peak">
-    <div class="section-tag">03 · Optimum state detail <span>1 panel</span></div>
+    <div class="section-tag">03 · Optimum state detail </div>
     <h2>Peak Position of the Optimum-State Marginal Distribution</h2>
     <p class="section-intro">
       A focused view of the optimum-state frequency marginal peak positions derived analytically from Eq. (33) of the draft. Root-finding of the derivative locates the extrema as a function of \(\Gamma_e/\Gamma_f\) for the selected detuning \(\delta_a/\Gamma_f\).
@@ -1086,16 +1369,81 @@
         </div>
       </div>
 
-      <div class="plot-caption">
+      <!-- <div class="plot-caption">
         Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">sky blue</span>) are roots of dP(ω)/dω = 0 computed numerically. The <span style="color:var(--coral);font-weight:500;">red dashed</span> line marks ω<sub>fe</sub>/Γ<sub>f</sub> = δ<sub>a</sub>/(2Γ<sub>f</sub>); the <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> line marks ω<sub>eg</sub>/Γ<sub>f</sub> = −δ<sub>a</sub>/(2Γ<sub>f</sub>). Data from <code>peak_data.json</code>.
+      </div> -->
+      <div class="plot-caption">
+        Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">sky blue</span>) 
+        are roots of \(\frac{dP(\omega)}{d\omega} = 0\) computed numerically. The <span style="color:var(--coral);font-weight:500;">red dashed</span> 
+        line marks \(\frac{\omega_{fe}}{\Gamma_f} = \frac{\delta_a}{2\Gamma_f}\); the <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> 
+        line marks \(\frac{\omega_{eg}}{\Gamma_f} = -\frac{\delta_a}{2\Gamma_f}\).</code>.
       </div>
     </div>
   </section>
 
+<!-- ══════════════════════════════════════════════
+       Authours
+  ══════════════════════════════════════════════ -->
+
+
+  <section class="scroll-section section" id="authors">
+  <div class="section-tag">Authors</div>
+  <h2>About the Authors</h2>
+
+  <div class="authors-grid">
+
+    <div class="author-card">
+      <div class="author-name">Masood Valipour<sup>1,2</sup></div>
+      <div class="author-affil">Quantum optics, open quantum systems</div>
+      <div class="author-links">
+        <a href="https://masood-valipour.github.io/masood-valipour" target="_blank" rel="noopener noreferrer">Website</a>
+        <a href="https://scholar.google.com/citations?user=pd996ysAAAAJ" target="_blank" rel="noopener noreferrer">Google Scholar</a>
+        <a href="mailto:masood.valipour@umk.pl">masood.valipour@umk.pl</a>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-name">Gniewomir Sarbicki<sup>1,2</sup></div>
+      <div class="author-affil">Quantum information, entanglement theory</div>
+      <div class="author-links">
+        <a href="https://fizyka.umk.pl/~gniewko/index_en.html" target="_blank" rel="noopener noreferrer">Website</a>
+        <a href="https://scholar.google.com/citations?user=guBV-eEAAAAJ" target="_blank" rel="noopener noreferrer">Google Scholar</a>
+        <a href="mailto:gniewko@fizyka.umk.pl">gniewko@fizyka.umk.pl</a>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-name">Karolina Słowik<sup>1,2</sup></div>
+      <div class="author-affil">Quantum nanophotonics, light-matter interaction</div>
+      <div class="author-links">
+        <a href="https://fizyka.umk.pl/~karolina/" target="_blank" rel="noopener noreferrer">Website</a>
+        <a href="https://scholar.google.com/citations?user=oqNU7OoAAAAJ" target="_blank" rel="noopener noreferrer">Google Scholar</a>
+        <a href="mailto:karolina@fizyka.umk.pl">karolina@fizyka.umk.pl</a>
+      </div>
+    </div>
+
+    <div class="author-card">
+      <div class="author-name">Anita Dąbrowska<sup>3</sup></div>
+      <div class="author-affil">Open quantum systems, quantum stochastics</div>
+      <div class="author-links">
+        <a href="https://scholar.google.com/citations?user=X6TyRLsAAAAJ" target="_blank" rel="noopener noreferrer">Google Scholar</a>
+        <a href="mailto:anita.dabrowska@ug.edu.pl">anita.dabrowska@ug.edu.pl</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="affiliations">
+    <p><sup>1</sup> Institute of Physics, Faculty of Physics, Astronomy and Informatics, Nicolaus Copernicus University, Grudziądzka 5/7, 87–100 Toruń, Poland</p>
+    <p><sup>2</sup> Institute of Advanced Studies, Nicolaus Copernicus University, Wileńska 4, 87–100 Toruń, Poland</p>
+    <p><sup>3</sup> Institute of Theoretical Physics and Astrophysics, Faculty of Mathematics, Physics and Informatics, University of Gdańsk, Wita Stwosza 57, 80–308 Gdańsk, Poland</p>
+  </div>
+
+</section>
   <!-- ══════════════════════════════════════════════
        NOTES / METHODS
   ══════════════════════════════════════════════ -->
-  <section class="scroll-section section" id="notes">
+  <!-- <section class="scroll-section section" id="notes">
     <div class="section-tag">04 · Methods &amp; notes</div>
     <h2>Computational notes</h2>
     <p class="section-intro">
@@ -1126,27 +1474,35 @@
         <li><code>MathJax 3</code> — Inline LaTeX rendering</li>
       </ul>
     </div>
-  </section>
+  </section> -->
 
   <!-- ══════════════════════════════════════════════
        FOOTER
   ══════════════════════════════════════════════ -->
-  <section class="footer-section" id="sfooter">
-    <h2>Keywords &amp; references</h2>
-    <p>This page will be updated as results are finalised. The theoretical framework and computational models are based on the accompanying manuscript (DOI to be linked).</p>
-    <div class="tag-list">
-      <span class="tag">entangled two-photon absorption</span>
-      <span class="tag">ETPA cross-section</span>
-      <span class="tag">SPDC</span>
-      <span class="tag">joint spectral amplitude</span>
-      <span class="tag">Schmidt decomposition</span>
-      <span class="tag">time–energy entanglement</span>
-      <span class="tag">marginal distribution</span>
-      <span class="tag">optimum state</span>
-      <span class="tag">variational optimization</span>
-      <span class="tag">quantum nonlinear optics</span>
-    </div>
-  </section>
+<section class="footer-section" id="sfooter">
+  <h2>Keywords &amp; references</h2>
+  <p>This page will be updated as results are finalised. The theoretical framework and computational models are based on the accompanying manuscript (DOI to be linked).</p>
+  
+  <p>
+    Source code and datasets for this interactive page are available on GitHub:<br>
+    <a href="https://github.com/YOUR-USERNAME/YOUR-REPO" target="_blank" rel="noopener noreferrer" style="color:var(--accent); border-bottom: 0.5px dashed var(--accent-mid); text-decoration:none;">
+      github.com/YOUR-USERNAME/YOUR-REPO
+    </a>
+  </p>
+
+  <div class="tag-list">
+    <span class="tag">entangled two-photon absorption</span>
+    <span class="tag">ETPA cross-section</span>
+    <span class="tag">SPDC</span>
+    <span class="tag">joint spectral amplitude</span>
+    <span class="tag">Schmidt decomposition</span>
+    <span class="tag">time–energy entanglement</span>
+    <span class="tag">marginal distribution</span>
+    <span class="tag">optimum state</span>
+    <span class="tag">variational optimization</span>
+    <span class="tag">quantum nonlinear optics</span>
+  </div>
+</section>
 
 </div><!-- /.page -->
 
