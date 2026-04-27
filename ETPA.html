@@ -92,7 +92,7 @@
 
     .nav-logo {
       font-family: var(--serif);
-      font-size: 25px;
+      font-size: 18px;
       color: var(--ink-2);
       letter-spacing: 0.01em;
     }
@@ -104,7 +104,7 @@
     }
 
     .nav-links a {
-      font-size: 12px;
+      font-size: 13px;
       letter-spacing: 0.04em;
       color: var(--ink-3);
       text-decoration: none;
@@ -162,7 +162,7 @@
     }
 
     .hero-desc {
-      font-size: 17px;
+      font-size: 16px;
       line-height: 1.9;
       color: var(--ink-2);
       max-width: 1000px;
@@ -266,7 +266,7 @@
       border-radius: 0 var(--radius-md) var(--radius-md) 0;
       padding: 1.25rem 1.5rem;
       margin: 1.5rem 0 2rem;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--ink-2);
       line-height: 1.75;
     }
@@ -341,10 +341,10 @@
     }
 
     .section-intro {
-      font-size: 15.5px;
+      font-size: 16px;
       line-height: 1.85;
       color: var(--ink-2);
-      max-width: 700px;
+      max-width: 950px;
       margin-bottom: 2.5rem;
       font-weight: 300;
     }
@@ -1201,17 +1201,20 @@
     </div>
     <div class="state-formula">
       \[
-        p(\omega)=
+        \begin{aligned}
+        p(\omega) =
         \frac{1}{\sqrt{\pi(\Omega_{+}^2+\Omega_{-}^2)}\,\mathcal{N}}
-        \Biggl\{
+        &\Biggl\{
           \exp\!\left(-\frac{4(\omega-\omega_{01})^2}{\Omega_{+}^2+\Omega_{-}^2}\right)
           +\exp\!\left(-\frac{4(\omega-\omega_{02})^2}{\Omega_{+}^2+\Omega_{-}^2}\right)
+          \\&\quad
           +2\exp\!\left(-\frac{4(\omega-\bar{\omega})^2}{\Omega_{+}^2+\Omega_{-}^2}
-               -\Omega^2\mu^2
-               -\frac{\delta_f^2}{\Omega_{-}^2}\right)
+              -\Omega^2\mu^2
+              -\frac{\delta_f^2}{\Omega_{-}^2}\right)
           \cos\!\left[\frac{2\Omega_{-}^2\mu}{\Omega_{+}^2+\Omega_{-}^2}(\omega-\bar{\omega})\right]
         \Biggr\}
-      \]
+        \end{aligned}
+        \]
       \[
       \text{Where}\quad \bar{\omega} = \frac{1}{2}(\omega_{01}+\omega_{02}), \quad
              \Omega^2 = \frac{\Omega_{+}^2\Omega_{-}^2}{\Omega_{+}^2+\Omega_{-}^2}
@@ -1300,7 +1303,7 @@
         Peak 1 and Peak 2 (where present) are shown in 
         <span style="color:var(--gold);font-weight:500;">gold</span> 
         and 
-        <span style="color:var(--sky);font-weight:500;">sky blue</span> 
+        <span style="color:var(--sky);font-weight:500;">blue</span> 
         respectively. The 
         <span style="color:var(--coral);font-weight:500;">red dashed</span> 
         horizontal line marks \(\frac{\omega_{fe}}{\Gamma_f} = \frac{\delta_a}{2\Gamma_f}\) 
@@ -1373,7 +1376,7 @@
         Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">sky blue</span>) are roots of dP(ω)/dω = 0 computed numerically. The <span style="color:var(--coral);font-weight:500;">red dashed</span> line marks ω<sub>fe</sub>/Γ<sub>f</sub> = δ<sub>a</sub>/(2Γ<sub>f</sub>); the <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> line marks ω<sub>eg</sub>/Γ<sub>f</sub> = −δ<sub>a</sub>/(2Γ<sub>f</sub>). Data from <code>peak_data.json</code>.
       </div> -->
       <div class="plot-caption">
-        Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">sky blue</span>) 
+        Peak 1 (<span style="color:var(--gold);font-weight:500;">gold</span>) and Peak 2 (<span style="color:var(--sky);font-weight:500;">blue</span>) 
         are roots of \(\frac{dP(\omega)}{d\omega} = 0\) computed numerically. The <span style="color:var(--coral);font-weight:500;">red dashed</span> 
         line marks \(\frac{\omega_{fe}}{\Gamma_f} = \frac{\delta_a}{2\Gamma_f}\); the <span style="color:var(--cobalt);font-weight:500;">blue dashed</span> 
         line marks \(\frac{\omega_{eg}}{\Gamma_f} = -\frac{\delta_a}{2\Gamma_f}\).</code>.
