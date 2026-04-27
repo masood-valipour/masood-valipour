@@ -1443,41 +1443,6 @@
   </div>
 
 </section>
-  <!-- ══════════════════════════════════════════════
-       NOTES / METHODS
-  ══════════════════════════════════════════════ -->
-  <!-- <section class="scroll-section section" id="notes">
-    <div class="section-tag">04 · Methods &amp; notes</div>
-    <h2>Computational notes</h2>
-    <p class="section-intro">
-      All visualizations run client-side; no server is required beyond a local file host for the JSON datasets. The JavaScript implementations of the probability functions mirror the analytical expressions derived in the accompanying paper.
-    </p>
-
-    <div class="info-box gap-lg">
-      <h3>Section 1 — Two-photon probability distributions</h3>
-      <p>Calculated on a 200×200 grid using explicit meshgrid evaluation. Complex arithmetic is handled via <code>math.js</code>. The Plotly layout uses a 4-row × 3-column subplot structure. Heatmaps use a reversed Hot colorscale. Grid size and domain can be adjusted via the domain control panel.</p>
-      <ul>
-        <li><strong>Optimum state:</strong> Analytical expressions in temporal and frequency domains with the two-photon resonance at \(\omega_{fg}\).</li>
-        <li><strong>Entangled state:</strong> Gaussian–Gaussian joint spectral amplitude parameterised by pump bandwidth \(\Omega_P\) and correlation bandwidth \(\Omega_M\), with optional delay \(t_{02}\).</li>
-        <li><strong>Unentangled state:</strong> Symmetrised product state of two independent Gaussian wave-packets \(\psi_A\) and \(\psi_B\).</li>
-      </ul>
-      <p>Parameters per slider combination are embedded directly in this file.</p>
-
-      <h3>Section 2 — Peak positions, three states</h3>
-      <p>Roots of the derivative of the marginal distribution \(P(\omega)\) are computed numerically. Each dataset (<code>peak_data_Opt.json</code>, <code>peak_data_Ent.json</code>, <code>peak_data_UnEnt.json</code>) contains pre-calculated peak positions over a grid of \((\Gamma_e/\Gamma_f,\, \delta_a/\Gamma_f)\) values. The slider selects the nearest available \(\delta_a\) row with tolerance 0.5.</p>
-
-      <h3>Section 3 — Optimum peak positions (full detuning range)</h3>
-      <p>Same root-finding methodology applied to the closed-form expression of the optimum-state marginal (Eq. 33 of the draft). The slider covers \(\delta_a/\Gamma_f \in [0, 100]\) with 0.25 step resolution. Data source: <code>peak_data.json</code>.</p>
-
-      <h3>Libraries &amp; dependencies</h3>
-      <ul>
-        <li><code>Plotly 2.27</code> — Section 1 heatmap subplot</li>
-        <li><code>Chart.js 4.4</code> — Sections 2 &amp; 3 line charts</li>
-        <li><code>math.js 11.11</code> — Complex-number arithmetic</li>
-        <li><code>MathJax 3</code> — Inline LaTeX rendering</li>
-      </ul>
-    </div>
-  </section> -->
 
   <!-- ══════════════════════════════════════════════
        FOOTER
@@ -1488,8 +1453,8 @@
   
   <p>
     Source code and datasets for this interactive page are available on GitHub:<br>
-    <a href="https://github.com/YOUR-USERNAME/YOUR-REPO" target="_blank" rel="noopener noreferrer" style="color:var(--accent); border-bottom: 0.5px dashed var(--accent-mid); text-decoration:none;">
-      github.com/YOUR-USERNAME/YOUR-REPO
+    <a href="https://github.com/masood-valipour/ETPA-Indistinguishable.git" target="_blank" rel="noopener noreferrer" style="color:var(--accent); border-bottom: 0.5px dashed var(--accent-mid); text-decoration:none;">
+      github.com/masood-valipour/ETPA-Indistinguishable
     </a>
   </p>
 
