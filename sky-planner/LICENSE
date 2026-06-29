@@ -1,0 +1,37 @@
+Night Sky Observing Planner
+Copyright (c) 2026 Masood Valipour. All rights reserved.
+
+This work is licensed for NON-COMMERCIAL use. In spirit it follows the
+Creative Commons Attribution-NonCommercial 4.0 International license
+(CC BY-NC 4.0): https://creativecommons.org/licenses/by-nc/4.0/
+
+1. NON-COMMERCIAL USE (free)
+   You are free to use, copy, modify, and share this software and its
+   source code for personal, educational, research, and other
+   NON-COMMERCIAL purposes, at no cost, provided that you keep this
+   copyright notice and give appropriate credit to the original author.
+
+2. COMMERCIAL USE (by permission)
+   Any commercial or for-profit use requires PRIOR WRITTEN PERMISSION
+   from the author. This includes, without limitation: selling this
+   software; bundling it in a paid product or service; using it to
+   generate revenue; or use by a for-profit organization as part of its
+   business. To request a commercial license, contact:
+       Masood Valipour — https://github.com/masood-valipour
+
+3. NO WARRANTY
+   This software is provided "AS IS", without warranty of any kind,
+   express or implied. The author is not liable for any claim, damages,
+   or other liability arising from its use. The astronomy, difficulty,
+   and eyepiece outputs are APPROXIMATIONS and must not be relied upon as
+   precise or for any safety-critical purpose.
+
+4. THIRD-PARTY COMPONENTS
+   This project bundles the "astronomy-engine" library by Don Cross,
+   which is licensed separately under the MIT License (see the header of
+   astronomy.browser.js). That library remains under its own MIT terms
+   and is NOT covered by this license.
+
+This is a plain-language license for a personal project and is not legal
+advice. If you need a standardized legal text, use CC BY-NC 4.0 (linked
+above) or the PolyForm Noncommercial License 1.0.0.

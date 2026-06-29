@@ -149,6 +149,7 @@
   <div class="topbar noprint">
     <h1>🔭 Night Sky Observing Planner</h1>
     <div class="row tight">
+      <button class="tab" id="helpBtn" title="About &amp; help">❓ Help</button>
       <button class="tab" id="themeBtn" title="Cycle theme">🌙 Dark</button>
     </div>
   </div>
@@ -1112,6 +1113,63 @@ function openLog(id){
 }
 function closeModal(){ $("#modalHost").innerHTML=""; }
 
+/* About / Help modal */
+function openHelp(){
+  const L=(cls,t)=>`<span class="lab ${cls}">${t}</span>`;
+  $("#modalHost").innerHTML=`
+   <div class="modal-bg" id="hbg"><div class="modal">
+    <h2>🔭 About &amp; Help</h2>
+    <p class="small">A free night-sky <b>observing planner &amp; logbook</b> for amateur astronomers.
+      Tell it where you are, the date, your equipment and how dark your sky is — it works out which
+      objects are worth observing tonight and tags each with how hard it is <i>for your setup</i>.
+      Build a checklist, tick off what you see, and keep notes. Works offline after the first load.</p>
+
+    <h2 style="margin-top:12px;">Getting started</h2>
+    <ol class="small" style="padding-left:18px;margin:4px 0;">
+      <li><b>Where &amp; when</b> — search a city (or enter latitude/longitude offline), pick the evening's date.</li>
+      <li><b>Gear &amp; sky</b> — naked eye, binoculars, or telescope (add aperture &amp; focal length), and how dark your sky is (Dark / Suburban / Bright). Blank fields use sensible defaults.</li>
+      <li>Tap <b>Compute sky ▸</b>.</li>
+    </ol>
+
+    <h2 style="margin-top:12px;">The three views</h2>
+    <ul class="small" style="padding-left:18px;margin:4px 0;">
+      <li><b>What's up</b> — best-placed targets for tonight.</li>
+      <li><b>Catalog</b> — all ~150 objects (110 Messier + famous NGC/Caldwell + planets &amp; Moon).</li>
+      <li><b>My list &amp; log</b> — your personal checklist, progress counter and observing log. Load a starter list (Messier 110, Caldwell, Beginner Top 20) from the bottom panel.</li>
+    </ul>
+
+    <h2 style="margin-top:12px;">Difficulty labels (for your gear &amp; sky)</h2>
+    <div class="small" style="line-height:2;">
+      ${L("easy","Easy to find")} ${L("needs","Needs experience")} ${L("hard","Extremely difficult")}
+      ${L("toofaint","Too faint for your gear")} ${L("sun","Lost in the Sun's glare")} ${L("horizon","Below the horizon here")}
+      <div class="muted" style="margin-top:4px;">Tap any label in the table to see the reasoning. They are honest <b>estimates</b>, not precise predictions.</div>
+    </div>
+
+    <h2 style="margin-top:12px;">Per-object actions</h2>
+    <ul class="small" style="padding-left:18px;margin:4px 0;">
+      <li><b>+ / ✓</b> (first column) — add to / remove from your list; <b>log</b> appears once it's on your list.</li>
+      <li><b>map</b> — opens Stellarium Web centred on the object · <b>photo</b> — image search · <b>info</b> — web search.</li>
+      <li>Tap the small <b>i</b> on any column header for what it means.</li>
+    </ul>
+
+    <h2 style="margin-top:12px;">Good to know</h2>
+    <ul class="small" style="padding-left:18px;margin:4px 0;">
+      <li><b>Private &amp; offline</b> — your list, log and settings live only in this browser (localStorage); nothing is uploaded. Use <b>Export/Import JSON</b> to back up or move between devices.</li>
+      <li><b>Night-vision</b> — the 🌙 button cycles Dark / Red night-vision / Normal themes.</li>
+      <li>The sky geometry (altitude, transit, twilight, Moon, planets) is genuinely computed; difficulty &amp; eyepiece tips are approximate.</li>
+    </ul>
+
+    <h2 style="margin-top:12px;">License &amp; credits</h2>
+    <p class="small">Free for <b>personal &amp; non-commercial</b> use with attribution; commercial use needs the author's permission
+      (see the LICENSE file). Astronomy by <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">astronomy-engine</a> (MIT).
+      Made by Masood Valipour.</p>
+
+    <div class="row tight" style="margin-top:12px;"><button class="btn-accent" id="hClose" style="width:auto;">Close</button></div>
+   </div></div>`;
+  $("#hClose").onclick=closeModal;
+  $("#hbg").onclick=(e)=>{ if(e.target.id==="hbg") closeModal(); };
+}
+
 /* =========================================================================
    PRESETS / EXPORT / IMPORT / PRINT
    ========================================================================= */
@@ -1301,6 +1359,8 @@ function init(){
   // compute
   $("#computeBtn").onclick=runCompute;
   $("#dateInput").addEventListener("change",()=>{ S.date=$("#dateInput").value; save(); if(NIGHT){runCompute();} });
+  // help / about
+  $("#helpBtn").onclick=openHelp;
   // theme cycle
   $("#themeBtn").onclick=()=>{ S.theme = S.theme==="dark"?"red":(S.theme==="red"?"normal":"dark"); save(); syncForm(); };
   // tabs
@@ -1337,17 +1397,21 @@ WHAT THIS IS
   colour difficulty label tuned to your gear and sky. Build a checklist, tick off
   what you saw, and keep notes — Messier-marathon style, self-refereed.
 
-FILES (drop both into your GitHub Pages repo, side by side)
-  sky-planner.html        <- this page
+FILES (drop these into your GitHub Pages repo, side by side in one folder)
+  index.html              <- this page
   astronomy.browser.js    <- vendored astronomy-engine (MIT). Must sit in the
-                             SAME folder as sky-planner.html.
+                             SAME folder as index.html.
+  apple-touch-icon.png    <- icon for iOS "Add to Home Screen" (iOS ignores SVG).
+  LICENSE                 <- non-commercial license (see LICENSE & CREDITS below).
 
 DEPLOY TO GitHub Pages
-  1. Copy both files into the repo for https://masood-valipour.github.io/masood-valipour/
-     (repo root, or a subfolder — just keep the two files together).
+  1. Copy these files into the repo for https://masood-valipour.github.io/masood-valipour/
+     A subfolder is recommended, e.g. sky-planner/index.html, giving the clean URL
+     https://masood-valipour.github.io/masood-valipour/sky-planner/
+     Keep index.html, astronomy.browser.js and apple-touch-icon.png together.
   2. Commit & push. The page is static; no build step, no keys, no server.
   3. Link it from your main site, e.g.:
-       <a href="sky-planner.html">Night Sky Observing Planner</a>
+       <a href="sky-planner/">Night Sky Observing Planner</a>
 
 OFFLINE BEHAVIOUR
   - The astronomy maths, catalog, checklist, log, sorting/filtering and labels all
@@ -1373,6 +1437,15 @@ ACCURACY & HONESTY
   - Difficulty and eyepiece suggestions are deliberate APPROXIMATIONS — heuristics
     based on aperture, sky-darkness level, surface brightness and altitude. Treat
     them as helpful estimates, not precise predictions.
+
+LICENSE & CREDITS
+  - This project (index.html) is free for PERSONAL & NON-COMMERCIAL use with
+    attribution; commercial/for-profit use requires the author's permission.
+    See the LICENSE file (aligned with CC BY-NC 4.0). © 2026 Masood Valipour.
+  - The bundled astronomy-engine library (astronomy.browser.js) by Don Cross is
+    under its own MIT License and is NOT covered by the project license.
+  - An in-app "❓ Help" button (top bar) explains usage; this comment is for
+    maintainers.
 ================================================================================
 -->
 </body>
