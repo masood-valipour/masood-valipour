@@ -89,6 +89,11 @@
   .ihelp:hover{color:var(--accent);border-color:var(--accent);}
   .helpbox{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--accent);border-radius:8px;
     padding:8px 10px;font-size:.8rem;font-weight:400;color:var(--ink);line-height:1.35;box-shadow:0 6px 22px rgba(0,0,0,.55);white-space:normal;}
+  .namecell{display:flex;align-items:flex-start;gap:7px;}
+  .listbtn{flex:0 0 auto;width:24px;height:24px;padding:0;border-radius:50%;font-size:15px;font-weight:700;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;color:var(--accent);}
+  .listbtn.on{background:var(--easy);border-color:var(--easy);color:#04101f;}
+  body.theme-red .listbtn.on{color:#120000;}
   table{width:100%;border-collapse:collapse;font-size:.86rem;}
   th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
   th{color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap;font-size:.78rem;}
@@ -972,8 +977,11 @@ function renderTable(){
     const sz = o.body? "—" : (o.sizeMaj===o.sizeMin? o.sizeMaj+"'": o.sizeMaj+"×"+o.sizeMin+"'");
     const ep = r.eyepiece.text + (r.eyepiece.owned?` · ${r.eyepiece.owned}`:"");
     return `<tr class="obj-row">
-      <td><span class="obj-name">${esc(objDisplayName(o))}</span> ${done?'✓':''}
-          <div class="tag">${o.cat?esc(o.cat.join(", ")):"solar system"}</div></td>
+      <td><div class="namecell">
+          <button class="listbtn noprint ${onList?'on':''}" data-toggle="${esc(r.id)}" title="${onList?'on your list — tap to remove':'add to my list'}">${onList?'✓':'+'}</button>
+          <div><span class="obj-name">${esc(objDisplayName(o))}</span> ${done?'✓':''}
+            <div class="tag">${o.cat?esc(o.cat.join(", ")):"solar system"}${onList?` · <a href="#" class="noprint" data-log="${esc(r.id)}">log</a>`:''}</div>
+          </div></div></td>
       <td>${labelHTML(r.diff)}</td>
       <td class="hide-sm">${TYPE_NAMES[o.type]||o.type}</td>
       <td class="hide-sm">${esc(o.con||"—")}</td>
@@ -986,8 +994,6 @@ function renderTable(){
         <a href="${skyMapURL(o)}" target="_blank" rel="noopener">map</a>
         <a href="${photoURL(o)}" target="_blank" rel="noopener">photo</a>
         <a href="${searchURL(o)}" target="_blank" rel="noopener">info</a>
-        <a href="#" data-toggle="${esc(r.id)}">${onList?"−list":"+list"}</a>
-        ${onList?`<a href="#" data-log="${esc(r.id)}">log</a>`:""}
       </td></tr>`;
   }).join("");
   host.innerHTML = `<div class="panel"><div class="scroll"><table>${head}${body}</table></div>
@@ -1038,8 +1044,8 @@ function renderListView(rows){
 }
 
 function wireRowActions(host){
-  $$("a[data-toggle]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); toggleList(a.dataset.toggle); });
-  $$("a[data-log]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); openLog(a.dataset.log); });
+  $$("[data-toggle]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); toggleList(a.dataset.toggle); });
+  $$("[data-log]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); openLog(a.dataset.log); });
 }
 function toggleList(id){
   const i=S.list.indexOf(id);
