@@ -121,6 +121,17 @@
   .kv{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:4px 0;}
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:50;overflow:auto;}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:520px;width:100%;padding:14px;margin-top:24px;}
+  /* language selector + right-to-left (Farsi) support */
+  #langSel{width:auto;padding:6px 8px;}
+  [dir=rtl] th,[dir=rtl] td{text-align:right;}
+  [dir=rtl] .geores button{text-align:right;}
+  [dir=rtl] label{text-align:right;}
+  [dir=rtl] ol,[dir=rtl] ul{padding-right:18px;padding-left:0;}
+  [dir=rtl] .acts a{margin-right:0;margin-left:8px;}
+  [dir=rtl] .listbtn{margin-right:0;}
+  /* keep designations / numbers / times rendered left-to-right inside RTL text */
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block;}
+  td.ltr,th.ltr{display:table-cell;} /* guard: never let .ltr break table layout */
   @media (max-width:560px){
     .hide-sm{display:none;}
     .wrap{padding:8px 6px 60px;}
@@ -147,120 +158,125 @@
 <div class="wrap">
 
   <div class="topbar noprint">
-    <h1>🔭 Night Sky Observing Planner</h1>
+    <h1 data-i18n="appTitle">🔭 Night Sky Observing Planner</h1>
     <div class="row tight">
-      <button class="tab" id="helpBtn" title="About &amp; help">❓ Help</button>
+      <select id="langSel" title="Language" aria-label="Language">
+        <option value="en">English</option>
+        <option value="fa">فارسی</option>
+        <option value="pl">Polski</option>
+      </select>
+      <button class="tab" id="helpBtn" title="About &amp; help" data-i18n="help">❓ Help</button>
       <button class="tab" id="themeBtn" title="Cycle theme">🌙 Dark</button>
     </div>
   </div>
-  <div class="small muted noprint">Difficulty &amp; eyepiece suggestions are <b>estimates</b> — the sky geometry (altitudes, transit, twilight, Moon, planets) is genuinely computed. Works offline after first load.</div>
+  <div class="small muted noprint" data-i18n-html="estimatesNote">Difficulty &amp; eyepiece suggestions are <b>estimates</b> — the sky geometry (altitudes, transit, twilight, Moon, planets) is genuinely computed. Works offline after first load.</div>
 
   <!-- ===================== SETUP PANEL ===================== -->
   <div class="panel noprint" id="setupPanel">
-    <h2>1 · Where &amp; when</h2>
+    <h2 data-i18n="whereWhen">1 · Where &amp; when</h2>
     <div class="row">
       <div style="flex:2 1 220px;">
-        <label>City (looks up coordinates — needs internet once, then cached)</label>
+        <label data-i18n="cityLabel">City (looks up coordinates — needs internet once, then cached)</label>
         <div class="row tight" style="flex-wrap:nowrap;">
-          <input id="cityInput" placeholder="e.g. Tehran, Nairobi, Quito" style="flex:1;">
-          <button id="cityBtn" style="width:auto;">Find</button>
+          <input id="cityInput" placeholder="e.g. Tehran, Nairobi, Quito" data-i18n-ph="cityPh" style="flex:1;">
+          <button id="cityBtn" style="width:auto;" data-i18n="find">Find</button>
         </div>
         <div id="geoResults"></div>
       </div>
       <div>
-        <label>Observing date (evening of)</label>
+        <label data-i18n="dateLabel">Observing date (evening of)</label>
         <input type="date" id="dateInput">
       </div>
     </div>
 
     <details style="margin-top:8px;">
-      <summary>Manual / offline location &amp; saved sites</summary>
+      <summary data-i18n="manualSummary">Manual / offline location &amp; saved sites</summary>
       <div class="row" style="margin-top:6px;">
-        <div><label>Latitude (°N)</label><input id="latInput" type="number" step="0.001" placeholder="35.70"></div>
-        <div><label>Longitude (°E)</label><input id="lonInput" type="number" step="0.001" placeholder="51.42"></div>
-        <div><label>UTC offset (h, optional)</label><input id="offInput" type="number" step="0.25" placeholder="auto"></div>
-        <div style="flex:0 0 auto;display:flex;align-items:flex-end;"><button id="useManual" style="width:auto;">Use these</button></div>
+        <div><label data-i18n="latLabel">Latitude (°N)</label><input id="latInput" type="number" step="0.001" placeholder="35.70"></div>
+        <div><label data-i18n="lonLabel">Longitude (°E)</label><input id="lonInput" type="number" step="0.001" placeholder="51.42"></div>
+        <div><label data-i18n="offLabel">UTC offset (h, optional)</label><input id="offInput" type="number" step="0.25" placeholder="auto"></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end;"><button id="useManual" style="width:auto;" data-i18n="useThese">Use these</button></div>
       </div>
       <div class="row tight" style="margin-top:6px;">
-        <input id="saveName" placeholder="Save current as… (e.g. Home)" style="flex:1;">
-        <button id="saveLoc" style="width:auto;">Save site</button>
+        <input id="saveName" placeholder="Save current as… (e.g. Home)" data-i18n-ph="savePh" style="flex:1;">
+        <button id="saveLoc" style="width:auto;" data-i18n="saveSite">Save site</button>
       </div>
       <div id="savedLocs" class="chips" style="margin-top:6px;"></div>
     </details>
     <div id="locStatus" class="small muted" style="margin-top:6px;"></div>
 
-    <h2 style="margin-top:14px;">2 · Your gear &amp; sky</h2>
+    <h2 style="margin-top:14px;" data-i18n="gearSky">2 · Your gear &amp; sky</h2>
     <div class="row">
-      <div><label>Mode</label>
-        <select id="mode"><option value="visual">Visual</option><option value="astro">Astrophotography</option></select></div>
-      <div><label>Instrument</label>
-        <select id="instrument"><option value="naked">Naked eye</option><option value="binoculars">Binoculars</option><option value="telescope" selected>Telescope</option></select></div>
-      <div><label>Sky darkness</label>
-        <select id="sky"><option value="dark">Dark (rural)</option><option value="suburban" selected>Suburban</option><option value="bright">Bright (city)</option></select></div>
+      <div><label data-i18n="modeLabel">Mode</label>
+        <select id="mode"><option value="visual" data-i18n="modeVisual">Visual</option><option value="astro" data-i18n="modeAstro">Astrophotography</option></select></div>
+      <div><label data-i18n="instrLabel">Instrument</label>
+        <select id="instrument"><option value="naked" data-i18n="instrNaked">Naked eye</option><option value="binoculars" data-i18n="instrBino">Binoculars</option><option value="telescope" selected data-i18n="instrScope">Telescope</option></select></div>
+      <div><label data-i18n="skyLabel">Sky darkness</label>
+        <select id="sky"><option value="dark" data-i18n="skyDark">Dark (rural)</option><option value="suburban" selected data-i18n="skySub">Suburban</option><option value="bright" data-i18n="skyBright">Bright (city)</option></select></div>
     </div>
     <div class="row" id="scopeFields">
-      <div><label>Aperture</label>
+      <div><label data-i18n="apertureLabel">Aperture</label>
         <div class="row tight" style="flex-wrap:nowrap;">
           <input id="aperture" type="number" step="1" placeholder="150" style="flex:1;">
           <select id="apUnit" style="width:auto;"><option value="mm">mm</option><option value="in">inch</option></select>
         </div></div>
-      <div><label>Focal length (mm)</label><input id="focal" type="number" step="1" placeholder="750"></div>
-      <div><label>Scope type (cosmetic)</label>
-        <select id="scopeType"><option value="">—</option><option>Reflector</option><option>Refractor</option><option>Cat (SCT/Mak)</option></select></div>
-      <div><label>Eyepieces owned (mm, comma-sep)</label><input id="eyepieces" placeholder="25, 10, 6"></div>
+      <div><label data-i18n="focalLabel">Focal length (mm)</label><input id="focal" type="number" step="1" placeholder="750"></div>
+      <div><label data-i18n="scopeTypeLabel">Scope type (cosmetic)</label>
+        <select id="scopeType"><option value="">—</option><option data-i18n="scopeReflector">Reflector</option><option data-i18n="scopeRefractor">Refractor</option><option data-i18n="scopeCat">Cat (SCT/Mak)</option></select></div>
+      <div><label data-i18n="epOwnedLabel">Eyepieces owned (mm, comma-sep)</label><input id="eyepieces" placeholder="25, 10, 6"></div>
     </div>
     <div id="binFields" class="row hidden">
-      <div><label>Binocular aperture (mm)</label><input id="binAp" type="number" placeholder="50"></div>
+      <div><label data-i18n="binApLabel">Binocular aperture (mm)</label><input id="binAp" type="number" placeholder="50"></div>
     </div>
     <div class="hint" id="assumptionNote"></div>
     <div class="row tight" style="margin-top:8px;">
-      <button class="btn-accent" id="computeBtn" style="width:auto;">Compute sky ▸</button>
+      <button class="btn-accent" id="computeBtn" style="width:auto;" data-i18n="compute">Compute sky ▸</button>
     </div>
   </div>
 
   <!-- ===================== SESSION SUMMARY ===================== -->
   <div class="panel" id="sessionPanel" style="display:none;">
-    <h2>Tonight at <span id="sessLoc"></span></h2>
+    <h2><span data-i18n="tonightAt">Tonight at</span> <span id="sessLoc"></span></h2>
     <div id="sessionInfo" class="small"></div>
   </div>
 
   <!-- ===================== VIEW TABS ===================== -->
   <div class="tabs noprint" id="viewTabs" style="display:none;">
-    <button class="tab on" data-view="tonight">What's up</button>
-    <button class="tab" data-view="all">Catalog</button>
-    <button class="tab" data-view="list">My list &amp; log</button>
+    <button class="tab on" data-view="tonight" data-i18n="tabTonight">What's up</button>
+    <button class="tab" data-view="all" data-i18n="tabAll">Catalog</button>
+    <button class="tab" data-view="list" data-i18n="tabList">My list &amp; log</button>
   </div>
 
   <!-- Controls (sort / filter) -->
   <div class="panel noprint" id="controls" style="display:none;">
     <div class="row">
-      <div><label>Sort by</label>
+      <div><label data-i18n="sortByLabel">Sort by</label>
         <select id="sortBy">
-          <option value="diff">Difficulty (easy→hard)</option>
-          <option value="time">Best time tonight</option>
-          <option value="set">Setting soonest</option>
-          <option value="name">Name (A→Z)</option>
-          <option value="type">Object type</option>
-          <option value="mag">Magnitude (bright→faint)</option>
-          <option value="con">Constellation</option>
-          <option value="month">Best month</option>
+          <option value="diff" data-i18n="sortDiff">Difficulty (easy→hard)</option>
+          <option value="time" data-i18n="sortTime">Best time tonight</option>
+          <option value="set" data-i18n="sortSet">Setting soonest</option>
+          <option value="name" data-i18n="sortName">Name (A→Z)</option>
+          <option value="type" data-i18n="sortType">Object type</option>
+          <option value="mag" data-i18n="sortMag">Magnitude (bright→faint)</option>
+          <option value="con" data-i18n="sortCon">Constellation</option>
+          <option value="month" data-i18n="sortMonth">Best month</option>
         </select></div>
-      <div><label>Filter type</label>
-        <select id="filterType"><option value="">All types</option></select></div>
+      <div><label data-i18n="filterTypeLabel">Filter type</label>
+        <select id="filterType"><option value="" data-i18n="allTypes">All types</option></select></div>
     </div>
     <div class="chips" style="margin-top:8px;">
-      <button class="chip" data-flag="hideImpossible">Hide impossible</button>
-      <button class="chip" data-flag="onlyUp">Only up tonight</button>
-      <button class="chip" data-flag="messier">Messier only</button>
-      <button class="chip" data-flag="listed">On my list</button>
+      <button class="chip" data-flag="hideImpossible" data-i18n="chipHideImpossible">Hide impossible</button>
+      <button class="chip" data-flag="onlyUp" data-i18n="chipOnlyUp">Only up tonight</button>
+      <button class="chip" data-flag="messier" data-i18n="chipMessier">Messier only</button>
+      <button class="chip" data-flag="listed" data-i18n="chipListed">On my list</button>
     </div>
     <div class="small" style="margin-top:10px;line-height:2;">
-      <span class="lab easy">Easy to find</span>
-      <span class="lab needs">Needs experience</span>
-      <span class="lab hard">Extremely difficult</span>
-      <span class="lab toofaint">Too faint for your gear</span>
-      <span class="lab sun">Lost in the Sun's glare</span>
-      <span class="lab horizon">Below the horizon here</span>
+      <span class="lab easy" data-i18n="diffEasy">Easy to find</span>
+      <span class="lab needs" data-i18n="diffNeeds">Needs experience</span>
+      <span class="lab hard" data-i18n="diffHard">Extremely difficult</span>
+      <span class="lab toofaint" data-i18n="diffToofaint">Too faint for your gear</span>
+      <span class="lab sun" data-i18n="diffSun">Lost in the Sun's glare</span>
+      <span class="lab horizon" data-i18n="diffHorizon">Below the horizon here</span>
     </div>
   </div>
 
@@ -268,18 +284,18 @@
 
   <!-- preset lists -->
   <div class="panel noprint" id="presetPanel" style="display:none;">
-    <h2>Starter lists &amp; backup</h2>
+    <h2 data-i18n="starterTitle">Starter lists &amp; backup</h2>
     <div class="row tight">
-      <button data-preset="messier" style="width:auto;">+ Messier 110</button>
-      <button data-preset="caldwell" style="width:auto;">+ Caldwell set</button>
-      <button data-preset="top20" style="width:auto;">+ Beginner Top 20</button>
-      <button data-preset="clear" style="width:auto;">Clear my list</button>
+      <button data-preset="messier" style="width:auto;" data-i18n="presetMessier">+ Messier 110</button>
+      <button data-preset="caldwell" style="width:auto;" data-i18n="presetCaldwell">+ Caldwell set</button>
+      <button data-preset="top20" style="width:auto;" data-i18n="presetTop20">+ Beginner Top 20</button>
+      <button data-preset="clear" style="width:auto;" data-i18n="presetClear">Clear my list</button>
     </div>
     <div class="row tight" style="margin-top:8px;">
-      <button id="exportJson" style="width:auto;">Export JSON</button>
-      <button id="exportCsv" style="width:auto;">Export CSV</button>
-      <button id="importBtn" style="width:auto;">Import JSON</button>
-      <button id="printBtn" style="width:auto;" class="noprint">Printable checklist</button>
+      <button id="exportJson" style="width:auto;" data-i18n="exportJson">Export JSON</button>
+      <button id="exportCsv" style="width:auto;" data-i18n="exportCsv">Export CSV</button>
+      <button id="importBtn" style="width:auto;" data-i18n="importJson">Import JSON</button>
+      <button id="printBtn" style="width:auto;" class="noprint" data-i18n="printChecklist">Printable checklist</button>
       <input id="importFile" type="file" accept="application/json" class="hidden">
     </div>
   </div>
@@ -470,6 +486,338 @@ const TYPE_NAMES = {GX:"Galaxy", EN:"Emission nebula", RN:"Reflection nebula", P
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 /* =========================================================================
+   INTERNATIONALISATION (self-hosted, offline). Languages: en, fa (RTL), pl.
+   Object designations (M31, NGC 253) and their common/constellation names are
+   intentionally kept in English (astronomy convention). To add a language,
+   add another block with the same keys. t(key,{vars}) substitutes {var}.
+   ========================================================================= */
+const RTL_LANGS = ["fa"];
+const I18N = {
+ en:{ months:MONTHS,
+   types:{GX:"Galaxy",EN:"Emission nebula",RN:"Reflection nebula",PN:"Planetary nebula",SNR:"Supernova remnant",OC:"Open cluster",GC:"Globular cluster",AST:"Star cloud/asterism",DBL:"Double star",Planet:"Planet",Moon:"Moon"},
+   tw:{astronomical:"astronomical",nautical:"nautical",civil:"civil"},
+   phases:{New:"New","Waxing crescent":"Waxing crescent","First quarter":"First quarter","Waxing gibbous":"Waxing gibbous",Full:"Full","Waning gibbous":"Waning gibbous","Last quarter":"Last quarter","Waning crescent":"Waning crescent"},
+   ui:{
+    appTitle:"🔭 Night Sky Observing Planner",
+    estimatesNote:"Difficulty &amp; eyepiece suggestions are <b>estimates</b> — the sky geometry (altitudes, transit, twilight, Moon, planets) is genuinely computed. Works offline after first load.",
+    help:"❓ Help", themeDark:"🌙 Dark", themeRed:"🔴 Night-vision", themeNormal:"☀️ Normal",
+    whereWhen:"1 · Where & when", cityLabel:"City (looks up coordinates — needs internet once, then cached)",
+    cityPh:"e.g. Tehran, Nairobi, Quito", find:"Find", dateLabel:"Observing date (evening of)",
+    manualSummary:"Manual / offline location & saved sites", latLabel:"Latitude (°N)", lonLabel:"Longitude (°E)",
+    offLabel:"UTC offset (h, optional)", useThese:"Use these", savePh:"Save current as… (e.g. Home)", saveSite:"Save site",
+    gearSky:"2 · Your gear & sky", modeLabel:"Mode", modeVisual:"Visual", modeAstro:"Astrophotography",
+    instrLabel:"Instrument", instrNaked:"Naked eye", instrBino:"Binoculars", instrScope:"Telescope",
+    skyLabel:"Sky darkness", skyDark:"Dark (rural)", skySub:"Suburban", skyBright:"Bright (city)",
+    apertureLabel:"Aperture", focalLabel:"Focal length (mm)", scopeTypeLabel:"Scope type (cosmetic)",
+    scopeReflector:"Reflector", scopeRefractor:"Refractor", scopeCat:"Cat (SCT/Mak)",
+    epOwnedLabel:"Eyepieces owned (mm, comma-sep)", binApLabel:"Binocular aperture (mm)", compute:"Compute sky ▸",
+    tonightAt:"Tonight at", sunsetSunrise:"Sunset → Sunrise", darkWindow:"Dark window", moon:"Moon",
+    moonUpMid:"up at mid-night", moonDownMid:"down at mid-night", darkTrue:"Astronomical darkness (true dark).",
+    darkOnly:"Best darkness reaches only {type} twilight tonight.",
+    noDark:"No true astronomical darkness tonight — using {type} twilight as the dark window.",
+    timesLocal:"Times shown in site-local {off}.", brightMoonWarn:"Bright Moon — faint targets will be washed out.",
+    tabTonight:"What's up", tabAll:"Catalog", tabList:"My list & log",
+    sortByLabel:"Sort by", sortDiff:"Difficulty (easy→hard)", sortTime:"Best time tonight", sortSet:"Setting soonest",
+    sortName:"Name (A→Z)", sortType:"Object type", sortMag:"Magnitude (bright→faint)", sortCon:"Constellation", sortMonth:"Best month",
+    filterTypeLabel:"Filter type", allTypes:"All types", chipHideImpossible:"Hide impossible", chipOnlyUp:"Only up tonight",
+    chipMessier:"Messier only", chipListed:"On my list",
+    diffEasy:"Easy to find", diffNeeds:"Needs experience", diffHard:"Extremely difficult", diffToofaint:"Too faint for your gear",
+    diffSun:"Lost in the Sun's glare", diffHorizon:"Below the horizon here", diffMoonDown:"Below the horizon tonight",
+    colObject:"Object", colDifficulty:"Difficulty", colType:"Type", colConst:"Const.", colMag:"Mag", colSize:"Size",
+    colBestMo:"Best mo.", colBestTime:"Best time", colEyepiece:"Eyepiece",
+    hObject:"Catalogue ID and common name. The grey line lists the object's other catalogue numbers.",
+    hDiff:"How hard this object is to spot with YOUR instrument, sky and date tonight — an estimate. Tap a coloured label for the reasoning behind it.",
+    hType:"Kind of object: galaxy, open/globular cluster, emission/planetary nebula, supernova remnant, etc.",
+    hCon:"The constellation the object lies in — useful for star-hopping to it.",
+    hMag:"Integrated (total) brightness. Lower numbers are brighter. Large faint objects can look dimmer than this single number suggests.",
+    hSize:"Apparent size on the sky, in arcminutes (′). Two numbers (e.g. 9×4′) mean long axis × short axis.",
+    hMonth:"The month the object rides highest at local midnight — i.e. its best season to observe.",
+    hTime:"The clock time tonight it climbs highest (transits), with its peak altitude. Shown in the site's local time.",
+    hEyepiece:"A rough eyepiece focal length to frame it well, with the approximate magnification. An estimate.",
+    hStatus:"Whether you've logged this as observed or missed. Tap “log” to record date, conditions, a rating and notes.",
+    solarSystem:"solar system", low:"low", statusObserved:"observed", statusMissed:"missed", statusNotYet:"not yet",
+    log:"log", remove:"remove",
+    eyeNaked:"naked-eye target", eyeBino:"binocular target (fixed magnification)", eyeEnterFocal:"enter focal length for eyepiece tips",
+    eyeBestRange:"best ~{lo}–{hi} mm (≈{mag}×)", eyeBestSingle:"best ~{ep} mm (≈{mag}×)",
+    eyeWholeDisk:" for the whole disk; go shorter (higher power) for crater detail", eyeTooBig:" — larger than one field",
+    eyeOwned:"your {ep} mm is closest (≈{mag}×)",
+    observed:"Observed", messierOnList:"Messier on list: {d} / {t}",
+    listEmpty:"Your list is empty. Add objects from the Catalog tab, or load a starter list below.",
+    objectsMatch:"{n} object(s) match.", bestPlacedNote:"Best-placed targets for tonight, easiest first.",
+    showingAll:"Showing all {n}.", showMore:"▾ Show {n} more ({rem} remaining)", showingOf:"Showing {shown} of {total}.",
+    starterTitle:"Starter lists & backup", presetMessier:"+ Messier 110", presetCaldwell:"+ Caldwell set",
+    presetTop20:"+ Beginner Top 20", presetClear:"Clear my list", exportJson:"Export JSON", exportCsv:"Export CSV",
+    importJson:"Import JSON", printChecklist:"Printable checklist",
+    notePrefix:"Note: ", assumeAperture:"aperture blank → assuming 150 mm (6\")", assumeFocal:"focal length blank → eyepiece tips limited",
+    assumeBino:"binocular aperture blank → assuming 50 mm", estShort:"difficulty & eyepiece outputs are estimates",
+    noLocYet:"No location set yet.", lookingUp:"Looking up…", loadedCache:"Loaded from cache.",
+    lookupFail:"Lookup failed (offline?). Use manual lat/lon below.", noMatches:"No matches. Use manual lat/lon below.",
+    offsetFromLon:"offset from longitude",
+    alertNoLib:"Astronomy library failed to load. Make sure astronomy.browser.js sits next to this page.",
+    alertNoLoc:"Set a location first (find a city, pick a saved site, or enter lat/lon).",
+    alertCompErr:"Computation error: ", alertNumeric:"Enter numeric latitude and longitude.",
+    alertSetLocFirst:"Set a location first.", alertImportOk:"Import complete: {n} objects on list.",
+    alertImportErr:"Could not read that file: ", alertListEmpty:"Your list is empty.",
+    // log modal
+    lgObserveQ:"Did you observe it?", lgObserved:"✓ Observed", lgMissed:"✗ Missed", lgDate:"Date observed",
+    lgCond:"Sky conditions", lgCondPh:"seeing, transparency, Moon…", lgEquip:"Equipment used", lgRate:"Rating (1–5)",
+    lgNotes:"Notes", lgNotesPh:"What you saw…", lgReason:"Reason missed (instead of ticking)",
+    lgReasonPh:"clouded out, too low, ran out of time…", lgSave:"Save", lgClear:"Clear entry", lgCancel:"Cancel",
+    // help modal
+    helpTitle:"🔭 About & Help",
+    helpIntro:"A free night-sky <b>observing planner &amp; logbook</b> for amateur astronomers. Tell it where you are, the date, your equipment and how dark your sky is — it works out which objects are worth observing tonight and tags each with how hard it is <i>for your setup</i>. Build a checklist, tick off what you see, and keep notes. Works offline after the first load.",
+    helpStart:"Getting started", helpS1:"<b>Where &amp; when</b> — search a city (or enter latitude/longitude offline), pick the evening's date.",
+    helpS2:"<b>Gear &amp; sky</b> — naked eye, binoculars, or telescope (add aperture &amp; focal length), and how dark your sky is. Blank fields use sensible defaults.",
+    helpS3:"Tap <b>Compute sky ▸</b>.",
+    helpViews:"The three views", helpV1:"<b>What's up</b> — best-placed targets for tonight.",
+    helpV2:"<b>Catalog</b> — all ~150 objects (110 Messier + famous NGC/Caldwell + planets &amp; Moon).",
+    helpV3:"<b>My list &amp; log</b> — your personal checklist, progress counter and observing log. Load a starter list from the bottom panel.",
+    helpDiffTitle:"Difficulty labels (for your gear &amp; sky)",
+    helpDiffNote:"Tap any label in the table to see the reasoning. They are honest <b>estimates</b>, not precise predictions.",
+    helpActions:"Per-object actions",
+    helpA1:"<b>+ / ✓</b> (first column) — add to / remove from your list; <b>log</b> appears once it's on your list.",
+    helpA2:"<b>map</b> — opens Stellarium Web centred on the object · <b>photo</b> — image search · <b>info</b> — web search.",
+    helpA3:"Tap the small <b>i</b> on any column header for what it means.",
+    helpGood:"Good to know",
+    helpG1:"<b>Private &amp; offline</b> — your list, log and settings live only in this browser; nothing is uploaded. Use <b>Export/Import JSON</b> to back up or move between devices.",
+    helpG2:"<b>Night-vision</b> — the 🌙 button cycles Dark / Red night-vision / Normal themes.",
+    helpG3:"The sky geometry (altitude, transit, twilight, Moon, planets) is genuinely computed; difficulty &amp; eyepiece tips are approximate.",
+    helpLicTitle:"License &amp; credits",
+    helpLic:"Free for <b>personal &amp; non-commercial</b> use with attribution; commercial use needs the author's permission (see the LICENSE file). Astronomy by astronomy-engine (MIT). Made by Masood Valipour.",
+    close:"Close"
+   }
+ },
+ fa:{ months:["ژانویه","فوریه","مارس","آوریل","مه","ژوئن","ژوئیه","اوت","سپتامبر","اکتبر","نوامبر","دسامبر"],
+   types:{GX:"کهکشان",EN:"سحابی نشری",RN:"سحابی بازتابی",PN:"سحابی سیاره‌نما",SNR:"بازماندهٔ ابرنواختر",OC:"خوشهٔ باز",GC:"خوشهٔ کروی",AST:"ابر ستاره‌ای/آستریزم",DBL:"ستارهٔ دوتایی",Planet:"سیاره",Moon:"ماه"},
+   tw:{astronomical:"نجومی",nautical:"دریایی",civil:"شفقی"},
+   phases:{New:"نو","Waxing crescent":"هلال افزاینده","First quarter":"تربیع اول","Waxing gibbous":"محدب افزاینده",Full:"بدر","Waning gibbous":"محدب کاهنده","Last quarter":"تربیع آخر","Waning crescent":"هلال کاهنده"},
+   ui:{
+    appTitle:"🔭 برنامه‌ریز رصد آسمان شب",
+    estimatesNote:"برآورد سختی و چشمی <b>تخمینی</b> است — هندسهٔ آسمان (ارتفاع، گذر، گرگ‌ومیش، ماه، سیارات) واقعاً محاسبه می‌شود. پس از نخستین بارگذاری آفلاین کار می‌کند.",
+    help:"❓ راهنما", themeDark:"🌙 تیره", themeRed:"🔴 دید شب", themeNormal:"☀️ روشن",
+    whereWhen:"1 · کجا و کِی", cityLabel:"شهر (یک‌بار اینترنت لازم دارد، سپس ذخیره می‌شود)",
+    cityPh:"مثلاً تهران، نایروبی، کیتو", find:"یافتن", dateLabel:"تاریخ رصد (عصرِ)",
+    manualSummary:"موقعیت دستی/آفلاین و مکان‌های ذخیره‌شده", latLabel:"عرض جغرافیایی (°ش)", lonLabel:"طول جغرافیایی (°ش)",
+    offLabel:"اختلاف با UTC (ساعت، اختیاری)", useThese:"استفاده", savePh:"ذخیره به‌نام… (مثلاً خانه)", saveSite:"ذخیرهٔ مکان",
+    gearSky:"2 · ابزار و آسمان شما", modeLabel:"حالت", modeVisual:"چشمی", modeAstro:"عکاسی نجومی",
+    instrLabel:"ابزار", instrNaked:"چشم غیرمسلح", instrBino:"دوربین دوچشمی", instrScope:"تلسکوپ",
+    skyLabel:"تاریکی آسمان", skyDark:"تاریک (روستایی)", skySub:"حومه‌ای", skyBright:"روشن (شهری)",
+    apertureLabel:"دهانه", focalLabel:"فاصلهٔ کانونی (mm)", scopeTypeLabel:"نوع تلسکوپ (ظاهری)",
+    scopeReflector:"بازتابی", scopeRefractor:"شکستی", scopeCat:"کاتادیوپتریک (SCT/Mak)",
+    epOwnedLabel:"چشمی‌های شما (mm، با کاما)", binApLabel:"دهانهٔ دوربین (mm)", compute:"محاسبهٔ آسمان ▸",
+    tonightAt:"امشب در", sunsetSunrise:"غروب تا طلوع", darkWindow:"بازهٔ تاریکی", moon:"ماه",
+    moonUpMid:"بالای افق در نیمه‌شب", moonDownMid:"زیر افق در نیمه‌شب", darkTrue:"تاریکی نجومی (تاریکی کامل).",
+    darkOnly:"بهترین تاریکی امشب فقط به گرگ‌ومیش {type} می‌رسد.",
+    noDark:"امشب تاریکی نجومی واقعی نداریم — از گرگ‌ومیش {type} به‌عنوان بازهٔ تاریک استفاده می‌شود.",
+    timesLocal:"زمان‌ها به وقت محلیِ محل ({off}).", brightMoonWarn:"ماهِ پرنور — هدف‌های کم‌نور محو می‌شوند.",
+    tabTonight:"چه چیزی بالاست", tabAll:"فهرست اجرام", tabList:"فهرست و دفترچهٔ من",
+    sortByLabel:"مرتب‌سازی بر اساس", sortDiff:"سختی (آسان→سخت)", sortTime:"بهترین زمان امشب", sortSet:"زودتر غروب‌کننده",
+    sortName:"نام (A→Z)", sortType:"نوع جرم", sortMag:"قدر (پرنورتر اول)", sortCon:"صورت فلکی", sortMonth:"بهترین ماه",
+    filterTypeLabel:"صافی نوع", allTypes:"همهٔ انواع", chipHideImpossible:"پنهان‌کردن ناممکن‌ها", chipOnlyUp:"فقط بالای افق امشب",
+    chipMessier:"فقط مسیه", chipListed:"در فهرست من",
+    diffEasy:"یافتنش آسان", diffNeeds:"نیازمند تجربه", diffHard:"بسیار دشوار", diffToofaint:"برای ابزار شما کم‌نور",
+    diffSun:"در تابش خورشید گم", diffHorizon:"زیر افق اینجا", diffMoonDown:"امشب زیر افق",
+    colObject:"جرم", colDifficulty:"سختی", colType:"نوع", colConst:"صورت فلکی", colMag:"قدر", colSize:"اندازه",
+    colBestMo:"بهترین ماه", colBestTime:"بهترین زمان", colEyepiece:"چشمی",
+    hObject:"شناسهٔ کاتالوگ و نام رایج. خط خاکستری، شماره‌های کاتالوگ دیگر را نشان می‌دهد.",
+    hDiff:"این جرم با ابزار، آسمان و تاریخِ شما امشب چقدر سخت دیده می‌شود — یک تخمین. روی برچسب رنگی بزنید تا دلیلش را ببینید.",
+    hType:"نوع جرم: کهکشان، خوشهٔ باز/کروی، سحابی نشری/سیاره‌نما، بازماندهٔ ابرنواختر و غیره.",
+    hCon:"صورت فلکیِ محل جرم — برای ستاره‌پویی به‌سویش مفید است.",
+    hMag:"روشناییِ کل (قدر). عدد کوچک‌تر یعنی پرنورتر. اجرام بزرگِ کم‌نور ممکن است کم‌نورتر از این عدد به‌نظر برسند.",
+    hSize:"اندازهٔ ظاهری در آسمان، به دقیقهٔ قوسی (′). دو عدد (مثل ۹×۴′) یعنی محور بلند × محور کوتاه.",
+    hMonth:"ماهی که جرم در نیمه‌شبِ محلی بالاترین است — یعنی بهترین فصل رصدش.",
+    hTime:"ساعتی که امشب بالاترین می‌شود (گذر)، همراه بیشینهٔ ارتفاع. به وقت محلیِ محل.",
+    hEyepiece:"فاصلهٔ کانونی تقریبی چشمی برای قاب‌بندی خوب، همراه بزرگ‌نمایی تقریبی. یک تخمین.",
+    hStatus:"اینکه آن را رصدشده یا ازدست‌رفته ثبت کرده‌اید. روی «ثبت» بزنید تا تاریخ، شرایط، امتیاز و یادداشت را وارد کنید.",
+    solarSystem:"منظومهٔ شمسی", low:"پایین", statusObserved:"رصد شد", statusMissed:"از دست رفت", statusNotYet:"هنوز نه",
+    log:"ثبت", remove:"حذف",
+    eyeNaked:"هدف چشم غیرمسلح", eyeBino:"هدف دوربین (بزرگ‌نمایی ثابت)", eyeEnterFocal:"برای پیشنهاد چشمی، فاصلهٔ کانونی را وارد کنید",
+    eyeBestRange:"بهترین حدود {lo}–{hi} mm (≈{mag}×)", eyeBestSingle:"بهترین حدود {ep} mm (≈{mag}×)",
+    eyeWholeDisk:" برای کل قرص؛ برای جزئیات دهانه‌ها چشمیِ کوتاه‌تر (بزرگ‌نمایی بیشتر) بگذارید", eyeTooBig:" — بزرگ‌تر از یک میدان دید",
+    eyeOwned:"چشمیِ {ep} mm شما نزدیک‌ترین است (≈{mag}×)",
+    observed:"رصدشده", messierOnList:"مسیه در فهرست: {d} / {t}",
+    listEmpty:"فهرست شما خالی است. از زبانهٔ «فهرست اجرام» اضافه کنید یا یک فهرست آماده را پایین بارگذاری کنید.",
+    objectsMatch:"{n} جرم مطابق.", bestPlacedNote:"بهترین هدف‌های امشب، آسان‌ترها اول.",
+    showingAll:"نمایش همهٔ {n}.", showMore:"▾ نمایش {n} مورد دیگر ({rem} باقی‌مانده)", showingOf:"نمایش {shown} از {total}.",
+    starterTitle:"فهرست‌های آماده و پشتیبان", presetMessier:"+ مسیه 110", presetCaldwell:"+ مجموعهٔ کالدول",
+    presetTop20:"+ 20 برتر مبتدی", presetClear:"پاک‌کردن فهرست من", exportJson:"خروجی JSON", exportCsv:"خروجی CSV",
+    importJson:"ورود JSON", printChecklist:"چاپ فهرست",
+    notePrefix:"توجه: ", assumeAperture:"دهانه خالی است → فرض ۱۵۰ mm (۶ اینچ)", assumeFocal:"فاصلهٔ کانونی خالی است → پیشنهاد چشمی محدود",
+    assumeBino:"دهانهٔ دوربین خالی است → فرض ۵۰ mm", estShort:"خروجی سختی و چشمی تخمینی است",
+    noLocYet:"هنوز موقعیتی تنظیم نشده.", lookingUp:"در حال جست‌وجو…", loadedCache:"از حافظه بارگذاری شد.",
+    lookupFail:"جست‌وجو ناموفق (آفلاین؟). از عرض/طول دستیِ پایین استفاده کنید.", noMatches:"موردی یافت نشد. از عرض/طول دستی استفاده کنید.",
+    offsetFromLon:"اختلاف از روی طول جغرافیایی",
+    alertNoLib:"کتابخانهٔ نجوم بارگذاری نشد. مطمئن شوید astronomy.browser.js کنار این صفحه است.",
+    alertNoLoc:"ابتدا موقعیت را تنظیم کنید (شهر بیابید، مکان ذخیره‌شده برگزینید یا عرض/طول وارد کنید).",
+    alertCompErr:"خطای محاسبه: ", alertNumeric:"عرض و طول جغرافیایی عددی وارد کنید.",
+    alertSetLocFirst:"ابتدا موقعیت را تنظیم کنید.", alertImportOk:"ورود کامل شد: {n} جرم در فهرست.",
+    alertImportErr:"خواندن فایل ممکن نشد: ", alertListEmpty:"فهرست شما خالی است.",
+    lgObserveQ:"آن را رصد کردید؟", lgObserved:"✓ رصد شد", lgMissed:"✗ از دست رفت", lgDate:"تاریخ رصد",
+    lgCond:"شرایط آسمان", lgCondPh:"تابِش، شفافیت، ماه…", lgEquip:"ابزار استفاده‌شده", lgRate:"امتیاز (۱–۵)",
+    lgNotes:"یادداشت‌ها", lgNotesPh:"چه دیدید…", lgReason:"دلیل از دست رفتن (به‌جای تیک)",
+    lgReasonPh:"ابری شد، خیلی پایین بود، وقت تمام شد…", lgSave:"ذخیره", lgClear:"پاک‌کردن ثبت", lgCancel:"انصراف",
+    helpTitle:"🔭 درباره و راهنما",
+    helpIntro:"یک <b>برنامه‌ریز رصد و دفترچهٔ</b> رایگانِ آسمان شب برای منجمان آماتور. محل، تاریخ، ابزار و میزان تاریکی آسمان‌تان را بگویید — تعیین می‌کند امشب چه اجرامی ارزش رصد دارند و سختیِ هر کدام را <i>برای ابزار شما</i> برچسب می‌زند. فهرست بسازید، دیده‌ها را تیک بزنید و یادداشت نگه دارید. پس از نخستین بارگذاری آفلاین کار می‌کند.",
+    helpStart:"شروع کار", helpS1:"<b>کجا و کِی</b> — شهری بیابید (یا آفلاین عرض/طول وارد کنید) و تاریخِ آن عصر را برگزینید.",
+    helpS2:"<b>ابزار و آسمان</b> — چشم غیرمسلح، دوربین یا تلسکوپ (دهانه و فاصلهٔ کانونی را بیفزایید) و میزان تاریکی آسمان. فیلدهای خالی مقدار پیش‌فرض می‌گیرند.",
+    helpS3:"روی <b>محاسبهٔ آسمان ▸</b> بزنید.",
+    helpViews:"سه نما", helpV1:"<b>چه چیزی بالاست</b> — بهترین هدف‌های امشب.",
+    helpV2:"<b>فهرست اجرام</b> — حدود ۱۵۰ جرم (۱۱۰ مسیه + NGC/کالدولِ مشهور + سیارات و ماه).",
+    helpV3:"<b>فهرست و دفترچهٔ من</b> — چک‌لیست شخصی، شمارندهٔ پیشرفت و دفترچهٔ رصد. از پنل پایین یک فهرست آماده بارگذاری کنید.",
+    helpDiffTitle:"برچسب‌های سختی (برای ابزار و آسمان شما)",
+    helpDiffNote:"روی هر برچسب در جدول بزنید تا دلیلش را ببینید. این‌ها <b>تخمین</b>‌اند، نه پیش‌بینی دقیق.",
+    helpActions:"کنش‌های هر جرم",
+    helpA1:"<b>+ / ✓</b> (ستون اول) — افزودن/حذف از فهرست؛ <b>ثبت</b> پس از افزوده‌شدن ظاهر می‌شود.",
+    helpA2:"<b>map</b> — Stellarium Web را روی جرم باز می‌کند · <b>photo</b> — جست‌وجوی تصویر · <b>info</b> — جست‌وجوی وب.",
+    helpA3:"روی <b>i</b>ِ کوچکِ هر سرستون بزنید تا معنایش را ببینید.",
+    helpGood:"خوب است بدانید",
+    helpG1:"<b>خصوصی و آفلاین</b> — فهرست، دفترچه و تنظیمات فقط در همین مرورگر می‌مانند؛ چیزی آپلود نمی‌شود. برای پشتیبان یا انتقال، از <b>خروجی/ورود JSON</b> استفاده کنید.",
+    helpG2:"<b>دید شب</b> — دکمهٔ 🌙 بین تم‌های تیره / دید شبِ قرمز / روشن می‌چرخد.",
+    helpG3:"هندسهٔ آسمان (ارتفاع، گذر، گرگ‌ومیش، ماه، سیارات) واقعاً محاسبه می‌شود؛ سختی و چشمی تقریبی‌اند.",
+    helpLicTitle:"مجوز و سپاس",
+    helpLic:"رایگان برای استفادهٔ <b>شخصی و غیرتجاری</b> با ذکر منبع؛ استفادهٔ تجاری به اجازهٔ نگارنده نیاز دارد (فایل LICENSE). محاسبات نجومی با astronomy-engine (MIT). ساختهٔ مسعود ولیپور.",
+    close:"بستن"
+   }
+ },
+ pl:{ months:["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"],
+   types:{GX:"Galaktyka",EN:"Mgławica emisyjna",RN:"Mgławica refleksyjna",PN:"Mgławica planetarna",SNR:"Pozostałość supernowej",OC:"Gromada otwarta",GC:"Gromada kulista",AST:"Obłok gwiazd/asteryzm",DBL:"Gwiazda podwójna",Planet:"Planeta",Moon:"Księżyc"},
+   tw:{astronomical:"astronomicznego",nautical:"żeglarskiego",civil:"cywilnego"},
+   phases:{New:"Nów","Waxing crescent":"Sierp przybywający","First quarter":"Pierwsza kwadra","Waxing gibbous":"Garb przybywający",Full:"Pełnia","Waning gibbous":"Garb ubywający","Last quarter":"Ostatnia kwadra","Waning crescent":"Sierp ubywający"},
+   ui:{
+    appTitle:"🔭 Planer Obserwacji Nocnego Nieba",
+    estimatesNote:"Trudność i okular to <b>szacunki</b> — geometria nieba (wysokość, górowanie, zmierzch, Księżyc, planety) jest realnie obliczana. Działa offline po pierwszym załadowaniu.",
+    help:"❓ Pomoc", themeDark:"🌙 Ciemny", themeRed:"🔴 Tryb nocny", themeNormal:"☀️ Normalny",
+    whereWhen:"1 · Gdzie i kiedy", cityLabel:"Miasto (wyszukuje współrzędne — raz potrzebny internet, potem z pamięci)",
+    cityPh:"np. Teheran, Nairobi, Quito", find:"Szukaj", dateLabel:"Data obserwacji (wieczór)",
+    manualSummary:"Ręczna/offline lokalizacja i zapisane miejsca", latLabel:"Szerokość (°N)", lonLabel:"Długość (°E)",
+    offLabel:"Przesunięcie UTC (godz., opcj.)", useThese:"Użyj", savePh:"Zapisz jako… (np. Dom)", saveSite:"Zapisz miejsce",
+    gearSky:"2 · Twój sprzęt i niebo", modeLabel:"Tryb", modeVisual:"Wizualny", modeAstro:"Astrofotografia",
+    instrLabel:"Instrument", instrNaked:"Gołe oko", instrBino:"Lornetka", instrScope:"Teleskop",
+    skyLabel:"Ciemność nieba", skyDark:"Ciemne (wieś)", skySub:"Podmiejskie", skyBright:"Jasne (miasto)",
+    apertureLabel:"Apertura", focalLabel:"Ogniskowa (mm)", scopeTypeLabel:"Typ teleskopu (kosmetyczny)",
+    scopeReflector:"Zwierciadlany", scopeRefractor:"Soczewkowy", scopeCat:"Katadioptryczny (SCT/Mak)",
+    epOwnedLabel:"Posiadane okulary (mm, przecinki)", binApLabel:"Apertura lornetki (mm)", compute:"Oblicz niebo ▸",
+    tonightAt:"Dziś w nocy w", sunsetSunrise:"Zachód → Wschód", darkWindow:"Okno ciemności", moon:"Księżyc",
+    moonUpMid:"nad horyzontem o północy", moonDownMid:"pod horyzontem o północy", darkTrue:"Ciemność astronomiczna (pełna).",
+    darkOnly:"Najlepsza ciemność dziś sięga tylko zmierzchu {type}.",
+    noDark:"Dziś brak prawdziwej ciemności astronomicznej — używam zmierzchu {type} jako okna ciemności.",
+    timesLocal:"Czas w lokalnym czasie miejsca ({off}).", brightMoonWarn:"Jasny Księżyc — słabe cele będą rozmyte.",
+    tabTonight:"Co widać", tabAll:"Katalog", tabList:"Moja lista i dziennik",
+    sortByLabel:"Sortuj wg", sortDiff:"Trudność (łatwe→trudne)", sortTime:"Najlepszy czas dziś", sortSet:"Najszybciej zachodzące",
+    sortName:"Nazwa (A→Z)", sortType:"Typ obiektu", sortMag:"Jasność (jasne→słabe)", sortCon:"Gwiazdozbiór", sortMonth:"Najlepszy miesiąc",
+    filterTypeLabel:"Filtr typu", allTypes:"Wszystkie typy", chipHideImpossible:"Ukryj niemożliwe", chipOnlyUp:"Tylko widoczne dziś",
+    chipMessier:"Tylko Messier", chipListed:"Na mojej liście",
+    diffEasy:"Łatwy do znalezienia", diffNeeds:"Wymaga doświadczenia", diffHard:"Bardzo trudny", diffToofaint:"Za słaby dla sprzętu",
+    diffSun:"Skryty w blasku Słońca", diffHorizon:"Pod horyzontem tutaj", diffMoonDown:"Dziś pod horyzontem",
+    colObject:"Obiekt", colDifficulty:"Trudność", colType:"Typ", colConst:"Gwiazdozb.", colMag:"Jasn.", colSize:"Rozmiar",
+    colBestMo:"Najl. mies.", colBestTime:"Najl. czas", colEyepiece:"Okular",
+    hObject:"Identyfikator katalogowy i nazwa zwyczajowa. Szary wiersz podaje inne numery katalogowe obiektu.",
+    hDiff:"Jak trudny jest ten obiekt dla TWOJEGO sprzętu, nieba i daty dziś — szacunek. Dotknij kolorowej etykiety, by zobaczyć uzasadnienie.",
+    hType:"Rodzaj obiektu: galaktyka, gromada otwarta/kulista, mgławica emisyjna/planetarna, pozostałość supernowej itd.",
+    hCon:"Gwiazdozbiór, w którym leży obiekt — przydatny do nawigacji.",
+    hMag:"Jasność całkowita. Mniejsze liczby = jaśniejszy. Duże słabe obiekty mogą wyglądać na słabsze niż ta liczba sugeruje.",
+    hSize:"Rozmiar widomy na niebie, w minutach kątowych (′). Dwie liczby (np. 9×4′) to oś długa × oś krótka.",
+    hMonth:"Miesiąc, w którym obiekt jest najwyżej o lokalnej północy — czyli najlepszy sezon obserwacji.",
+    hTime:"Godzina dziś, gdy wznosi się najwyżej (góruje), z maks. wysokością. W lokalnym czasie miejsca.",
+    hEyepiece:"Przybliżona ogniskowa okularu do dobrego kadrowania, z przybliżonym powiększeniem. Szacunek.",
+    hStatus:"Czy zapisałeś go jako zaobserwowany lub pominięty. Dotknij „dziennik”, by zapisać datę, warunki, ocenę i notatki.",
+    solarSystem:"Układ Słoneczny", low:"nisko", statusObserved:"zaobserwowany", statusMissed:"pominięty", statusNotYet:"jeszcze nie",
+    log:"dziennik", remove:"usuń",
+    eyeNaked:"cel dla gołego oka", eyeBino:"cel dla lornetki (stałe powiększenie)", eyeEnterFocal:"podaj ogniskową, by zobaczyć wskazówki okularowe",
+    eyeBestRange:"najlepiej ~{lo}–{hi} mm (≈{mag}×)", eyeBestSingle:"najlepiej ~{ep} mm (≈{mag}×)",
+    eyeWholeDisk:" na całą tarczę; krótszy okular (większe powiększenie) na szczegóły kraterów", eyeTooBig:" — większy niż jedno pole",
+    eyeOwned:"Twój {ep} mm jest najbliższy (≈{mag}×)",
+    observed:"Zaobserwowane", messierOnList:"Messier na liście: {d} / {t}",
+    listEmpty:"Twoja lista jest pusta. Dodaj obiekty z zakładki Katalog lub wczytaj listę startową poniżej.",
+    objectsMatch:"Pasujących obiektów: {n}.", bestPlacedNote:"Najlepiej położone cele na dziś, najłatwiejsze pierwsze.",
+    showingAll:"Pokazano wszystkie {n}.", showMore:"▾ Pokaż {n} więcej ({rem} pozostało)", showingOf:"Pokazano {shown} z {total}.",
+    starterTitle:"Listy startowe i kopia", presetMessier:"+ Messier 110", presetCaldwell:"+ Zestaw Caldwell",
+    presetTop20:"+ Top 20 dla początkujących", presetClear:"Wyczyść listę", exportJson:"Eksport JSON", exportCsv:"Eksport CSV",
+    importJson:"Import JSON", printChecklist:"Lista do druku",
+    notePrefix:"Uwaga: ", assumeAperture:"brak apertury → przyjęto 150 mm (6\")", assumeFocal:"brak ogniskowej → wskazówki okularowe ograniczone",
+    assumeBino:"brak apertury lornetki → przyjęto 50 mm", estShort:"trudność i okular to szacunki",
+    noLocYet:"Nie ustawiono lokalizacji.", lookingUp:"Wyszukiwanie…", loadedCache:"Wczytano z pamięci.",
+    lookupFail:"Wyszukiwanie nieudane (offline?). Użyj ręcznych współrzędnych poniżej.", noMatches:"Brak wyników. Użyj ręcznych współrzędnych.",
+    offsetFromLon:"przesunięcie z długości geogr.",
+    alertNoLib:"Nie udało się wczytać biblioteki astronomicznej. Upewnij się, że astronomy.browser.js jest obok tej strony.",
+    alertNoLoc:"Najpierw ustaw lokalizację (znajdź miasto, wybierz zapisane miejsce lub podaj współrzędne).",
+    alertCompErr:"Błąd obliczeń: ", alertNumeric:"Podaj liczbowe wartości szerokości i długości.",
+    alertSetLocFirst:"Najpierw ustaw lokalizację.", alertImportOk:"Import zakończony: {n} obiektów na liście.",
+    alertImportErr:"Nie można odczytać pliku: ", alertListEmpty:"Twoja lista jest pusta.",
+    lgObserveQ:"Czy go zaobserwowałeś?", lgObserved:"✓ Zaobserwowany", lgMissed:"✗ Pominięty", lgDate:"Data obserwacji",
+    lgCond:"Warunki nieba", lgCondPh:"seeing, przejrzystość, Księżyc…", lgEquip:"Użyty sprzęt", lgRate:"Ocena (1–5)",
+    lgNotes:"Notatki", lgNotesPh:"Co widziałeś…", lgReason:"Powód pominięcia (zamiast odhaczenia)",
+    lgReasonPh:"zachmurzenie, za nisko, brak czasu…", lgSave:"Zapisz", lgClear:"Wyczyść wpis", lgCancel:"Anuluj",
+    helpTitle:"🔭 O programie i pomoc",
+    helpIntro:"Darmowy <b>planer obserwacji i dziennik</b> nocnego nieba dla astronomów-amatorów. Podaj lokalizację, datę, sprzęt i ciemność nieba — program wyliczy, które obiekty warto dziś obserwować, i oznaczy każdy etykietą trudności <i>dla Twojego zestawu</i>. Twórz listę, odhaczaj obserwacje i rób notatki. Działa offline po pierwszym załadowaniu.",
+    helpStart:"Pierwsze kroki", helpS1:"<b>Gdzie i kiedy</b> — znajdź miasto (lub podaj współrzędne offline) i wybierz datę wieczoru.",
+    helpS2:"<b>Sprzęt i niebo</b> — gołe oko, lornetka lub teleskop (dodaj aperturę i ogniskową) oraz ciemność nieba. Puste pola przyjmują rozsądne wartości.",
+    helpS3:"Dotknij <b>Oblicz niebo ▸</b>.",
+    helpViews:"Trzy widoki", helpV1:"<b>Co widać</b> — najlepiej położone cele na dziś.",
+    helpV2:"<b>Katalog</b> — ok. 150 obiektów (110 Messiera + znane NGC/Caldwell + planety i Księżyc).",
+    helpV3:"<b>Moja lista i dziennik</b> — osobista lista, licznik postępu i dziennik obserwacji. Wczytaj listę startową z dolnego panelu.",
+    helpDiffTitle:"Etykiety trudności (dla Twojego sprzętu i nieba)",
+    helpDiffNote:"Dotknij dowolnej etykiety w tabeli, by zobaczyć uzasadnienie. To uczciwe <b>szacunki</b>, nie dokładne prognozy.",
+    helpActions:"Akcje dla obiektu",
+    helpA1:"<b>+ / ✓</b> (pierwsza kolumna) — dodaj/usuń z listy; <b>dziennik</b> pojawia się, gdy obiekt jest na liście.",
+    helpA2:"<b>map</b> — otwiera Stellarium Web na obiekcie · <b>photo</b> — szukaj obrazów · <b>info</b> — szukaj w sieci.",
+    helpA3:"Dotknij małego <b>i</b> przy nagłówku kolumny, by poznać jego znaczenie.",
+    helpGood:"Warto wiedzieć",
+    helpG1:"<b>Prywatne i offline</b> — lista, dziennik i ustawienia są tylko w tej przeglądarce; nic nie jest wysyłane. Użyj <b>Eksport/Import JSON</b> do kopii lub przenoszenia.",
+    helpG2:"<b>Tryb nocny</b> — przycisk 🌙 przełącza motywy Ciemny / Czerwony nocny / Normalny.",
+    helpG3:"Geometria nieba (wysokość, górowanie, zmierzch, Księżyc, planety) jest realnie obliczana; trudność i okular są przybliżone.",
+    helpLicTitle:"Licencja i podziękowania",
+    helpLic:"Darmowe do użytku <b>osobistego i niekomercyjnego</b> z podaniem autora; użycie komercyjne wymaga zgody autora (plik LICENSE). Astronomia: astronomy-engine (MIT). Autor: Masood Valipour.",
+    close:"Zamknij"
+   }
+ }
+};
+let LANGCODE = "en";
+function t(k, vars){
+  const d = I18N[LANGCODE] && I18N[LANGCODE].ui ? I18N[LANGCODE].ui : I18N.en.ui;
+  let s = (d[k]!=null) ? d[k] : (I18N.en.ui[k]!=null ? I18N.en.ui[k] : k);
+  if(vars) for(const p in vars) s = s.split("{"+p+"}").join(vars[p]);
+  return s;
+}
+function tType(code){ const d=I18N[LANGCODE]||I18N.en; return (d.types&&d.types[code]) || I18N.en.types[code] || code; }
+function tMonth(i){ const d=I18N[LANGCODE]||I18N.en; return (d.months&&d.months[i]) || MONTHS[i]; }
+function tPhase(name){ const d=I18N[LANGCODE]||I18N.en; return (d.phases&&d.phases[name]) || name; }
+function tTw(word){ const d=I18N[LANGCODE]||I18N.en; return (d.tw&&d.tw[word]) || word; }
+// wrap designations/numbers so they render left-to-right inside RTL text
+function ltr(s){ return LANGCODE==="fa" ? `<span class="ltr">${s}</span>` : s; }
+// difficulty "why" tooltip + note templates (kept separate to keep the main dict tidy)
+Object.assign(I18N.en.ui,{
+  whyHorizon:"From this latitude it only ever climbs to about {alt}° — it never clears a usable altitude here, on any date.",
+  whySun:"It reaches {alt}° but only during daylight on this date — it sits in the Sun's part of the sky right now.{hint}",
+  whyMonthHint:" Try around {month}.", whyMain:"Peaks ~{alt}°; {mode} margin {sign}{margin} mag vs your {ap}mm under {sky} sky{astro}.",
+  whyAstro:" (astro)", modeContrast:"contrast", modeBrightness:"brightness",
+  skyShortDark:"dark", skyShortSub:"suburban", skyShortBright:"bright",
+  noteLow:"low in the sky (peaks ~{alt}°)", noteMoon:"Moon ~{pct}% lit tonight",
+  whyMoon:"Moon, {pct}% illuminated.", whyMoonDown:"The Moon is up only during daylight on this date ({pct}% illuminated)."
+});
+Object.assign(I18N.fa.ui,{
+  whyHorizon:"از این عرض جغرافیایی حداکثر تا حدود {alt}° بالا می‌آید — هرگز و در هیچ تاریخی به ارتفاع قابل‌رصد نمی‌رسد.",
+  whySun:"به {alt}° می‌رسد اما در این تاریخ فقط در روز بالای افق است — اکنون در بخشِ خورشیدیِ آسمان قرار دارد.{hint}",
+  whyMonthHint:" حدود {month} امتحان کنید.", whyMain:"بیشینه ~{alt}°؛ حاشیهٔ {mode} {sign}{margin} قدر نسبت به {ap}mm شما زیر آسمان {sky}{astro}.",
+  whyAstro:" (عکاسی)", modeContrast:"کنتراست", modeBrightness:"روشنایی",
+  skyShortDark:"تاریک", skyShortSub:"حومه‌ای", skyShortBright:"شهری",
+  noteLow:"پایینِ آسمان (بیشینه ~{alt}°)", noteMoon:"ماه ~{pct}٪ روشن امشب",
+  whyMoon:"ماه، {pct}٪ روشن.", whyMoonDown:"ماه در این تاریخ فقط در روز بالای افق است ({pct}٪ روشن)."
+});
+Object.assign(I18N.pl.ui,{
+  whyHorizon:"Z tej szerokości wznosi się najwyżej do około {alt}° — nigdy nie osiąga użytecznej wysokości, w żadną datę.",
+  whySun:"Osiąga {alt}°, ale w tej dacie jest nad horyzontem tylko za dnia — leży teraz w słonecznej części nieba.{hint}",
+  whyMonthHint:" Spróbuj około {month}.", whyMain:"Maks. ~{alt}°; margines {mode} {sign}{margin} mag względem Twoich {ap}mm pod niebem {sky}{astro}.",
+  whyAstro:" (astro)", modeContrast:"kontrastu", modeBrightness:"jasności",
+  skyShortDark:"ciemnym", skyShortSub:"podmiejskim", skyShortBright:"miejskim",
+  noteLow:"nisko na niebie (maks. ~{alt}°)", noteMoon:"Księżyc ~{pct}% oświetlony dziś",
+  whyMoon:"Księżyc, {pct}% oświetlenia.", whyMoonDown:"Księżyc jest nad horyzontem tylko za dnia w tej dacie ({pct}% oświetlenia)."
+});
+I18N.en.ui.colStatus="Status / log"; I18N.fa.ui.colStatus="وضعیت / ثبت"; I18N.pl.ui.colStatus="Status / dziennik";
+function diffLabel(key){ return t({easy:"diffEasy",needs:"diffNeeds",hard:"diffHard",toofaint:"diffToofaint",sun:"diffSun",horizon:"diffHorizon"}[key]); }
+function skyWord(){ return t({dark:"skyShortDark",suburban:"skyShortSub",bright:"skyShortBright"}[S.sky]); }
+
+/* =========================================================================
    STATE / localStorage
    ========================================================================= */
 const LS_KEY = "skyPlanner.v1";
@@ -484,12 +832,18 @@ function defaultState(){
     equip: {mode:"visual", instrument:"telescope", aperture:150, apUnit:"mm", focal:750, scopeType:"", eyepieces:[25,10,6], binAp:50},
     sky: "suburban",
     theme: "dark",
+    lang: detectLang(),       // "en" | "fa" | "pl"
     list: [],                 // array of object ids on personal list
     log: {}                   // id -> {done, date, conditions, equip, rating, notes, missed}
   };
 }
+function detectLang(){
+  const n = (navigator.language||"en").slice(0,2).toLowerCase();
+  return I18N[n] ? n : "en";
+}
 function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 let S = loadState();
+LANGCODE = (S.lang && I18N[S.lang]) ? S.lang : "en";
 function loadState(){
   try{ const raw=localStorage.getItem(LS_KEY); if(raw){ return Object.assign(defaultState(), JSON.parse(raw)); } }catch(e){}
   return defaultState();
@@ -661,13 +1015,13 @@ function difficulty(o, geom, night){
     // Two distinct "impossible" geometry cases:
     if(geom.geomMaxAlt < MIN_ALT){
       // never climbs high enough from this latitude — a horizon limit, true all year.
-      return {key:"horizon", label:"Below the horizon here", cls:"horizon", rank:6,
-        why:`From this latitude it only ever climbs to about ${Math.max(geom.geomMaxAlt,0).toFixed(0)}° — it never clears a usable altitude here, on any date.`};
+      return {key:"horizon", label:diffLabel("horizon"), cls:"horizon", rank:6,
+        why:t("whyHorizon",{alt:Math.max(geom.geomMaxAlt,0).toFixed(0)})};
     }
     // it CAN get high, but only while the Sun is up on this date (it's near the Sun now).
-    const moHint = (!o.body) ? ` Try around ${MONTHS[bestMonth(o)]}.` : "";
-    return {key:"sun", label:"Lost in the Sun's glare", cls:"sun", rank:5,
-      why:`It reaches ${geom.geomMaxAlt.toFixed(0)}° but only during daylight on this date — it sits in the Sun's part of the sky right now.${moHint}`};
+    const hint = (!o.body) ? t("whyMonthHint",{month:monthLabelFromDate(bestMonthDate(o), false)}) : "";
+    return {key:"sun", label:diffLabel("sun"), cls:"sun", rank:5,
+      why:t("whySun",{alt:geom.geomMaxAlt.toFixed(0), hint})};
   }
   const astro = S.equip.mode==="astro";
   const D_cm = effectiveApertureMM()/10;
@@ -704,27 +1058,29 @@ function difficulty(o, geom, night){
   }
 
   // classify on margin alone first
-  const RANK = {1:["easy","Easy to find","easy"], 2:["needs","Needs experience","needs"], 3:["hard","Extremely difficult","hard"]};
-  let key,label,cls,rank;
-  if(margin < 0){ [key,label,cls]=["toofaint","Too faint for your gear","toofaint"]; rank=4; }
-  else { rank = margin>=2.5?1 : (margin>=1.0?2:3); [key,label,cls]=RANK[rank]; }
+  const RANK = {1:["easy","easy"], 2:["needs","needs"], 3:["hard","hard"]};
+  let key,cls,rank;
+  if(margin < 0){ [key,cls]=["toofaint","toofaint"]; rank=4; }
+  else { rank = margin>=2.5?1 : (margin>=1.0?2:3); [key,cls]=RANK[rank]; }
 
   // low-altitude bump (don't bump past "extremely difficult")
   if(key!=="toofaint" && geom.nightMaxAlt<LOW_ALT && rank<3){
-    rank++; [key,label,cls]=RANK[rank];
-    notes.push(`low in the sky (peaks ~${geom.nightMaxAlt.toFixed(0)}°)`);
+    rank++; [key,cls]=RANK[rank];
+    notes.push(t("noteLow",{alt:geom.nightMaxAlt.toFixed(0)}));
   }
   // Bright Moon: gentle one-notch downgrade for faint/extended targets — never turns a
   // genuinely bright object "impossible", just harder.
   if(night.moonIllum>0.55 && night.moonAltMid>0 && (o.mag>6 || extended) && key!=="toofaint"){
-    if(rank<3){ rank++; [key,label,cls]=RANK[rank]; }
-    notes.push(`Moon ~${Math.round(night.moonIllum*100)}% lit tonight`);
+    if(rank<3){ rank++; [key,cls]=RANK[rank]; }
+    notes.push(t("noteMoon",{pct:Math.round(night.moonIllum*100)}));
   }
 
-  const why = `Peaks ~${geom.nightMaxAlt.toFixed(0)}°; ${mode} margin ${margin>=0?"+":""}${margin.toFixed(1)} mag vs your `+
-    `${effectiveApertureMM().toFixed(0)}mm under ${S.sky} sky${astro?" (astro)":""}.`+
-    (notes.length?" "+notes.join("; ")+".":"");
-  return {key,label,cls,rank,why};
+  const why = t("whyMain",{alt:geom.nightMaxAlt.toFixed(0),
+      mode:(mode==="contrast"?t("modeContrast"):t("modeBrightness")),
+      sign:(margin>=0?"+":""), margin:margin.toFixed(1),
+      ap:effectiveApertureMM().toFixed(0), sky:skyWord(), astro:(astro?t("whyAstro"):"")})
+    + (notes.length?" "+notes.join("; ")+".":"");
+  return {key, label:diffLabel(key), cls, rank, why};
 }
 
 /* =========================================================================
@@ -732,10 +1088,10 @@ function difficulty(o, geom, night){
    ========================================================================= */
 function eyepieceSuggestion(o){
   const e=S.equip;
-  if(e.instrument==="naked") return {text:"naked-eye target"};
-  if(e.instrument==="binoculars") return {text:"binocular target (fixed magnification)"};
+  if(e.instrument==="naked") return {text:t("eyeNaked")};
+  if(e.instrument==="binoculars") return {text:t("eyeBino")};
   const focal = +e.focal||0;
-  if(!focal) return {text:"enter focal length for eyepiece tips"};
+  if(!focal) return {text:t("eyeEnterFocal")};
   const apMM = effectiveApertureMM();
   const objDeg = o.sizeMaj/60;
   const AFOV = 52; // assumed eyepiece apparent field
@@ -759,32 +1115,61 @@ function eyepieceSuggestion(o){
   if(epLow>epHigh){ const t=epLow; epLow=epHigh; epHigh=t; }
   const magMid = Math.round(focal/epMid);
   let text = (epHigh-epLow < 0.8)
-    ? `best ~${epMid.toFixed(0)} mm (≈${magMid}×)`
-    : `best ~${epLow.toFixed(0)}–${epHigh.toFixed(0)} mm (≈${magMid}×)`;
-  if(o.type==="Moon") text += " for the whole disk; go shorter (higher power) for crater detail";
+    ? t("eyeBestSingle",{ep:epMid.toFixed(0), mag:magMid})
+    : t("eyeBestRange",{lo:epLow.toFixed(0), hi:epHigh.toFixed(0), mag:magMid});
+  if(o.type==="Moon") text += t("eyeWholeDisk");
   // fit check at lowest practical power (widest true field this scope can show)
   const maxTrueField = AFOV*maxEP/focal; // deg
   let fit=true;
-  if(o.type!=="Planet" && o.type!=="Moon" && objDeg>maxTrueField){ fit=false; text+=" — larger than one field"; }
+  if(o.type!=="Planet" && o.type!=="Moon" && objDeg>maxTrueField){ fit=false; text+=t("eyeTooBig"); }
   // closest owned eyepiece
   let owned=null;
   if(Array.isArray(e.eyepieces) && e.eyepieces.length){
     let best=null,bd=1e9;
     for(const ep of e.eyepieces){ const d=Math.abs(ep-epMid); if(d<bd){bd=d;best=ep;} }
-    if(best!=null){ owned=`your ${best} mm is closest (≈${Math.round(focal/best)}×)`; }
+    if(best!=null){ owned=t("eyeOwned",{ep:best, mag:Math.round(focal/best)}); }
   }
   return {text, owned, fit};
 }
 
 /* =========================================================================
-   BEST MONTH (RA-driven: month the object transits near local midnight)
+   BEST MONTH (RA-driven: month the object transits near local midnight).
+   For Farsi, the month is shown in the Iranian (Solar Hijri / Jalali) calendar,
+   since a Gregorian month means little when planning an Iranian observing season.
    ========================================================================= */
-function bestMonth(o){
+function bestMonthDate(o){
   let d = (((o.ra-12)%24)+24)%24;
   let days = d/24*365.25;
-  const base = new Date(Date.UTC(2025,2,20));
+  const base = new Date(Date.UTC(2025,2,20)); // ~vernal equinox reference
   base.setUTCDate(base.getUTCDate()+Math.round(days));
-  return base.getUTCMonth(); // 0..11
+  return base;
+}
+function bestMonth(o){ return bestMonthDate(o).getUTCMonth(); } // Gregorian 0..11
+
+// Gregorian -> Jalali (Solar Hijri). Standard jalaali algorithm; returns {jy,jm,jd}, jm 1..12.
+const PERSIAN_MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+function g2j(gy, gm, gd){
+  const gdm=[0,31,59,90,120,151,181,212,243,273,304,334];
+  const fdiv=(a,b)=>Math.floor(a/b);
+  const gy2 = (gm>2)? gy+1 : gy;
+  let days = 355666 + 365*gy + fdiv(gy2+3,4) - fdiv(gy2+99,100) + fdiv(gy2+399,400) + gd + gdm[gm-1];
+  let jy = -1595 + 33*fdiv(days,12053); days %= 12053;
+  jy += 4*fdiv(days,1461); days %= 1461;
+  if(days>365){ jy += fdiv(days-1,365); days = (days-1)%365; }
+  const jm = (days<186)? 1+fdiv(days,31) : 7+fdiv(days-186,30);
+  return {jy, jm};
+}
+function persianMonthNum(date){ return g2j(date.getUTCFullYear(), date.getUTCMonth()+1, date.getUTCDate()).jm; }
+// Localised best-month name from a date (Jalali for fa; Gregorian otherwise, abbrev=3 letters).
+function monthLabelFromDate(date, abbrev){
+  if(!date) return "—";
+  if(LANGCODE==="fa") return PERSIAN_MONTHS[persianMonthNum(date)-1];
+  const name = tMonth(date.getUTCMonth());
+  return abbrev ? name.slice(0,3) : name;
+}
+function monthSortKey(r){ // sort by Persian month order for fa, else Gregorian
+  if(r.monthDate==null) return 99;
+  return LANGCODE==="fa" ? persianMonthNum(r.monthDate) : r.month;
 }
 
 /* =========================================================================
@@ -809,11 +1194,12 @@ function computeAll(){
     const oo = Object.assign({}, o, {mag, sizeMaj:sizeMaj||5, sizeMin:sizeMin||5});
     const moonUp = geom.nightMaxAlt>=MIN_ALT;
     const diff = (o.id==="Moon") ? (moonUp
-                  ? {key:"easy", label:"Easy to find", cls:"easy", rank:1, why:`Moon, ${Math.round(NIGHT.moonIllum*100)}% illuminated.`}
-                  : {key:"sun", label:"Below the horizon tonight", cls:"sun", rank:5, why:`The Moon is up only during daylight on this date (${Math.round(NIGHT.moonIllum*100)}% illuminated).`})
+                  ? {key:"easy", label:diffLabel("easy"), cls:"easy", rank:1, why:t("whyMoon",{pct:Math.round(NIGHT.moonIllum*100)})}
+                  : {key:"sun", label:t("diffMoonDown"), cls:"sun", rank:5, why:t("whyMoonDown",{pct:Math.round(NIGHT.moonIllum*100)})})
                  : difficulty(oo, geom, NIGHT);
+    const md = o.body? null : bestMonthDate(o);
     ROWS.push({o:oo, id:objId(o), geom, diff,
-      month:(o.body?null:bestMonth(o)),
+      month:(md?md.getUTCMonth():null), monthDate:md,
       eyepiece:eyepieceSuggestion(oo)});
   }
 }
@@ -829,11 +1215,11 @@ const PAGE_SIZE=20;
 let SHOWN=PAGE_SIZE;                 // how many rows are currently revealed
 function resetPage(){ SHOWN=PAGE_SIZE; }
 function pagerHTML(total){
-  if(total<=SHOWN) return total? `<div class="small muted" style="margin-top:6px;">Showing all ${total}.</div>` : "";
+  if(total<=SHOWN) return total? `<div class="small muted" style="margin-top:6px;">${t("showingAll",{n:total})}</div>` : "";
   const remaining=total-SHOWN, next=Math.min(PAGE_SIZE,remaining);
   return `<div style="margin-top:10px;text-align:center;">
-    <button id="showMore" style="width:auto;">▾ Show ${next} more (${remaining} remaining)</button>
-    <div class="small muted" style="margin-top:4px;">Showing ${SHOWN} of ${total}.</div></div>`;
+    <button id="showMore" style="width:auto;">${t("showMore",{n:next,rem:remaining})}</button>
+    <div class="small muted" style="margin-top:4px;">${t("showingOf",{shown:SHOWN,total:total})}</div></div>`;
 }
 function wirePager(host){ const b=$("#showMore",host); if(b) b.onclick=()=>{ SHOWN+=PAGE_SIZE; renderTable(); }; }
 
@@ -849,20 +1235,10 @@ function phaseName(angle){
   return "Waning crescent";
 }
 
-/* Short, tap-to-open descriptions for each table column. */
-const COLHELP = {
-  name:"Catalogue ID and common name. The grey line lists the object's other catalogue numbers.",
-  diff:"How hard this object is to spot with YOUR instrument, sky and date tonight — an estimate. Tap a coloured label for the reasoning behind it.",
-  type:"Kind of object: galaxy, open/globular cluster, emission/planetary nebula, supernova remnant, etc.",
-  con:"The constellation the object lies in — useful for star-hopping to it.",
-  mag:"Integrated (total) brightness. Lower numbers are brighter. Large faint objects can look dimmer than this single number suggests.",
-  size:"Apparent size on the sky, in arcminutes (′). Two numbers (e.g. 9×4′) mean long axis × short axis for a non-round object.",
-  month:"The month the object rides highest at local midnight — i.e. its best season to observe.",
-  time:"The clock time tonight it climbs highest (transits), with its peak altitude. Shown in the site's local time.",
-  eyepiece:"A rough eyepiece focal length to frame it well, with the approximate magnification. If you listed eyepieces you own, the closest match is named. An estimate.",
-  status:"Whether you've logged this as observed or missed. Tap “log” to record date, conditions, a rating and notes."
-};
-function ihelp(key){ return ` <span class="ihelp" data-h="${key}" title="what is this?">i</span>`; }
+/* Column key → translation key for the tap-to-open header descriptions. */
+const COLHELP = {name:"hObject", diff:"hDiff", type:"hType", con:"hCon", mag:"hMag", size:"hSize",
+  month:"hMonth", time:"hTime", eyepiece:"hEyepiece", status:"hStatus"};
+function ihelp(key){ return ` <span class="ihelp" data-h="${key}" title="?">i</span>`; }
 function closeColHelp(){ const b=document.querySelector(".helpbox"); if(b) b.remove(); }
 function onIhelp(e, el){
   e.stopPropagation();
@@ -872,7 +1248,7 @@ function onIhelp(e, el){
   if(same) return;
   const box=document.createElement("div");
   box.className="helpbox"; box._owner=el;
-  box.textContent = COLHELP[el.dataset.h]||"";
+  box.textContent = t(COLHELP[el.dataset.h]||"");
   document.body.appendChild(box);
   const r=el.getBoundingClientRect();
   const bw=Math.min(260, window.innerWidth-20);
@@ -891,17 +1267,18 @@ function renderSession(){
   $("#sessLoc").textContent = S.cur.label + " · " + S.date;
   const n=NIGHT;
   const moonPct=Math.round(n.moonIllum*100);
+  const twWord = tTw(n.darkType);
   let darkLine;
-  if(n.noDark){ darkLine = `<span class="warn">No true astronomical darkness tonight</span> — using ${n.darkType} twilight as the dark window.`; }
-  else if(n.darkType!=="astronomical"){ darkLine = `Best darkness reaches only <b>${n.darkType}</b> twilight tonight.`; }
-  else darkLine = `Astronomical darkness (true dark).`;
-  const ds=n.darkStart, de=n.darkEnd;
+  if(n.noDark){ darkLine = `<span class="warn">${t("noDark",{type:twWord})}</span>`; }
+  else if(n.darkType!=="astronomical"){ darkLine = t("darkOnly",{type:twWord}); }
+  else darkLine = t("darkTrue");
+  const ds=n.darkStart, de=n.darkEnd, ar = LANGCODE==="fa" ? "←" : "→";
   $("#sessionInfo").innerHTML =
-    `<div class="kv"><span>Sunset → Sunrise</span><b>${fmtLocal(n.sunset)} → ${fmtLocal(n.sunrise)}</b></div>`+
-    `<div class="kv"><span>Dark window (${n.darkType})</span><b>${fmtLocal(ds)} → ${fmtLocal(de)}</b></div>`+
-    `<div class="kv"><span>Moon</span><b>${phaseName(n.moonPhase)} · ${moonPct}% lit ${n.moonAltMid>0?"(up at mid-night)":"(down at mid-night)"}</b></div>`+
-    `<div class="small muted" style="margin-top:6px;">${darkLine} Times shown in site-local ${fmtOff(curOffset())}.`+
-    (moonPct>60?` <span class="warn">Bright Moon — faint targets will be washed out.</span>`:``)+`</div>`;
+    `<div class="kv"><span>${t("sunsetSunrise")}</span><b class="ltr">${fmtLocal(n.sunset)} ${ar} ${fmtLocal(n.sunrise)}</b></div>`+
+    `<div class="kv"><span>${t("darkWindow")} (${twWord})</span><b class="ltr">${fmtLocal(ds)} ${ar} ${fmtLocal(de)}</b></div>`+
+    `<div class="kv"><span>${t("moon")}</span><b>${tPhase(phaseName(n.moonPhase))} · ${moonPct}% · ${n.moonAltMid>0?t("moonUpMid"):t("moonDownMid")}</b></div>`+
+    `<div class="small muted" style="margin-top:6px;">${darkLine} ${t("timesLocal",{off:fmtOff(curOffset())})}`+
+    (moonPct>60?` <span class="warn">${t("brightMoonWarn")}</span>`:``)+`</div>`;
 }
 
 function labelHTML(diff){ return `<span class="lab ${diff.cls}" title="${esc(diff.why)}">${diff.label}</span>`; }
@@ -946,10 +1323,10 @@ function filteredSortedRows(){
     time:(a,b)=> (a.geom.bestTime?a.geom.bestTime.getTime():9e15)-(b.geom.bestTime?b.geom.bestTime.getTime():9e15),
     set:(a,b)=> (a.geom.setTime?a.geom.setTime.getTime():9e15)-(b.geom.setTime?b.geom.setTime.getTime():9e15),
     name:(a,b)=> objDisplayName(a.o).localeCompare(objDisplayName(b.o)),
-    type:(a,b)=> (TYPE_NAMES[a.o.type]||"").localeCompare(TYPE_NAMES[b.o.type]||"") || a.o.mag-b.o.mag,
+    type:(a,b)=> (tType(a.o.type)||"").localeCompare(tType(b.o.type)||"") || a.o.mag-b.o.mag,
     mag:(a,b)=> a.o.mag-b.o.mag,
     con:(a,b)=> (a.o.con||"~").localeCompare(b.o.con||"~"),
-    month:(a,b)=> ((a.month==null?99:a.month)-(b.month==null?99:b.month))
+    month:(a,b)=> monthSortKey(a)-monthSortKey(b)
   }[SORT];
   if(VIEW==="tonight") rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT); // only what's up
   // Honour the chosen sort. Only when sorting by "difficulty" do we also rank by
@@ -964,15 +1341,15 @@ function renderTable(){
   const host=$("#tableHost");
   if(VIEW==="list"){ renderListView(rows); return; }
   const head=`<tr>
-    <th class="sortable" data-s="name">Object${ihelp("name")}</th>
-    <th>Difficulty${ihelp("diff")}</th>
-    <th class="hide-sm sortable" data-s="type">Type${ihelp("type")}</th>
-    <th class="hide-sm sortable" data-s="con">Const.${ihelp("con")}</th>
-    <th class="sortable" data-s="mag">Mag${ihelp("mag")}</th>
-    <th class="hide-sm">Size${ihelp("size")}</th>
-    <th class="hide-sm sortable" data-s="month">Best mo.${ihelp("month")}</th>
-    <th class="sortable" data-s="time">Best time${ihelp("time")}</th>
-    <th class="hide-sm">Eyepiece${ihelp("eyepiece")}</th>
+    <th class="sortable" data-s="name">${t("colObject")}${ihelp("name")}</th>
+    <th>${t("colDifficulty")}${ihelp("diff")}</th>
+    <th class="hide-sm sortable" data-s="type">${t("colType")}${ihelp("type")}</th>
+    <th class="hide-sm sortable" data-s="con">${t("colConst")}${ihelp("con")}</th>
+    <th class="sortable" data-s="mag">${t("colMag")}${ihelp("mag")}</th>
+    <th class="hide-sm">${t("colSize")}${ihelp("size")}</th>
+    <th class="hide-sm sortable" data-s="month">${t("colBestMo")}${ihelp("month")}</th>
+    <th class="sortable" data-s="time">${t("colBestTime")}${ihelp("time")}</th>
+    <th class="hide-sm">${t("colEyepiece")}${ihelp("eyepiece")}</th>
     <th class="noprint">·</th></tr>`;
   const pageRows=rows.slice(0,SHOWN);
   const body=pageRows.map(r=>{
@@ -983,17 +1360,17 @@ function renderTable(){
     const ep = r.eyepiece.text + (r.eyepiece.owned?` · ${r.eyepiece.owned}`:"");
     return `<tr class="obj-row">
       <td><div class="namecell">
-          <button class="listbtn noprint ${onList?'on':''}" data-toggle="${esc(r.id)}" title="${onList?'on your list — tap to remove':'add to my list'}">${onList?'✓':'+'}</button>
-          <div><span class="obj-name">${esc(objDisplayName(o))}</span> ${done?'✓':''}
-            <div class="tag">${o.cat?esc(o.cat.join(", ")):"solar system"}${onList?` · <a href="#" class="noprint" data-log="${esc(r.id)}">log</a>`:''}</div>
+          <button class="listbtn noprint ${onList?'on':''}" data-toggle="${esc(r.id)}" title="${onList?esc(t("remove")):esc(t("chipListed"))}">${onList?'✓':'+'}</button>
+          <div><span class="obj-name ltr">${esc(objDisplayName(o))}</span> ${done?'✓':''}
+            <div class="tag">${o.cat?'<span class="ltr">'+esc(o.cat.join(", "))+'</span>':t("solarSystem")}${onList?` · <a href="#" class="noprint" data-log="${esc(r.id)}">${t("log")}</a>`:''}</div>
           </div></div></td>
       <td>${labelHTML(r.diff)}</td>
-      <td class="hide-sm">${TYPE_NAMES[o.type]||o.type}</td>
-      <td class="hide-sm">${esc(o.con||"—")}</td>
-      <td>${o.body&&o.body!=="Moon"?o.mag.toFixed(1):(o.id==="Moon"?"—":o.mag.toFixed(1))}</td>
-      <td class="hide-sm">${sz}</td>
-      <td class="hide-sm">${r.month==null?"—":MONTHS[r.month].slice(0,3)}</td>
-      <td>${fmtLocal(r.geom.bestTime)}<div class="tag">${r.geom.nightMaxAlt>=MIN_ALT?("↑"+r.geom.nightMaxAlt.toFixed(0)+"°"):"low"}</div></td>
+      <td class="hide-sm">${tType(o.type)||o.type}</td>
+      <td class="hide-sm"><span class="ltr">${esc(o.con||"—")}</span></td>
+      <td><span class="ltr">${o.body&&o.body!=="Moon"?o.mag.toFixed(1):(o.id==="Moon"?"—":o.mag.toFixed(1))}</span></td>
+      <td class="hide-sm"><span class="ltr">${sz}</span></td>
+      <td class="hide-sm">${monthLabelFromDate(r.monthDate, true)}</td>
+      <td><span class="ltr">${fmtLocal(r.geom.bestTime)}</span><div class="tag">${r.geom.nightMaxAlt>=MIN_ALT?('<span class="ltr">↑'+r.geom.nightMaxAlt.toFixed(0)+"°</span>"):t("low")}</div></td>
       <td class="hide-sm small">${esc(ep)}</td>
       <td class="acts noprint">
         <a href="${skyMapURL(o)}" target="_blank" rel="noopener">map</a>
@@ -1002,7 +1379,7 @@ function renderTable(){
       </td></tr>`;
   }).join("");
   host.innerHTML = `<div class="panel"><div class="scroll"><table>${head}${body}</table></div>
-    <div class="small muted" style="margin-top:6px;">${rows.length} object(s) match. ${VIEW==="tonight"?"Best-placed targets for tonight, easiest first.":""}</div>
+    <div class="small muted" style="margin-top:6px;">${t("objectsMatch",{n:rows.length})} ${VIEW==="tonight"?t("bestPlacedNote"):""}</div>
     ${pagerHTML(rows.length)}</div>`;
   // wire sortable headers (re-sorting resets pagination)
   $$("th.sortable",host).forEach(th=>th.onclick=()=>{ SORT=th.dataset.s; $("#sortBy").value=SORT; resetPage(); renderTable(); });
@@ -1018,28 +1395,28 @@ function renderListView(rows){
   const mTotal=S.list.filter(id=>{const r=ROWS.find(x=>x.id===id);return r&&r.o.m!=null;}).length;
   const mDone=S.list.filter(id=>{const r=ROWS.find(x=>x.id===id);return r&&r.o.m!=null&&S.log[id]&&S.log[id].done;}).length;
   let html=`<div class="panel">
-    <div class="kv"><span>Observed</span><b class="count">${done} / ${total}</b></div>
+    <div class="kv"><span>${t("observed")}</span><b class="count ltr">${done} / ${total}</b></div>
     <div class="progress"><span style="width:${total?(done/total*100):0}%"></span></div>
-    ${mTotal?`<div class="small muted" style="margin-top:6px;">Messier on list: ${mDone} / ${mTotal}</div>`:""}
+    ${mTotal?`<div class="small muted" style="margin-top:6px;">${t("messierOnList",{d:mDone,t:mTotal})}</div>`:""}
   </div>`;
-  if(!rows.length){ html+=`<div class="panel muted">Your list is empty. Add objects from the Catalog tab, or load a starter list below.</div>`; }
+  if(!rows.length){ html+=`<div class="panel muted">${t("listEmpty")}</div>`; }
   else {
     const pageRows=rows.slice(0,SHOWN);
     const body=pageRows.map(r=>{
       const o=r.o, L=S.log[r.id]||{};
-      const status = L.done? `<span class="lab easy">observed</span>` : (L.missed?`<span class="lab hard">missed</span>`:`<span class="muted small">not yet</span>`);
+      const status = L.done? `<span class="lab easy">${t("statusObserved")}</span>` : (L.missed?`<span class="lab hard">${t("statusMissed")}</span>`:`<span class="muted small">${t("statusNotYet")}</span>`);
       const meta = L.done? `${L.date||""} ${L.rating?("★"+L.rating):""} ${esc(L.notes||"")}` : (L.missed?esc(L.missed):"");
       return `<tr class="obj-row">
-        <td><span class="obj-name">${esc(objDisplayName(o))}</span><div class="tag">${o.cat?esc(o.cat.join(", ")):"solar"}</div></td>
+        <td><span class="obj-name ltr">${esc(objDisplayName(o))}</span><div class="tag">${o.cat?'<span class="ltr">'+esc(o.cat.join(", "))+'</span>':t("solarSystem")}</div></td>
         <td>${labelHTML(r.diff)}</td>
         <td>${status}<div class="tag">${esc(meta||"")}</div></td>
         <td class="acts noprint">
-          <a href="#" data-log="${esc(r.id)}">log</a>
-          <a href="#" data-toggle="${esc(r.id)}">remove</a>
+          <a href="#" data-log="${esc(r.id)}">${t("log")}</a>
+          <a href="#" data-toggle="${esc(r.id)}">${t("remove")}</a>
         </td></tr>`;
     }).join("");
     html+=`<div class="panel"><div class="scroll"><table>
-      <tr><th>Object${ihelp("name")}</th><th>Difficulty${ihelp("diff")}</th><th>Status / log${ihelp("status")}</th><th class="noprint">·</th></tr>${body}</table></div>
+      <tr><th>${t("colObject")}${ihelp("name")}</th><th>${t("colDifficulty")}${ihelp("diff")}</th><th>${t("colStatus")}${ihelp("status")}</th><th class="noprint">·</th></tr>${body}</table></div>
       ${pagerHTML(rows.length)}</div>`;
   }
   host.innerHTML=html;
@@ -1065,29 +1442,29 @@ function openLog(id){
   const equipGuess = `${S.equip.instrument}${S.equip.instrument==="telescope"?" "+effectiveApertureMM().toFixed(0)+"mm":""}, ${S.sky} sky`;
   $("#modalHost").innerHTML=`
    <div class="modal-bg" id="mbg"><div class="modal">
-    <h2>${esc(objDisplayName(r.o))}</h2>
+    <h2 class="ltr">${esc(objDisplayName(r.o))}</h2>
     <div class="small muted">${labelHTML(r.diff)} · ${r.diff.why?esc(r.diff.why):""}</div>
-    <label>Did you observe it?</label>
+    <label>${t("lgObserveQ")}</label>
     <div class="chips">
-      <button class="chip ${L.done?'on':''}" id="obsYes">✓ Observed</button>
-      <button class="chip ${L.missed?'on':''}" id="obsMiss">✗ Missed</button>
+      <button class="chip ${L.done?'on':''}" id="obsYes">${t("lgObserved")}</button>
+      <button class="chip ${L.missed?'on':''}" id="obsMiss">${t("lgMissed")}</button>
     </div>
     <div id="obsFields">
-      <label>Date observed</label><input id="lgDate" type="date" value="${L.date||S.date}">
-      <label>Sky conditions</label><input id="lgCond" value="${esc(L.conditions||"")}" placeholder="seeing, transparency, Moon…">
-      <label>Equipment used</label><input id="lgEquip" value="${esc(L.equip||equipGuess)}">
-      <label>Rating (1–5)</label>
+      <label>${t("lgDate")}</label><input id="lgDate" type="date" value="${L.date||S.date}">
+      <label>${t("lgCond")}</label><input id="lgCond" value="${esc(L.conditions||"")}" placeholder="${esc(t("lgCondPh"))}">
+      <label>${t("lgEquip")}</label><input id="lgEquip" value="${esc(L.equip||equipGuess)}">
+      <label>${t("lgRate")}</label>
       <select id="lgRate"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option ${L.rating==n?"selected":""}>${n}</option>`).join("")}</select>
-      <label>Notes</label><textarea id="lgNotes" placeholder="What you saw…">${esc(L.notes||"")}</textarea>
+      <label>${t("lgNotes")}</label><textarea id="lgNotes" placeholder="${esc(t("lgNotesPh"))}">${esc(L.notes||"")}</textarea>
     </div>
     <div id="missFields" class="hidden">
-      <label>Reason missed (instead of ticking)</label>
-      <textarea id="lgMiss" placeholder="clouded out, too low, ran out of time…">${esc(L.missed||"")}</textarea>
+      <label>${t("lgReason")}</label>
+      <textarea id="lgMiss" placeholder="${esc(t("lgReasonPh"))}">${esc(L.missed||"")}</textarea>
     </div>
     <div class="row tight" style="margin-top:10px;">
-      <button class="btn-accent" id="lgSave" style="width:auto;">Save</button>
-      <button id="lgDelete" style="width:auto;">Clear entry</button>
-      <button id="lgClose" style="width:auto;">Cancel</button>
+      <button class="btn-accent" id="lgSave" style="width:auto;">${t("lgSave")}</button>
+      <button id="lgDelete" style="width:auto;">${t("lgClear")}</button>
+      <button id="lgClose" style="width:auto;">${t("lgCancel")}</button>
     </div>
    </div></div>`;
   let mode = L.missed? "miss" : "obs";
@@ -1118,53 +1495,40 @@ function openHelp(){
   const L=(cls,t)=>`<span class="lab ${cls}">${t}</span>`;
   $("#modalHost").innerHTML=`
    <div class="modal-bg" id="hbg"><div class="modal">
-    <h2>🔭 About &amp; Help</h2>
-    <p class="small">A free night-sky <b>observing planner &amp; logbook</b> for amateur astronomers.
-      Tell it where you are, the date, your equipment and how dark your sky is — it works out which
-      objects are worth observing tonight and tags each with how hard it is <i>for your setup</i>.
-      Build a checklist, tick off what you see, and keep notes. Works offline after the first load.</p>
+    <h2>${t("helpTitle")}</h2>
+    <p class="small">${t("helpIntro")}</p>
 
-    <h2 style="margin-top:12px;">Getting started</h2>
+    <h2 style="margin-top:12px;">${t("helpStart")}</h2>
     <ol class="small" style="padding-left:18px;margin:4px 0;">
-      <li><b>Where &amp; when</b> — search a city (or enter latitude/longitude offline), pick the evening's date.</li>
-      <li><b>Gear &amp; sky</b> — naked eye, binoculars, or telescope (add aperture &amp; focal length), and how dark your sky is (Dark / Suburban / Bright). Blank fields use sensible defaults.</li>
-      <li>Tap <b>Compute sky ▸</b>.</li>
+      <li>${t("helpS1")}</li><li>${t("helpS2")}</li><li>${t("helpS3")}</li>
     </ol>
 
-    <h2 style="margin-top:12px;">The three views</h2>
+    <h2 style="margin-top:12px;">${t("helpViews")}</h2>
     <ul class="small" style="padding-left:18px;margin:4px 0;">
-      <li><b>What's up</b> — best-placed targets for tonight.</li>
-      <li><b>Catalog</b> — all ~150 objects (110 Messier + famous NGC/Caldwell + planets &amp; Moon).</li>
-      <li><b>My list &amp; log</b> — your personal checklist, progress counter and observing log. Load a starter list (Messier 110, Caldwell, Beginner Top 20) from the bottom panel.</li>
+      <li>${t("helpV1")}</li><li>${t("helpV2")}</li><li>${t("helpV3")}</li>
     </ul>
 
-    <h2 style="margin-top:12px;">Difficulty labels (for your gear &amp; sky)</h2>
+    <h2 style="margin-top:12px;">${t("helpDiffTitle")}</h2>
     <div class="small" style="line-height:2;">
-      ${L("easy","Easy to find")} ${L("needs","Needs experience")} ${L("hard","Extremely difficult")}
-      ${L("toofaint","Too faint for your gear")} ${L("sun","Lost in the Sun's glare")} ${L("horizon","Below the horizon here")}
-      <div class="muted" style="margin-top:4px;">Tap any label in the table to see the reasoning. They are honest <b>estimates</b>, not precise predictions.</div>
+      ${L("easy",diffLabel("easy"))} ${L("needs",diffLabel("needs"))} ${L("hard",diffLabel("hard"))}
+      ${L("toofaint",diffLabel("toofaint"))} ${L("sun",diffLabel("sun"))} ${L("horizon",diffLabel("horizon"))}
+      <div class="muted" style="margin-top:4px;">${t("helpDiffNote")}</div>
     </div>
 
-    <h2 style="margin-top:12px;">Per-object actions</h2>
+    <h2 style="margin-top:12px;">${t("helpActions")}</h2>
     <ul class="small" style="padding-left:18px;margin:4px 0;">
-      <li><b>+ / ✓</b> (first column) — add to / remove from your list; <b>log</b> appears once it's on your list.</li>
-      <li><b>map</b> — opens Stellarium Web centred on the object · <b>photo</b> — image search · <b>info</b> — web search.</li>
-      <li>Tap the small <b>i</b> on any column header for what it means.</li>
+      <li>${t("helpA1")}</li><li>${t("helpA2")}</li><li>${t("helpA3")}</li>
     </ul>
 
-    <h2 style="margin-top:12px;">Good to know</h2>
+    <h2 style="margin-top:12px;">${t("helpGood")}</h2>
     <ul class="small" style="padding-left:18px;margin:4px 0;">
-      <li><b>Private &amp; offline</b> — your list, log and settings live only in this browser (localStorage); nothing is uploaded. Use <b>Export/Import JSON</b> to back up or move between devices.</li>
-      <li><b>Night-vision</b> — the 🌙 button cycles Dark / Red night-vision / Normal themes.</li>
-      <li>The sky geometry (altitude, transit, twilight, Moon, planets) is genuinely computed; difficulty &amp; eyepiece tips are approximate.</li>
+      <li>${t("helpG1")}</li><li>${t("helpG2")}</li><li>${t("helpG3")}</li>
     </ul>
 
-    <h2 style="margin-top:12px;">License &amp; credits</h2>
-    <p class="small">Free for <b>personal &amp; non-commercial</b> use with attribution; commercial use needs the author's permission
-      (see the LICENSE file). Astronomy by <a href="https://github.com/cosinekitty/astronomy" target="_blank" rel="noopener">astronomy-engine</a> (MIT).
-      Made by Masood Valipour.</p>
+    <h2 style="margin-top:12px;">${t("helpLicTitle")}</h2>
+    <p class="small">${t("helpLic")}</p>
 
-    <div class="row tight" style="margin-top:12px;"><button class="btn-accent" id="hClose" style="width:auto;">Close</button></div>
+    <div class="row tight" style="margin-top:12px;"><button class="btn-accent" id="hClose" style="width:auto;">${t("close")}</button></div>
    </div></div>`;
   $("#hClose").onclick=closeModal;
   $("#hbg").onclick=(e)=>{ if(e.target.id==="hbg") closeModal(); };
@@ -1212,12 +1576,12 @@ function importJSON(file){
     if(d.equip) S.equip=Object.assign(S.equip,d.equip);
     if(d.sky) S.sky=d.sky;
     save(); syncForm(); if(NIGHT){computeAll();renderAll();}
-    alert("Import complete: "+(d.list?d.list.length:0)+" objects on list.");
-  }catch(e){ alert("Could not read that file: "+e.message); } };
+    alert(t("alertImportOk",{n:(d.list?d.list.length:0)}));
+  }catch(e){ alert(t("alertImportErr")+e.message); } };
   rd.readAsText(file);
 }
 function printChecklist(){
-  if(!S.list.length){ alert("Your list is empty."); return; }
+  if(!S.list.length){ alert(t("alertListEmpty")); return; }
   window.print();
 }
 
@@ -1238,7 +1602,7 @@ async function geocode(name){
 }
 function showGeoResults(list){
   const host=$("#geoResults");
-  if(!list.length){ host.innerHTML=`<div class="small warn" style="margin-top:4px;">No matches. Use manual lat/lon below.</div>`; return; }
+  if(!list.length){ host.innerHTML=`<div class="small warn" style="margin-top:4px;">${t("noMatches")}</div>`; return; }
   host.innerHTML=`<div class="geores">`+list.map((r,i)=>
     `<button data-gi="${i}">${esc(r.label)} <span class="muted small">(${r.lat.toFixed(2)}, ${r.lon.toFixed(2)})</span></button>`).join("")+`</div>`;
   $$("button[data-gi]",host).forEach(b=>b.onclick=()=>{ const r=list[+b.dataset.gi];
@@ -1252,8 +1616,8 @@ function setLocation(loc){
 }
 function updateLocStatus(){
   const el=$("#locStatus");
-  if(!S.cur){ el.textContent="No location set yet."; return; }
-  el.innerHTML=`📍 <b>${esc(S.cur.label)}</b> · ${S.cur.lat.toFixed(3)}, ${S.cur.lon.toFixed(3)} · ${fmtOff(curOffset())}${S.cur.tz?` · ${esc(S.cur.tz)}`:" · offset from longitude"}`;
+  if(!S.cur){ el.textContent=t("noLocYet"); return; }
+  el.innerHTML=`📍 <b>${esc(S.cur.label)}</b> · <span class="ltr">${S.cur.lat.toFixed(3)}, ${S.cur.lon.toFixed(3)} · ${fmtOff(curOffset())}</span>${S.cur.tz?` · <span class="ltr">${esc(S.cur.tz)}</span>`:" · "+t("offsetFromLon")}`;
 }
 function renderSavedLocs(){
   const host=$("#savedLocs");
@@ -1267,6 +1631,18 @@ function renderSavedLocs(){
 /* =========================================================================
    FORM <-> STATE SYNC + WIRING
    ========================================================================= */
+function localizeStatic(){
+  $$("[data-i18n]").forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  $$("[data-i18n-html]").forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
+  $$("[data-i18n-ph]").forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+}
+function applyLang(){
+  LANGCODE = (S.lang && I18N[S.lang]) ? S.lang : "en";
+  document.documentElement.lang = LANGCODE;
+  document.documentElement.dir = RTL_LANGS.includes(LANGCODE) ? "rtl" : "ltr";
+  if($("#langSel")) $("#langSel").value = LANGCODE;
+  localizeStatic();
+}
 function syncForm(){
   $("#dateInput").value=S.date;
   $("#mode").value=S.equip.mode; $("#instrument").value=S.equip.instrument; $("#sky").value=S.sky;
@@ -1277,20 +1653,20 @@ function syncForm(){
   toggleInstrumentFields();
   updateLocStatus(); renderSavedLocs(); updateAssumptionNote();
   document.body.className = "theme-"+(S.theme||"dark");
-  $("#themeBtn").textContent = S.theme==="red"?"🔴 Night-vision":(S.theme==="normal"?"☀️ Normal":"🌙 Dark");
+  $("#themeBtn").textContent = S.theme==="red"?t("themeRed"):(S.theme==="normal"?t("themeNormal"):t("themeDark"));
 }
 function toggleInstrumentFields(){
-  const t=$("#instrument").value;
-  $("#scopeFields").classList.toggle("hidden", t!=="telescope");
-  $("#binFields").classList.toggle("hidden", t!=="binoculars");
+  const inst=$("#instrument").value;
+  $("#scopeFields").classList.toggle("hidden", inst!=="telescope");
+  $("#binFields").classList.toggle("hidden", inst!=="binoculars");
 }
 function updateAssumptionNote(){
   const a=[];
-  if($("#instrument").value==="telescope" && !$("#aperture").value) a.push("aperture blank → assuming 150 mm (6\")");
-  if($("#instrument").value==="telescope" && !$("#focal").value) a.push("focal length blank → eyepiece tips limited");
-  if($("#instrument").value==="binoculars" && !$("#binAp").value) a.push("binocular aperture blank → assuming 50 mm");
-  a.push("difficulty & eyepiece outputs are estimates");
-  $("#assumptionNote").textContent="Note: "+a.join("; ")+".";
+  if($("#instrument").value==="telescope" && !$("#aperture").value) a.push(t("assumeAperture"));
+  if($("#instrument").value==="telescope" && !$("#focal").value) a.push(t("assumeFocal"));
+  if($("#instrument").value==="binoculars" && !$("#binAp").value) a.push(t("assumeBino"));
+  a.push(t("estShort"));
+  $("#assumptionNote").textContent=t("notePrefix")+a.join("; ")+".";
 }
 function readEquipFromForm(){
   S.equip.mode=$("#mode").value; S.equip.instrument=$("#instrument").value; S.sky=$("#sky").value;
@@ -1303,13 +1679,13 @@ function readEquipFromForm(){
 }
 
 function runCompute(){
-  if(!A){ alert("Astronomy library failed to load. Make sure astronomy.browser.js sits next to this page."); return; }
-  if(!S.cur){ alert("Set a location first (find a city, pick a saved site, or enter lat/lon)."); return; }
+  if(!A){ alert(t("alertNoLib")); return; }
+  if(!S.cur){ alert(t("alertNoLoc")); return; }
   S.date=$("#dateInput").value||todayStr();
   readEquipFromForm();
   try{
     computeAll();
-  }catch(e){ alert("Computation error: "+e.message); return; }
+  }catch(e){ alert(t("alertCompErr")+e.message); return; }
   $("#viewTabs").style.display=""; $("#controls").style.display=""; $("#presetPanel").style.display="";
   resetPage();
   renderAll();
@@ -1320,35 +1696,39 @@ function renderAll(){ renderSession(); renderTable(); }
 
 function populateTypeFilter(){
   const sel=$("#filterType"); const types=[...new Set(ROWS.map(r=>r.o.type))].sort();
-  sel.innerHTML=`<option value="">All types</option>`+types.map(t=>`<option value="${t}">${TYPE_NAMES[t]||t}</option>`).join("");
+  sel.innerHTML=`<option value="">${t("allTypes")}</option>`+types.map(c=>`<option value="${c}">${tType(c)||c}</option>`).join("");
   sel.value=FILTERS.type;
 }
 
 /* ---- wire everything on load ---- */
 function init(){
+  applyLang();
   syncForm();
+  // language switch: re-localize, and re-render if a sky is already computed
+  $("#langSel").onchange=()=>{ S.lang=$("#langSel").value; save(); applyLang(); syncForm();
+    if(NIGHT){ computeAll(); renderAll(); populateTypeFilter(); } };
   if(!S.cur){ S.date=$("#dateInput").value=todayStr(); }
   // city lookup
   $("#cityBtn").onclick=async()=>{
     const name=$("#cityInput").value.trim(); if(!name) return;
-    $("#geoResults").innerHTML=`<div class="small muted" style="margin-top:4px;">Looking up…</div>`;
+    $("#geoResults").innerHTML=`<div class="small muted" style="margin-top:4px;">${t("lookingUp")}</div>`;
     try{
       const r=await geocode(name);
-      if(Array.isArray(r)) showGeoResults(r); else { setLocation(r); $("#geoResults").innerHTML=`<div class="small" style="margin-top:4px;">Loaded from cache.</div>`; }
+      if(Array.isArray(r)) showGeoResults(r); else { setLocation(r); $("#geoResults").innerHTML=`<div class="small" style="margin-top:4px;">${t("loadedCache")}</div>`; }
     }catch(e){
-      $("#geoResults").innerHTML=`<div class="small warn" style="margin-top:4px;">Lookup failed (offline?). Use manual lat/lon below.</div>`;
+      $("#geoResults").innerHTML=`<div class="small warn" style="margin-top:4px;">${t("lookupFail")}</div>`;
     }
   };
   $("#cityInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();$("#cityBtn").click();} });
   // manual
   $("#useManual").onclick=()=>{
     const lat=parseFloat($("#latInput").value), lon=parseFloat($("#lonInput").value);
-    if(isNaN(lat)||isNaN(lon)){ alert("Enter numeric latitude and longitude."); return; }
+    if(isNaN(lat)||isNaN(lon)){ alert(t("alertNumeric")); return; }
     const off=$("#offInput").value!==""?parseFloat($("#offInput").value):null;
     setLocation({lat,lon,tz:null,label:`${lat.toFixed(2)}, ${lon.toFixed(2)}`,fixedOffset:off});
   };
   $("#saveLoc").onclick=()=>{
-    if(!S.cur){ alert("Set a location first."); return; }
+    if(!S.cur){ alert(t("alertSetLocFirst")); return; }
     const nm=$("#saveName").value.trim()||S.cur.label;
     S.locations.push({name:nm, lat:S.cur.lat, lon:S.cur.lon, tz:S.cur.tz, fixedOffset:S.cur.fixedOffset});
     $("#saveName").value=""; save(); renderSavedLocs();
@@ -1364,7 +1744,7 @@ function init(){
   // theme cycle
   $("#themeBtn").onclick=()=>{ S.theme = S.theme==="dark"?"red":(S.theme==="red"?"normal":"dark"); save(); syncForm(); };
   // tabs
-  $$("#viewTabs .tab").forEach(t=>t.onclick=()=>{ VIEW=t.dataset.view; $$("#viewTabs .tab").forEach(x=>x.classList.toggle("on",x===t));
+  $$("#viewTabs .tab").forEach(tab=>tab.onclick=()=>{ VIEW=tab.dataset.view; $$("#viewTabs .tab").forEach(x=>x.classList.toggle("on",x===tab));
     $("#controls").style.display=VIEW==="list"?"none":""; resetPage(); renderTable(); });
   // sort/filter (each resets pagination)
   $("#sortBy").onchange=()=>{ SORT=$("#sortBy").value; resetPage(); renderTable(); };
