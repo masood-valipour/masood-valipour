@@ -111,7 +111,16 @@
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:520px;width:100%;padding:14px;margin-top:24px;}
   @media (max-width:560px){
     .hide-sm{display:none;}
-    .wrap{padding:8px 8px 60px;}
+    .wrap{padding:8px 6px 60px;}
+    .panel{padding:8px;}
+    /* tighten the table so the action links fit on a phone without sideways scrolling */
+    table{font-size:.8rem;}
+    th,td{padding:5px 3px;}
+    .obj-row td:first-child{max-width:128px;}
+    .obj-name{font-size:.82rem;}
+    .tag{font-size:.66rem;}
+    .acts a{margin-right:7px;display:inline-block;}
+    .lab{font-size:.68rem;padding:2px 5px;}
   }
   @media print{
     body{background:#fff;color:#000;}
@@ -216,6 +225,7 @@
         <select id="sortBy">
           <option value="diff">Difficulty (easy→hard)</option>
           <option value="time">Best time tonight</option>
+          <option value="set">Setting soonest</option>
           <option value="name">Name (A→Z)</option>
           <option value="type">Object type</option>
           <option value="mag">Magnitude (bright→faint)</option>
@@ -596,7 +606,10 @@ function objGeom(o, night){
   let geomMaxAlt;
   if(o.body){ geomMaxAlt = (transitAlt!=null)? transitAlt : nightMaxAlt; }
   else { geomMaxAlt = 90 - Math.abs(obs.latitude - o.dec); }
-  return {transit, transitAlt, nightMaxAlt, geomMaxAlt, bestTime};
+  // time it sinks below a usable altitude (so observers can grab setting objects first)
+  let setTime=null;
+  if(winA){ const s=safe(()=>A.SearchAltitude(bodyEnum(o), obs, -1, winA, 1.5, MIN_ALT)); if(s) setTime=s; }
+  return {transit, transitAlt, nightMaxAlt, geomMaxAlt, bestTime, setTime};
 }
 
 /* =========================================================================
@@ -880,8 +893,23 @@ function renderSession(){
 
 function labelHTML(diff){ return `<span class="lab ${diff.cls}" title="${esc(diff.why)}">${diff.label}</span>`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-function searchURL(o){ const q=encodeURIComponent((o.cat?o.cat[0]:o.name)+" "+(o.name||"")+" astronomy"); return "https://www.google.com/search?q="+q; }
-function photoURL(o){ const q=encodeURIComponent((o.cat?o.cat[0]:o.name)+" "+(o.name||"")); return "https://www.google.com/search?tbm=isch&q="+q; }
+// Build an UNAMBIGUOUS search phrase so bare codes like "M33" don't match products
+// (e.g. an audio device). Messier objects expand to "Messier 33", plus the common
+// name and the word "astronomy" to anchor the search on the sky object.
+function objQuery(o){
+  const bits=[];
+  if(o.body){
+    bits.push(o.type==="Moon" ? "the Moon" : (o.name+" planet"));
+  } else {
+    if(o.m!=null) bits.push("Messier "+o.m);
+    else if(o.cat && o.cat[0]) bits.push(o.cat[0].replace(/^(NGC|IC)(\d)/,"$1 $2"));
+    if(o.name) bits.push(o.name);
+  }
+  bits.push("astronomy");
+  return bits.join(" ");
+}
+function searchURL(o){ return "https://www.google.com/search?q="+encodeURIComponent(objQuery(o)); }
+function photoURL(o){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(objQuery(o)); }
 
 function filteredSortedRows(){
   let rows=ROWS.slice();
@@ -894,17 +922,17 @@ function filteredSortedRows(){
   const cmp={
     diff:(a,b)=> a.diff.rank-b.diff.rank || b.geom.nightMaxAlt-a.geom.nightMaxAlt,
     time:(a,b)=> (a.geom.bestTime?a.geom.bestTime.getTime():9e15)-(b.geom.bestTime?b.geom.bestTime.getTime():9e15),
+    set:(a,b)=> (a.geom.setTime?a.geom.setTime.getTime():9e15)-(b.geom.setTime?b.geom.setTime.getTime():9e15),
     name:(a,b)=> objDisplayName(a.o).localeCompare(objDisplayName(b.o)),
     type:(a,b)=> (TYPE_NAMES[a.o.type]||"").localeCompare(TYPE_NAMES[b.o.type]||"") || a.o.mag-b.o.mag,
     mag:(a,b)=> a.o.mag-b.o.mag,
     con:(a,b)=> (a.o.con||"~").localeCompare(b.o.con||"~"),
     month:(a,b)=> ((a.month==null?99:a.month)-(b.month==null?99:b.month))
   }[SORT];
+  if(VIEW==="tonight") rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT); // only what's up
+  // Honour the chosen sort. Only when sorting by "difficulty" do we also rank by
+  // altitude (best-placed first) as a tie-breaker.
   rows.sort(cmp);
-  if(VIEW==="tonight"){ // rank best-placed: up, easiest, highest (no cap — paginated)
-    rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT);
-    rows.sort((a,b)=> a.diff.rank-b.diff.rank || b.geom.nightMaxAlt-a.geom.nightMaxAlt);
-  }
   return rows;
 }
 
