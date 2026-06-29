@@ -908,6 +908,15 @@ function objQuery(o){
   bits.push("astronomy");
   return bits.join(" ");
 }
+// Stellarium Web deep link — opens an in-browser planetarium centred on the object,
+// so you can see exactly where it is in the sky (works on phone & desktop, no install).
+function skyMapName(o){
+  if(o.body) return o.name.replace(/^The\s+/i,"");          // "Moon", "Mars"
+  if(o.m!=null) return "M"+o.m;                              // Stellarium knows Messier IDs
+  if(o.cat && o.cat[0]) return o.cat[0].split("/")[0].replace(/^(NGC|IC)(\d)/,"$1 $2");
+  return o.name;
+}
+function skyMapURL(o){ return "https://stellarium-web.org/skysource/"+encodeURIComponent(skyMapName(o)); }
 function searchURL(o){ return "https://www.google.com/search?q="+encodeURIComponent(objQuery(o)); }
 function photoURL(o){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(objQuery(o)); }
 
@@ -971,6 +980,7 @@ function renderTable(){
       <td>${fmtLocal(r.geom.bestTime)}<div class="tag">${r.geom.nightMaxAlt>=MIN_ALT?("↑"+r.geom.nightMaxAlt.toFixed(0)+"°"):"low"}</div></td>
       <td class="hide-sm small">${esc(ep)}</td>
       <td class="acts noprint">
+        <a href="${skyMapURL(o)}" target="_blank" rel="noopener">map</a>
         <a href="${photoURL(o)}" target="_blank" rel="noopener">photo</a>
         <a href="${searchURL(o)}" target="_blank" rel="noopener">info</a>
         <a href="#" data-toggle="${esc(r.id)}">${onList?"−list":"+list"}</a>
