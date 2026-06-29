@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Night Sky Observing Planner</title>
+<!--
+  Night Sky Observing Planner & Logbook
+  =====================================
+  A single, self-contained, offline-capable page for amateur astronomers.
+  - Astronomy geometry (alt/az, transit, twilight, Moon, planets) is computed by the
+    vendored astronomy-engine library (astronomy.browser.js, MIT) - genuinely correct.
+  - Difficulty + eyepiece outputs are deliberate APPROXIMATIONS (heuristics) and say so.
+  - No backend, no build step, no API keys. City lookup uses a free no-key geocoder
+    (Open-Meteo) ONLY on demand; results are cached and there is a full offline
+    lat/lon fallback. All user data is stored in localStorage with JSON/CSV export.
+
+  WHERE THINGS LIVE (for future editing):
+  - CATALOG  : the object data array (search "const CATALOG"). Add/edit objects there.
+  - difficulty(): the difficulty heuristic (search "function difficulty").
+  - eyepieceSuggestion(): the eyepiece heuristic.
+  See the README block at the very bottom of this file for deployment notes.
+-->
+<style>
+  :root{
+    --bg:#0a0d14; --panel:#121826; --panel2:#0e1320; --ink:#cdd6e6; --muted:#8b97ad;
+    --line:#222b3d; --accent:#6aa3ff; --field:#0c111c;
+    --easy:#2f9e54; --needs:#caa12a; --hard:#d8702a; --notup:#5a6678; --toofaint:#9b3b6e;
+    --sun:#3f6f9e; --horizon:#5a6678;
+  }
+  /* Normal dark mode is default. Red night-vision and plain dark are toggled via body class. */
+  body.theme-red{
+    --bg:#000000; --panel:#0c0000; --panel2:#080000; --ink:#ff5a3c; --muted:#a33019;
+    --line:#3a0d05; --accent:#ff6a4a; --field:#100000;
+    --easy:#ff7a55; --needs:#d65a3c; --hard:#b34428; --notup:#5a1d10; --toofaint:#8a2a18;
+    --sun:#6a2412; --horizon:#5a1d10;
+  }
+  body.theme-red a{color:#ff7a55;}
+  body.theme-red ::selection{background:#5a1505;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.4; -webkit-text-size-adjust:100%;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  h1{font-size:1.25rem;margin:.2rem 0;}
+  h2{font-size:1.02rem;margin:.1rem 0 .5rem;}
+  a{color:var(--accent);}
+  .wrap{max-width:1100px;margin:0 auto;padding:10px 10px 60px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .muted{color:var(--muted);}
+  .small{font-size:.82rem;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:6px 0 2px;}
+  input,select,button,textarea{
+    font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);
+    border-radius:8px;padding:8px;width:100%;
+  }
+  textarea{min-height:54px;resize:vertical;}
+  button{cursor:pointer;background:var(--panel2);}
+  button:hover{border-color:var(--accent);}
+  .btn-accent{background:var(--accent);color:#04101f;border-color:var(--accent);font-weight:600;}
+  body.theme-red .btn-accent{color:#1a0300;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row>*{flex:1 1 140px;min-width:0;}
+  .row.tight>*{flex:0 0 auto;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:.8rem;width:auto;}
+  .chip.on{border-color:var(--accent);color:var(--accent);}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .tab{width:auto;flex:0 0 auto;padding:7px 12px;border-radius:8px;}
+  .tab.on{background:var(--accent);color:#04101f;border-color:var(--accent);font-weight:600;}
+  body.theme-red .tab.on{color:#1a0300;}
+  .lab{display:inline-block;padding:2px 7px;border-radius:6px;font-size:.74rem;font-weight:700;color:#04101f;white-space:nowrap;}
+  body.theme-red .lab{color:#120000;}
+  .lab.easy{background:var(--easy);} .lab.needs{background:var(--needs);}
+  .lab.hard{background:var(--hard);} .lab.notup{background:var(--notup);color:#dfe6f2;}
+  .lab.toofaint{background:var(--toofaint);color:#fde;}
+  .lab.sun{background:var(--sun);color:#eaf2ff;} .lab.horizon{background:var(--horizon);color:#dfe6f2;}
+  body.theme-red .lab.notup,body.theme-red .lab.toofaint,body.theme-red .lab.sun,body.theme-red .lab.horizon{color:#fde;}
+  .ihelp{display:inline-block;width:15px;height:15px;line-height:14px;text-align:center;border:1px solid var(--line);
+    border-radius:50%;color:var(--muted);font-size:10px;font-style:italic;font-weight:700;cursor:pointer;margin-left:4px;vertical-align:middle;}
+  .ihelp:hover{color:var(--accent);border-color:var(--accent);}
+  .helpbox{position:absolute;z-index:60;background:var(--panel);border:1px solid var(--accent);border-radius:8px;
+    padding:8px 10px;font-size:.8rem;font-weight:400;color:var(--ink);line-height:1.35;box-shadow:0 6px 22px rgba(0,0,0,.55);white-space:normal;}
+  table{width:100%;border-collapse:collapse;font-size:.86rem;}
+  th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap;font-size:.78rem;}
+  th.sortable:hover{color:var(--accent);}
+  .obj-name{font-weight:600;}
+  .tag{font-size:.72rem;color:var(--muted);}
+  .acts a{margin-right:8px;white-space:nowrap;}
+  .count{font-variant-numeric:tabular-nums;}
+  .pill{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:.76rem;margin:2px 4px 2px 0;}
+  .warn{color:var(--needs);}
+  .progress{height:8px;background:var(--panel2);border-radius:999px;overflow:hidden;border:1px solid var(--line);}
+  .progress>span{display:block;height:100%;background:var(--easy);}
+  .obj-row td:first-child{max-width:230px;}
+  .hint{font-size:.78rem;color:var(--muted);font-style:italic;}
+  .hidden{display:none!important;}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .geores{border:1px solid var(--line);border-radius:8px;margin-top:4px;background:var(--panel2);}
+  .geores button{text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;}
+  .geores button:last-child{border-bottom:0;}
+  details>summary{cursor:pointer;color:var(--accent);font-size:.85rem;}
+  .kv{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:4px 0;}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:50;overflow:auto;}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:520px;width:100%;padding:14px;margin-top:24px;}
+  @media (max-width:560px){
+    .hide-sm{display:none;}
+    .wrap{padding:8px 8px 60px;}
+  }
+  @media print{
+    body{background:#fff;color:#000;}
+    .noprint{display:none!important;}
+    .panel{border:1px solid #999;}
+    table{font-size:11px;} th,td{border-bottom:1px solid #bbb;}
+    .lab{border:1px solid #000;background:#fff!important;color:#000!important;}
+  }
+</style>
+</head>
+<body class="theme-dark">
+<div class="wrap">
+
+  <div class="topbar noprint">
+    <h1>🔭 Night Sky Observing Planner</h1>
+    <div class="row tight">
+      <button class="tab" id="themeBtn" title="Cycle theme">🌙 Dark</button>
+    </div>
+  </div>
+  <div class="small muted noprint">Difficulty &amp; eyepiece suggestions are <b>estimates</b> — the sky geometry (altitudes, transit, twilight, Moon, planets) is genuinely computed. Works offline after first load.</div>
+
+  <!-- ===================== SETUP PANEL ===================== -->
+  <div class="panel noprint" id="setupPanel">
+    <h2>1 · Where &amp; when</h2>
+    <div class="row">
+      <div style="flex:2 1 220px;">
+        <label>City (looks up coordinates — needs internet once, then cached)</label>
+        <div class="row tight" style="flex-wrap:nowrap;">
+          <input id="cityInput" placeholder="e.g. Tehran, Nairobi, Quito" style="flex:1;">
+          <button id="cityBtn" style="width:auto;">Find</button>
+        </div>
+        <div id="geoResults"></div>
+      </div>
+      <div>
+        <label>Observing date (evening of)</label>
+        <input type="date" id="dateInput">
+      </div>
+    </div>
+
+    <details style="margin-top:8px;">
+      <summary>Manual / offline location &amp; saved sites</summary>
+      <div class="row" style="margin-top:6px;">
+        <div><label>Latitude (°N)</label><input id="latInput" type="number" step="0.001" placeholder="35.70"></div>
+        <div><label>Longitude (°E)</label><input id="lonInput" type="number" step="0.001" placeholder="51.42"></div>
+        <div><label>UTC offset (h, optional)</label><input id="offInput" type="number" step="0.25" placeholder="auto"></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end;"><button id="useManual" style="width:auto;">Use these</button></div>
+      </div>
+      <div class="row tight" style="margin-top:6px;">
+        <input id="saveName" placeholder="Save current as… (e.g. Home)" style="flex:1;">
+        <button id="saveLoc" style="width:auto;">Save site</button>
+      </div>
+      <div id="savedLocs" class="chips" style="margin-top:6px;"></div>
+    </details>
+    <div id="locStatus" class="small muted" style="margin-top:6px;"></div>
+
+    <h2 style="margin-top:14px;">2 · Your gear &amp; sky</h2>
+    <div class="row">
+      <div><label>Mode</label>
+        <select id="mode"><option value="visual">Visual</option><option value="astro">Astrophotography</option></select></div>
+      <div><label>Instrument</label>
+        <select id="instrument"><option value="naked">Naked eye</option><option value="binoculars">Binoculars</option><option value="telescope" selected>Telescope</option></select></div>
+      <div><label>Sky darkness</label>
+        <select id="sky"><option value="dark">Dark (rural)</option><option value="suburban" selected>Suburban</option><option value="bright">Bright (city)</option></select></div>
+    </div>
+    <div class="row" id="scopeFields">
+      <div><label>Aperture</label>
+        <div class="row tight" style="flex-wrap:nowrap;">
+          <input id="aperture" type="number" step="1" placeholder="150" style="flex:1;">
+          <select id="apUnit" style="width:auto;"><option value="mm">mm</option><option value="in">inch</option></select>
+        </div></div>
+      <div><label>Focal length (mm)</label><input id="focal" type="number" step="1" placeholder="750"></div>
+      <div><label>Scope type (cosmetic)</label>
+        <select id="scopeType"><option value="">—</option><option>Reflector</option><option>Refractor</option><option>Cat (SCT/Mak)</option></select></div>
+      <div><label>Eyepieces owned (mm, comma-sep)</label><input id="eyepieces" placeholder="25, 10, 6"></div>
+    </div>
+    <div id="binFields" class="row hidden">
+      <div><label>Binocular aperture (mm)</label><input id="binAp" type="number" placeholder="50"></div>
+    </div>
+    <div class="hint" id="assumptionNote"></div>
+    <div class="row tight" style="margin-top:8px;">
+      <button class="btn-accent" id="computeBtn" style="width:auto;">Compute sky ▸</button>
+    </div>
+  </div>
+
+  <!-- ===================== SESSION SUMMARY ===================== -->
+  <div class="panel" id="sessionPanel" style="display:none;">
+    <h2>Tonight at <span id="sessLoc"></span></h2>
+    <div id="sessionInfo" class="small"></div>
+  </div>
+
+  <!-- ===================== VIEW TABS ===================== -->
+  <div class="tabs noprint" id="viewTabs" style="display:none;">
+    <button class="tab on" data-view="tonight">What's up</button>
+    <button class="tab" data-view="all">Catalog</button>
+    <button class="tab" data-view="list">My list &amp; log</button>
+  </div>
+
+  <!-- Controls (sort / filter) -->
+  <div class="panel noprint" id="controls" style="display:none;">
+    <div class="row">
+      <div><label>Sort by</label>
+        <select id="sortBy">
+          <option value="diff">Difficulty (easy→hard)</option>
+          <option value="time">Best time tonight</option>
+          <option value="name">Name (A→Z)</option>
+          <option value="type">Object type</option>
+          <option value="mag">Magnitude (bright→faint)</option>
+          <option value="con">Constellation</option>
+          <option value="month">Best month</option>
+        </select></div>
+      <div><label>Filter type</label>
+        <select id="filterType"><option value="">All types</option></select></div>
+    </div>
+    <div class="chips" style="margin-top:8px;">
+      <button class="chip" data-flag="hideImpossible">Hide impossible</button>
+      <button class="chip" data-flag="onlyUp">Only up tonight</button>
+      <button class="chip" data-flag="messier">Messier only</button>
+      <button class="chip" data-flag="listed">On my list</button>
+    </div>
+    <div class="small" style="margin-top:10px;line-height:2;">
+      <span class="lab easy">Easy to find</span>
+      <span class="lab needs">Needs experience</span>
+      <span class="lab hard">Extremely difficult</span>
+      <span class="lab toofaint">Too faint for your gear</span>
+      <span class="lab sun">Lost in the Sun's glare</span>
+      <span class="lab horizon">Below the horizon here</span>
+    </div>
+  </div>
+
+  <div id="tableHost"></div>
+
+  <!-- preset lists -->
+  <div class="panel noprint" id="presetPanel" style="display:none;">
+    <h2>Starter lists &amp; backup</h2>
+    <div class="row tight">
+      <button data-preset="messier" style="width:auto;">+ Messier 110</button>
+      <button data-preset="caldwell" style="width:auto;">+ Caldwell set</button>
+      <button data-preset="top20" style="width:auto;">+ Beginner Top 20</button>
+      <button data-preset="clear" style="width:auto;">Clear my list</button>
+    </div>
+    <div class="row tight" style="margin-top:8px;">
+      <button id="exportJson" style="width:auto;">Export JSON</button>
+      <button id="exportCsv" style="width:auto;">Export CSV</button>
+      <button id="importBtn" style="width:auto;">Import JSON</button>
+      <button id="printBtn" style="width:auto;" class="noprint">Printable checklist</button>
+      <input id="importFile" type="file" accept="application/json" class="hidden">
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<div id="modalHost"></div>
+
+<!-- Vendored astronomy library (local, cached, offline). -->
+<script src="astronomy.browser.js"></script>
+<script>
+"use strict";
+/* =========================================================================
+   DATA: object catalog. RA in decimal HOURS (J2000), Dec in decimal DEGREES.
+   type: GX galaxy, EN emission nebula, RN reflection nebula, PN planetary nebula,
+         SNR supernova remnant, OC open cluster, GC globular cluster,
+         AST asterism/star cloud, DBL double star.
+   To add objects, append entries here with the same fields.
+   ========================================================================= */
+const CATALOG = [
+  {m:1, cat:["M1","NGC1952"], name:"Crab Nebula", type:"SNR", con:"Taurus", ra:5.5750, dec:22.017, mag:8.4, sizeMaj:6, sizeMin:4},
+  {m:2, cat:["M2","NGC7089"], name:"", type:"GC", con:"Aquarius", ra:21.558, dec:-0.817, mag:6.5, sizeMaj:16, sizeMin:16},
+  {m:3, cat:["M3","NGC5272"], name:"", type:"GC", con:"Canes Venatici", ra:13.703, dec:28.383, mag:6.2, sizeMaj:18, sizeMin:18},
+  {m:4, cat:["M4","NGC6121"], name:"", type:"GC", con:"Scorpius", ra:16.393, dec:-26.533, mag:5.6, sizeMaj:26, sizeMin:26},
+  {m:5, cat:["M5","NGC5904"], name:"", type:"GC", con:"Serpens", ra:15.310, dec:2.083, mag:5.6, sizeMaj:23, sizeMin:23},
+  {m:6, cat:["M6","NGC6405"], name:"Butterfly Cluster", type:"OC", con:"Scorpius", ra:17.668, dec:-32.217, mag:4.2, sizeMaj:25, sizeMin:25},
+  {m:7, cat:["M7","NGC6475"], name:"Ptolemy Cluster", type:"OC", con:"Scorpius", ra:17.898, dec:-34.817, mag:3.3, sizeMaj:80, sizeMin:80},
+  {m:8, cat:["M8","NGC6523"], name:"Lagoon Nebula", type:"EN", con:"Sagittarius", ra:18.063, dec:-24.383, mag:6.0, sizeMaj:90, sizeMin:40},
+  {m:9, cat:["M9","NGC6333"], name:"", type:"GC", con:"Ophiuchus", ra:17.320, dec:-18.517, mag:7.7, sizeMaj:12, sizeMin:12},
+  {m:10, cat:["M10","NGC6254"], name:"", type:"GC", con:"Ophiuchus", ra:16.952, dec:-4.100, mag:6.6, sizeMaj:20, sizeMin:20},
+  {m:11, cat:["M11","NGC6705"], name:"Wild Duck Cluster", type:"OC", con:"Scutum", ra:18.852, dec:-6.267, mag:6.3, sizeMaj:14, sizeMin:14},
+  {m:12, cat:["M12","NGC6218"], name:"", type:"GC", con:"Ophiuchus", ra:16.787, dec:-1.950, mag:6.7, sizeMaj:16, sizeMin:16},
+  {m:13, cat:["M13","NGC6205"], name:"Hercules Globular", type:"GC", con:"Hercules", ra:16.695, dec:36.467, mag:5.8, sizeMaj:20, sizeMin:20},
+  {m:14, cat:["M14","NGC6402"], name:"", type:"GC", con:"Ophiuchus", ra:17.627, dec:-3.250, mag:7.6, sizeMaj:11, sizeMin:11},
+  {m:15, cat:["M15","NGC7078"], name:"", type:"GC", con:"Pegasus", ra:21.500, dec:12.167, mag:6.2, sizeMaj:18, sizeMin:18},
+  {m:16, cat:["M16","NGC6611"], name:"Eagle Nebula", type:"EN", con:"Serpens", ra:18.313, dec:-13.783, mag:6.0, sizeMaj:35, sizeMin:28},
+  {m:17, cat:["M17","NGC6618"], name:"Omega / Swan Nebula", type:"EN", con:"Sagittarius", ra:18.347, dec:-16.183, mag:6.0, sizeMaj:11, sizeMin:11},
+  {m:18, cat:["M18","NGC6613"], name:"", type:"OC", con:"Sagittarius", ra:18.332, dec:-17.133, mag:6.9, sizeMaj:9, sizeMin:9},
+  {m:19, cat:["M19","NGC6273"], name:"", type:"GC", con:"Ophiuchus", ra:17.043, dec:-26.267, mag:6.8, sizeMaj:17, sizeMin:17},
+  {m:20, cat:["M20","NGC6514"], name:"Trifid Nebula", type:"EN", con:"Sagittarius", ra:18.043, dec:-23.033, mag:6.3, sizeMaj:28, sizeMin:28},
+  {m:21, cat:["M21","NGC6531"], name:"", type:"OC", con:"Sagittarius", ra:18.077, dec:-22.500, mag:5.9, sizeMaj:13, sizeMin:13},
+  {m:22, cat:["M22","NGC6656"], name:"", type:"GC", con:"Sagittarius", ra:18.607, dec:-23.900, mag:5.1, sizeMaj:24, sizeMin:24},
+  {m:23, cat:["M23","NGC6494"], name:"", type:"OC", con:"Sagittarius", ra:17.947, dec:-19.017, mag:5.5, sizeMaj:27, sizeMin:27},
+  {m:24, cat:["M24","IC4715"], name:"Sagittarius Star Cloud", type:"AST", con:"Sagittarius", ra:18.282, dec:-18.483, mag:4.6, sizeMaj:90, sizeMin:90},
+  {m:25, cat:["M25","IC4725"], name:"", type:"OC", con:"Sagittarius", ra:18.527, dec:-19.250, mag:4.6, sizeMaj:32, sizeMin:32},
+  {m:26, cat:["M26","NGC6694"], name:"", type:"OC", con:"Scutum", ra:18.753, dec:-9.400, mag:8.0, sizeMaj:15, sizeMin:15},
+  {m:27, cat:["M27","NGC6853"], name:"Dumbbell Nebula", type:"PN", con:"Vulpecula", ra:19.993, dec:22.717, mag:7.4, sizeMaj:8, sizeMin:6},
+  {m:28, cat:["M28","NGC6626"], name:"", type:"GC", con:"Sagittarius", ra:18.408, dec:-24.867, mag:6.8, sizeMaj:11, sizeMin:11},
+  {m:29, cat:["M29","NGC6913"], name:"", type:"OC", con:"Cygnus", ra:20.398, dec:38.533, mag:7.1, sizeMaj:7, sizeMin:7},
+  {m:30, cat:["M30","NGC7099"], name:"", type:"GC", con:"Capricornus", ra:21.673, dec:-23.183, mag:7.2, sizeMaj:12, sizeMin:12},
+  {m:31, cat:["M31","NGC224"], name:"Andromeda Galaxy", type:"GX", con:"Andromeda", ra:0.712, dec:41.267, mag:3.4, sizeMaj:178, sizeMin:63},
+  {m:32, cat:["M32","NGC221"], name:"", type:"GX", con:"Andromeda", ra:0.712, dec:40.867, mag:8.1, sizeMaj:8, sizeMin:6},
+  {m:33, cat:["M33","NGC598"], name:"Triangulum Galaxy", type:"GX", con:"Triangulum", ra:1.565, dec:30.650, mag:5.7, sizeMaj:73, sizeMin:45},
+  {m:34, cat:["M34","NGC1039"], name:"", type:"OC", con:"Perseus", ra:2.700, dec:42.783, mag:5.5, sizeMaj:35, sizeMin:35},
+  {m:35, cat:["M35","NGC2168"], name:"", type:"OC", con:"Gemini", ra:6.148, dec:24.333, mag:5.3, sizeMaj:28, sizeMin:28},
+  {m:36, cat:["M36","NGC1960"], name:"", type:"OC", con:"Auriga", ra:5.602, dec:34.133, mag:6.3, sizeMaj:12, sizeMin:12},
+  {m:37, cat:["M37","NGC2099"], name:"", type:"OC", con:"Auriga", ra:5.873, dec:32.550, mag:6.2, sizeMaj:24, sizeMin:24},
+  {m:38, cat:["M38","NGC1912"], name:"", type:"OC", con:"Auriga", ra:5.473, dec:35.850, mag:7.4, sizeMaj:21, sizeMin:21},
+  {m:39, cat:["M39","NGC7092"], name:"", type:"OC", con:"Cygnus", ra:21.537, dec:48.433, mag:4.6, sizeMaj:32, sizeMin:32},
+  {m:40, cat:["M40","WNC4"], name:"Winnecke 4", type:"DBL", con:"Ursa Major", ra:12.373, dec:58.083, mag:8.4, sizeMaj:0.8, sizeMin:0.8},
+  {m:41, cat:["M41","NGC2287"], name:"", type:"OC", con:"Canis Major", ra:6.767, dec:-20.733, mag:4.5, sizeMaj:38, sizeMin:38},
+  {m:42, cat:["M42","NGC1976"], name:"Orion Nebula", type:"EN", con:"Orion", ra:5.590, dec:-5.450, mag:4.0, sizeMaj:85, sizeMin:60},
+  {m:43, cat:["M43","NGC1982"], name:"De Mairan's Nebula", type:"EN", con:"Orion", ra:5.592, dec:-5.267, mag:9.0, sizeMaj:20, sizeMin:15},
+  {m:44, cat:["M44","NGC2632"], name:"Beehive Cluster", type:"OC", con:"Cancer", ra:8.668, dec:19.983, mag:3.7, sizeMaj:95, sizeMin:95},
+  {m:45, cat:["M45"], name:"Pleiades", type:"OC", con:"Taurus", ra:3.783, dec:24.117, mag:1.6, sizeMaj:110, sizeMin:110},
+  {m:46, cat:["M46","NGC2437"], name:"", type:"OC", con:"Puppis", ra:7.697, dec:-14.817, mag:6.1, sizeMaj:27, sizeMin:27},
+  {m:47, cat:["M47","NGC2422"], name:"", type:"OC", con:"Puppis", ra:7.610, dec:-14.500, mag:4.4, sizeMaj:30, sizeMin:30},
+  {m:48, cat:["M48","NGC2548"], name:"", type:"OC", con:"Hydra", ra:8.230, dec:-5.800, mag:5.8, sizeMaj:54, sizeMin:54},
+  {m:49, cat:["M49","NGC4472"], name:"", type:"GX", con:"Virgo", ra:12.497, dec:8.000, mag:8.4, sizeMaj:9, sizeMin:7},
+  {m:50, cat:["M50","NGC2323"], name:"", type:"OC", con:"Monoceros", ra:7.053, dec:-8.333, mag:5.9, sizeMaj:16, sizeMin:16},
+  {m:51, cat:["M51","NGC5194"], name:"Whirlpool Galaxy", type:"GX", con:"Canes Venatici", ra:13.498, dec:47.200, mag:8.4, sizeMaj:11, sizeMin:7},
+  {m:52, cat:["M52","NGC7654"], name:"", type:"OC", con:"Cassiopeia", ra:23.403, dec:61.583, mag:6.9, sizeMaj:13, sizeMin:13},
+  {m:53, cat:["M53","NGC5024"], name:"", type:"GC", con:"Coma Berenices", ra:13.215, dec:18.167, mag:7.6, sizeMaj:13, sizeMin:13},
+  {m:54, cat:["M54","NGC6715"], name:"", type:"GC", con:"Sagittarius", ra:18.918, dec:-30.483, mag:7.6, sizeMaj:12, sizeMin:12},
+  {m:55, cat:["M55","NGC6809"], name:"", type:"GC", con:"Sagittarius", ra:19.667, dec:-30.967, mag:6.3, sizeMaj:19, sizeMin:19},
+  {m:56, cat:["M56","NGC6779"], name:"", type:"GC", con:"Lyra", ra:19.277, dec:30.183, mag:8.3, sizeMaj:7, sizeMin:7},
+  {m:57, cat:["M57","NGC6720"], name:"Ring Nebula", type:"PN", con:"Lyra", ra:18.893, dec:33.033, mag:8.8, sizeMaj:1.4, sizeMin:1.0},
+  {m:58, cat:["M58","NGC4579"], name:"", type:"GX", con:"Virgo", ra:12.628, dec:11.817, mag:9.7, sizeMaj:6, sizeMin:5},
+  {m:59, cat:["M59","NGC4621"], name:"", type:"GX", con:"Virgo", ra:12.700, dec:11.650, mag:9.6, sizeMaj:5, sizeMin:4},
+  {m:60, cat:["M60","NGC4649"], name:"", type:"GX", con:"Virgo", ra:12.728, dec:11.550, mag:8.8, sizeMaj:7, sizeMin:6},
+  {m:61, cat:["M61","NGC4303"], name:"", type:"GX", con:"Virgo", ra:12.365, dec:4.467, mag:9.7, sizeMaj:6, sizeMin:6},
+  {m:62, cat:["M62","NGC6266"], name:"", type:"GC", con:"Ophiuchus", ra:17.020, dec:-30.117, mag:6.5, sizeMaj:15, sizeMin:15},
+  {m:63, cat:["M63","NGC5055"], name:"Sunflower Galaxy", type:"GX", con:"Canes Venatici", ra:13.263, dec:42.033, mag:8.6, sizeMaj:13, sizeMin:7},
+  {m:64, cat:["M64","NGC4826"], name:"Black Eye Galaxy", type:"GX", con:"Coma Berenices", ra:12.945, dec:21.683, mag:8.5, sizeMaj:9, sizeMin:5},
+  {m:65, cat:["M65","NGC3623"], name:"Leo Triplet (M65)", type:"GX", con:"Leo", ra:11.315, dec:13.083, mag:9.3, sizeMaj:8, sizeMin:2},
+  {m:66, cat:["M66","NGC3627"], name:"Leo Triplet (M66)", type:"GX", con:"Leo", ra:11.337, dec:12.983, mag:8.9, sizeMaj:9, sizeMin:4},
+  {m:67, cat:["M67","NGC2682"], name:"", type:"OC", con:"Cancer", ra:8.857, dec:11.817, mag:6.1, sizeMaj:30, sizeMin:30},
+  {m:68, cat:["M68","NGC4590"], name:"", type:"GC", con:"Hydra", ra:12.658, dec:-26.750, mag:7.8, sizeMaj:12, sizeMin:12},
+  {m:69, cat:["M69","NGC6637"], name:"", type:"GC", con:"Sagittarius", ra:18.523, dec:-32.350, mag:7.6, sizeMaj:7, sizeMin:7},
+  {m:70, cat:["M70","NGC6681"], name:"", type:"GC", con:"Sagittarius", ra:18.720, dec:-32.300, mag:7.9, sizeMaj:8, sizeMin:8},
+  {m:71, cat:["M71","NGC6838"], name:"", type:"GC", con:"Sagitta", ra:19.897, dec:18.783, mag:8.2, sizeMaj:7, sizeMin:7},
+  {m:72, cat:["M72","NGC6981"], name:"", type:"GC", con:"Aquarius", ra:20.892, dec:-12.533, mag:9.3, sizeMaj:6, sizeMin:6},
+  {m:73, cat:["M73","NGC6994"], name:"", type:"AST", con:"Aquarius", ra:20.982, dec:-12.633, mag:8.9, sizeMaj:2.8, sizeMin:2.8},
+  {m:74, cat:["M74","NGC628"], name:"Phantom Galaxy", type:"GX", con:"Pisces", ra:1.612, dec:15.783, mag:9.4, sizeMaj:10, sizeMin:9},
+  {m:75, cat:["M75","NGC6864"], name:"", type:"GC", con:"Sagittarius", ra:20.102, dec:-21.917, mag:8.5, sizeMaj:6, sizeMin:6},
+  {m:76, cat:["M76","NGC650"], name:"Little Dumbbell", type:"PN", con:"Perseus", ra:1.707, dec:51.567, mag:10.1, sizeMaj:2.7, sizeMin:1.8},
+  {m:77, cat:["M77","NGC1068"], name:"", type:"GX", con:"Cetus", ra:2.712, dec:-0.017, mag:8.9, sizeMaj:7, sizeMin:6},
+  {m:78, cat:["M78","NGC2068"], name:"", type:"RN", con:"Orion", ra:5.778, dec:0.050, mag:8.3, sizeMaj:8, sizeMin:6},
+  {m:79, cat:["M79","NGC1904"], name:"", type:"GC", con:"Lepus", ra:5.408, dec:-24.550, mag:7.7, sizeMaj:9, sizeMin:9},
+  {m:80, cat:["M80","NGC6093"], name:"", type:"GC", con:"Scorpius", ra:16.283, dec:-22.983, mag:7.3, sizeMaj:10, sizeMin:10},
+  {m:81, cat:["M81","NGC3031"], name:"Bode's Galaxy", type:"GX", con:"Ursa Major", ra:9.927, dec:69.067, mag:6.9, sizeMaj:27, sizeMin:14},
+  {m:82, cat:["M82","NGC3034"], name:"Cigar Galaxy", type:"GX", con:"Ursa Major", ra:9.930, dec:69.683, mag:8.4, sizeMaj:11, sizeMin:4},
+  {m:83, cat:["M83","NGC5236"], name:"Southern Pinwheel", type:"GX", con:"Hydra", ra:13.617, dec:-29.867, mag:7.5, sizeMaj:13, sizeMin:12},
+  {m:84, cat:["M84","NGC4374"], name:"", type:"GX", con:"Virgo", ra:12.418, dec:12.883, mag:9.1, sizeMaj:6, sizeMin:5},
+  {m:85, cat:["M85","NGC4382"], name:"", type:"GX", con:"Coma Berenices", ra:12.423, dec:18.183, mag:9.1, sizeMaj:7, sizeMin:5},
+  {m:86, cat:["M86","NGC4406"], name:"", type:"GX", con:"Virgo", ra:12.437, dec:12.950, mag:8.9, sizeMaj:9, sizeMin:6},
+  {m:87, cat:["M87","NGC4486"], name:"Virgo A", type:"GX", con:"Virgo", ra:12.513, dec:12.400, mag:8.6, sizeMaj:8, sizeMin:7},
+  {m:88, cat:["M88","NGC4501"], name:"", type:"GX", con:"Coma Berenices", ra:12.533, dec:14.417, mag:9.6, sizeMaj:7, sizeMin:4},
+  {m:89, cat:["M89","NGC4552"], name:"", type:"GX", con:"Virgo", ra:12.595, dec:12.550, mag:9.8, sizeMaj:5, sizeMin:5},
+  {m:90, cat:["M90","NGC4569"], name:"", type:"GX", con:"Virgo", ra:12.613, dec:13.167, mag:9.5, sizeMaj:10, sizeMin:4},
+  {m:91, cat:["M91","NGC4548"], name:"", type:"GX", con:"Coma Berenices", ra:12.590, dec:14.500, mag:10.2, sizeMaj:5, sizeMin:4},
+  {m:92, cat:["M92","NGC6341"], name:"", type:"GC", con:"Hercules", ra:17.285, dec:43.133, mag:6.4, sizeMaj:14, sizeMin:14},
+  {m:93, cat:["M93","NGC2447"], name:"", type:"OC", con:"Puppis", ra:7.743, dec:-23.867, mag:6.0, sizeMaj:22, sizeMin:22},
+  {m:94, cat:["M94","NGC4736"], name:"", type:"GX", con:"Canes Venatici", ra:12.848, dec:41.117, mag:8.2, sizeMaj:11, sizeMin:9},
+  {m:95, cat:["M95","NGC3351"], name:"", type:"GX", con:"Leo", ra:10.733, dec:11.700, mag:9.7, sizeMaj:7, sizeMin:5},
+  {m:96, cat:["M96","NGC3368"], name:"", type:"GX", con:"Leo", ra:10.780, dec:11.817, mag:9.2, sizeMaj:7, sizeMin:5},
+  {m:97, cat:["M97","NGC3587"], name:"Owl Nebula", type:"PN", con:"Ursa Major", ra:11.247, dec:55.017, mag:9.9, sizeMaj:3.4, sizeMin:3.3},
+  {m:98, cat:["M98","NGC4192"], name:"", type:"GX", con:"Coma Berenices", ra:12.230, dec:14.900, mag:10.1, sizeMaj:10, sizeMin:3},
+  {m:99, cat:["M99","NGC4254"], name:"", type:"GX", con:"Coma Berenices", ra:12.313, dec:14.417, mag:9.9, sizeMaj:5, sizeMin:5},
+  {m:100, cat:["M100","NGC4321"], name:"", type:"GX", con:"Coma Berenices", ra:12.382, dec:15.817, mag:9.3, sizeMaj:7, sizeMin:6},
+  {m:101, cat:["M101","NGC5457"], name:"Pinwheel Galaxy", type:"GX", con:"Ursa Major", ra:14.053, dec:54.350, mag:7.9, sizeMaj:29, sizeMin:27},
+  {m:102, cat:["M102","NGC5866"], name:"Spindle Galaxy", type:"GX", con:"Draco", ra:15.108, dec:55.767, mag:9.9, sizeMaj:5, sizeMin:2},
+  {m:103, cat:["M103","NGC581"], name:"", type:"OC", con:"Cassiopeia", ra:1.553, dec:60.700, mag:7.4, sizeMaj:6, sizeMin:6},
+  {m:104, cat:["M104","NGC4594"], name:"Sombrero Galaxy", type:"GX", con:"Virgo", ra:12.667, dec:-11.617, mag:8.0, sizeMaj:9, sizeMin:4},
+  {m:105, cat:["M105","NGC3379"], name:"", type:"GX", con:"Leo", ra:10.797, dec:12.583, mag:9.3, sizeMaj:5, sizeMin:5},
+  {m:106, cat:["M106","NGC4258"], name:"", type:"GX", con:"Canes Venatici", ra:12.317, dec:47.300, mag:8.4, sizeMaj:19, sizeMin:7},
+  {m:107, cat:["M107","NGC6171"], name:"", type:"GC", con:"Ophiuchus", ra:16.542, dec:-13.050, mag:7.9, sizeMaj:13, sizeMin:13},
+  {m:108, cat:["M108","NGC3556"], name:"", type:"GX", con:"Ursa Major", ra:11.192, dec:55.667, mag:10.0, sizeMaj:8, sizeMin:2},
+  {m:109, cat:["M109","NGC3992"], name:"", type:"GX", con:"Ursa Major", ra:11.960, dec:53.383, mag:9.8, sizeMaj:8, sizeMin:5},
+  {m:110, cat:["M110","NGC205"], name:"", type:"GX", con:"Andromeda", ra:0.673, dec:41.683, mag:8.5, sizeMaj:22, sizeMin:11},
+  // ---- Curated non-Messier showpieces (NGC / Caldwell) ----
+  {m:null, cald:14, cat:["NGC869/884","C14"], name:"Double Cluster", type:"OC", con:"Perseus", ra:2.333, dec:57.133, mag:4.3, sizeMaj:60, sizeMin:30},
+  {m:null, cald:65, cat:["NGC253","C65"], name:"Sculptor Galaxy", type:"GX", con:"Sculptor", ra:0.793, dec:-25.283, mag:7.1, sizeMaj:27, sizeMin:7},
+  {m:null, cald:63, cat:["NGC7293","C63"], name:"Helix Nebula", type:"PN", con:"Aquarius", ra:22.493, dec:-20.800, mag:7.3, sizeMaj:16, sizeMin:12},
+  {m:null, cald:33, cat:["NGC6992","C33"], name:"Veil Nebula (East)", type:"SNR", con:"Cygnus", ra:20.940, dec:31.717, mag:7.0, sizeMaj:60, sizeMin:8},
+  {m:null, cald:34, cat:["NGC6960","C34"], name:"Veil Nebula (West)", type:"SNR", con:"Cygnus", ra:20.762, dec:30.717, mag:7.0, sizeMaj:70, sizeMin:6},
+  {m:null, cald:20, cat:["NGC7000","C20"], name:"North America Nebula", type:"EN", con:"Cygnus", ra:20.980, dec:44.333, mag:4.0, sizeMaj:120, sizeMin:100},
+  {m:null, cald:55, cat:["NGC7009","C55"], name:"Saturn Nebula", type:"PN", con:"Aquarius", ra:21.070, dec:-11.367, mag:8.0, sizeMaj:0.5, sizeMin:0.4},
+  {m:null, cald:22, cat:["NGC7662","C22"], name:"Blue Snowball", type:"PN", con:"Andromeda", ra:23.432, dec:42.550, mag:8.3, sizeMaj:0.6, sizeMin:0.6},
+  {m:null, cald:6, cat:["NGC6543","C6"], name:"Cat's Eye Nebula", type:"PN", con:"Draco", ra:17.977, dec:66.633, mag:8.1, sizeMaj:0.4, sizeMin:0.3},
+  {m:null, cald:49, cat:["NGC2237","C49"], name:"Rosette Nebula", type:"EN", con:"Monoceros", ra:6.538, dec:5.050, mag:6.0, sizeMaj:80, sizeMin:60},
+  {m:null, cald:50, cat:["NGC2244","C50"], name:"Rosette Cluster", type:"OC", con:"Monoceros", ra:6.540, dec:4.867, mag:4.8, sizeMaj:24, sizeMin:24},
+  {m:null, cald:23, cat:["NGC891","C23"], name:"Outer Limits Galaxy", type:"GX", con:"Andromeda", ra:2.377, dec:42.350, mag:9.9, sizeMaj:14, sizeMin:3},
+  {m:null, cald:38, cat:["NGC4565","C38"], name:"Needle Galaxy", type:"GX", con:"Coma Berenices", ra:12.605, dec:25.983, mag:9.6, sizeMaj:16, sizeMin:2},
+  {m:null, cald:77, cat:["NGC5128","C77"], name:"Centaurus A", type:"GX", con:"Centaurus", ra:13.425, dec:-43.017, mag:6.8, sizeMaj:26, sizeMin:20},
+  {m:null, cald:80, cat:["NGC5139","C80"], name:"Omega Centauri", type:"GC", con:"Centaurus", ra:13.447, dec:-47.483, mag:3.7, sizeMaj:36, sizeMin:36},
+  {m:null, cald:106, cat:["NGC104","C106"], name:"47 Tucanae", type:"GC", con:"Tucana", ra:0.402, dec:-72.083, mag:4.0, sizeMaj:31, sizeMin:31},
+  {m:null, cald:103, cat:["NGC2070","C103"], name:"Tarantula Nebula", type:"EN", con:"Dorado", ra:5.643, dec:-69.100, mag:8.0, sizeMaj:40, sizeMin:25},
+  {m:null, cald:76, cat:["NGC6231","C76"], name:"", type:"OC", con:"Scorpius", ra:16.900, dec:-41.800, mag:2.6, sizeMaj:15, sizeMin:15},
+  {m:null, cald:13, cat:["NGC457","C13"], name:"Owl / ET Cluster", type:"OC", con:"Cassiopeia", ra:1.318, dec:58.333, mag:6.4, sizeMaj:13, sizeMin:13},
+  {m:null, cald:30, cat:["NGC7789","C30"], name:"Caroline's Rose", type:"OC", con:"Cassiopeia", ra:23.950, dec:56.733, mag:6.7, sizeMaj:16, sizeMin:16},
+  {m:null, cald:15, cat:["NGC6826","C15"], name:"Blinking Planetary", type:"PN", con:"Cygnus", ra:19.747, dec:50.517, mag:8.8, sizeMaj:0.5, sizeMin:0.4},
+  {m:null, cald:39, cat:["NGC2392","C39"], name:"Eskimo Nebula", type:"PN", con:"Gemini", ra:7.487, dec:20.917, mag:9.2, sizeMaj:0.7, sizeMin:0.7},
+  {m:null, cald:59, cat:["NGC3242","C59"], name:"Ghost of Jupiter", type:"PN", con:"Hydra", ra:10.413, dec:-18.633, mag:7.8, sizeMaj:0.7, sizeMin:0.7},
+  {m:null, cald:28, cat:["NGC752","C28"], name:"", type:"OC", con:"Andromeda", ra:1.963, dec:37.683, mag:5.7, sizeMaj:50, sizeMin:50},
+  {m:null, cald:null, cat:["NGC2264"], name:"Christmas Tree Cluster", type:"OC", con:"Monoceros", ra:6.683, dec:9.883, mag:3.9, sizeMaj:20, sizeMin:20},
+  {m:null, cald:92, cat:["NGC3372","C92"], name:"Eta Carinae Nebula", type:"EN", con:"Carina", ra:10.730, dec:-59.867, mag:1.0, sizeMaj:120, sizeMin:120},
+  {m:null, cald:91, cat:["NGC3532","C91"], name:"Wishing Well Cluster", type:"OC", con:"Carina", ra:11.107, dec:-58.667, mag:3.0, sizeMaj:50, sizeMin:50},
+  {m:null, cald:94, cat:["NGC4755","C94"], name:"Jewel Box", type:"OC", con:"Crux", ra:12.893, dec:-60.333, mag:4.2, sizeMaj:10, sizeMin:10},
+  {m:null, cald:96, cat:["NGC2516","C96"], name:"", type:"OC", con:"Carina", ra:7.972, dec:-60.867, mag:3.8, sizeMaj:30, sizeMin:30},
+  {m:null, cald:93, cat:["NGC6752","C93"], name:"", type:"GC", con:"Pavo", ra:19.182, dec:-59.983, mag:5.4, sizeMaj:20, sizeMin:20},
+  {m:null, cald:null, cat:["NGC281"], name:"Pacman Nebula", type:"EN", con:"Cassiopeia", ra:0.880, dec:56.617, mag:7.4, sizeMaj:35, sizeMin:30},
+  {m:null, cald:27, cat:["NGC6888","C27"], name:"Crescent Nebula", type:"EN", con:"Cygnus", ra:20.200, dec:38.350, mag:7.4, sizeMaj:18, sizeMin:12},
+  {m:null, cald:null, cat:["NGC2903"], name:"", type:"GX", con:"Leo", ra:9.537, dec:21.500, mag:9.0, sizeMaj:12, sizeMin:6},
+  {m:null, cald:32, cat:["NGC4631","C32"], name:"Whale Galaxy", type:"GX", con:"Canes Venatici", ra:12.702, dec:32.533, mag:9.2, sizeMaj:15, sizeMin:3},
+  {m:null, cald:null, cat:["NGC7331"], name:"Deer Lick Galaxy", type:"GX", con:"Pegasus", ra:22.618, dec:34.417, mag:9.5, sizeMaj:10, sizeMin:4},
+  {m:null, cald:null, cat:["NGC1499"], name:"California Nebula", type:"EN", con:"Perseus", ra:4.055, dec:36.417, mag:5.0, sizeMaj:145, sizeMin:40},
+  {m:null, cald:72, cat:["NGC55","C72"], name:"", type:"GX", con:"Sculptor", ra:0.248, dec:-39.183, mag:7.9, sizeMaj:32, sizeMin:6},
+  {m:null, cald:null, cat:["NGC7635"], name:"Bubble Nebula", type:"EN", con:"Cassiopeia", ra:23.345, dec:61.200, mag:10.0, sizeMaj:15, sizeMin:8}
+];
+
+/* Solar-system targets. Positions/magnitudes computed live from the library.
+   bright:true ones are judged across the whole night (twilight ok). */
+const SOLAR = [
+  {id:"Moon", body:"Moon", name:"The Moon", type:"Moon", bright:true},
+  {id:"Mercury", body:"Mercury", name:"Mercury", type:"Planet", bright:true},
+  {id:"Venus", body:"Venus", name:"Venus", type:"Planet", bright:true},
+  {id:"Mars", body:"Mars", name:"Mars", type:"Planet", bright:true},
+  {id:"Jupiter", body:"Jupiter", name:"Jupiter", type:"Planet", bright:true},
+  {id:"Saturn", body:"Saturn", name:"Saturn", type:"Planet", bright:true},
+  {id:"Uranus", body:"Uranus", name:"Uranus", type:"Planet", bright:false},
+  {id:"Neptune", body:"Neptune", name:"Neptune", type:"Planet", bright:false}
+];
+
+const TYPE_NAMES = {GX:"Galaxy", EN:"Emission nebula", RN:"Reflection nebula", PN:"Planetary nebula",
+  SNR:"Supernova remnant", OC:"Open cluster", GC:"Globular cluster", AST:"Star cloud/asterism",
+  DBL:"Double star", Planet:"Planet", Moon:"Moon"};
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+/* =========================================================================
+   STATE / localStorage
+   ========================================================================= */
+const LS_KEY = "skyPlanner.v1";
+const A = (typeof Astronomy !== "undefined") ? Astronomy : null;
+
+function defaultState(){
+  return {
+    locations: [],            // {name,lat,lon,tz}
+    cityCache: {},            // "name" -> {lat,lon,tz,label}
+    cur: null,                // {lat,lon,tz,label}
+    date: todayStr(),
+    equip: {mode:"visual", instrument:"telescope", aperture:150, apUnit:"mm", focal:750, scopeType:"", eyepieces:[25,10,6], binAp:50},
+    sky: "suburban",
+    theme: "dark",
+    list: [],                 // array of object ids on personal list
+    log: {}                   // id -> {done, date, conditions, equip, rating, notes, missed}
+  };
+}
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+let S = loadState();
+function loadState(){
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ return Object.assign(defaultState(), JSON.parse(raw)); } }catch(e){}
+  return defaultState();
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+
+/* =========================================================================
+   SMALL ASTRO/MATH HELPERS
+   ========================================================================= */
+const D2R = Math.PI/180, R2D = 180/Math.PI;
+function clampLat(x){ return Math.max(-90, Math.min(90, x)); }
+
+// DST-aware UTC offset (hours) for an IANA tz at a given instant; fallback longitude-based.
+function tzOffsetHours(tz, date){
+  if(tz){
+    try{
+      const dtf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const p={}; for(const part of dtf.formatToParts(date)) p[part.type]=part.value;
+      let h = p.hour==='24'?0:+p.hour;
+      const asUTC = Date.UTC(+p.year,+p.month-1,+p.day,h,+p.minute,+p.second);
+      return Math.round((asUTC-date.getTime())/3600000*4)/4;
+    }catch(e){}
+  }
+  return null;
+}
+function curOffset(){
+  const loc = S.cur; if(!loc) return 0;
+  const [Y,M,Dd] = S.date.split("-").map(Number);
+  const probe = new Date(Date.UTC(Y,M-1,Dd,12,0,0));
+  let off = tzOffsetHours(loc.tz, probe);
+  if(off===null || loc.tz==null){
+    off = (loc.fixedOffset!=null) ? loc.fixedOffset : Math.round((loc.lon/15)*4)/4;
+  }
+  if(loc.fixedOffset!=null && !loc.tz) off = loc.fixedOffset;
+  return off;
+}
+// Build a UTC Date for local-site noon of the chosen date.
+function siteNoonUTC(){
+  const [Y,M,Dd] = S.date.split("-").map(Number);
+  const off = curOffset();
+  return new Date(Date.UTC(Y,M-1,Dd,12,0,0) - off*3600000);
+}
+function fmtLocal(d){
+  if(!d) return "—";
+  const off = curOffset();
+  const l = new Date(d.getTime() + off*3600000);
+  return String(l.getUTCHours()).padStart(2,"0")+":"+String(l.getUTCMinutes()).padStart(2,"0");
+}
+function fmtOff(off){ const s=off<0?"-":"+"; const a=Math.abs(off); const h=Math.floor(a); const m=Math.round((a-h)*60); return "UTC"+s+h+(m?(":"+String(m).padStart(2,"0")):""); }
+
+/* =========================================================================
+   GEOMETRY (uses astronomy-engine)
+   ========================================================================= */
+function observer(){ const loc=S.cur; return new A.Observer(clampLat(loc.lat), loc.lon, 0); }
+
+// alt/az for a catalog/solar object at a given time.
+function altAz(o, time, obs){
+  if(o.body){ // solar-system body
+    const eq = A.Equator(A.Body[o.body], time, obs, true, true);
+    return A.Horizon(time, obs, eq.ra, eq.dec, 'normal');
+  } else {     // fixed star/DSO via DefineStar
+    A.DefineStar(A.Body.Star1, o.ra, o.dec, 1000);
+    const eq = A.Equator(A.Body.Star1, time, obs, true, true);
+    return A.Horizon(time, obs, eq.ra, eq.dec, 'normal');
+  }
+}
+function bodyEnum(o){ return o.body ? A.Body[o.body] : A.Body.Star1; }
+
+// Compute the night windows once per location/date.
+function computeNight(){
+  const obs = observer();
+  const noon = siteNoonUTC();
+  const sunset  = safe(()=>A.SearchRiseSet(A.Body.Sun, obs, -1, noon, 1));
+  const sunrise = safe(()=>A.SearchRiseSet(A.Body.Sun, obs, +1, sunset?sunset:noon, 1.5));
+  // darkness: try astronomical (-18), then nautical (-12), then civil (-6)
+  let darkStart=null, darkEnd=null, darkType="astronomical";
+  for(const [alt,label] of [[-18,"astronomical"],[-12,"nautical"],[-6,"civil"]]){
+    darkStart = safe(()=>A.SearchAltitude(A.Body.Sun, obs, -1, noon, 1, alt));
+    if(darkStart){ darkEnd = safe(()=>A.SearchAltitude(A.Body.Sun, obs, +1, darkStart, 1.2, alt)); }
+    if(darkStart && darkEnd){ darkType=label; break; }
+  }
+  const noDark = !(darkStart && darkEnd);
+  // sky background depending on real darkness achieved
+  let darkPenalty = 0; // worsening of sky vs nominal
+  if(darkType==="nautical") darkPenalty = 0.6;
+  if(darkType==="civil" || noDark) darkPenalty = 1.4;
+  // moon context at deepest night
+  const mid = darkStart && darkEnd ? new Date((darkStart.getTime()+darkEnd.getTime())/2)
+            : (sunset && sunrise ? new Date((sunset.getTime()+sunrise.getTime())/2) : noon);
+  const ill = A.Illumination(A.Body.Moon, mid);
+  const moonHor = altAz({body:"Moon"}, mid, obs);
+  return {
+    obs, noon, sunset, sunrise, darkStart, darkEnd, darkType, noDark, darkPenalty,
+    moonIllum: ill.phase_fraction, moonPhase: A.MoonPhase(mid), moonAltMid: moonHor.altitude
+  };
+}
+function safe(fn){ try{ const r=fn(); return r? (r.date||r):null; }catch(e){ return null; } }
+
+// Per-object geometry for the night: highest altitude reached during the relevant window.
+function objGeom(o, night){
+  const obs = night.obs;
+  // IMPORTANT: for fixed objects, define the custom star BEFORE any search/lookup,
+  // otherwise SearchHourAngle would reuse whatever Star1 was last set to.
+  if(!o.body) A.DefineStar(A.Body.Star1, o.ra, o.dec, 1000);
+  // search next transit (upper culmination) after local noon
+  let transit=null, transitAlt=null;
+  try{
+    const ev = A.SearchHourAngle(bodyEnum(o), obs, 0, night.noon, +1);
+    transit = ev.time.date; transitAlt = ev.hor.altitude;
+  }catch(e){}
+  // window: bright solar objects use sunset..sunrise; everything else uses dark window
+  const useBright = o.bright;
+  const winA = useBright ? night.sunset : (night.darkStart||night.sunset);
+  const winB = useBright ? night.sunrise : (night.darkEnd||night.sunrise);
+  let nightMaxAlt=-90, bestTime=null;
+  if(transit && winA && winB && transit>=winA && transit<=winB){
+    nightMaxAlt = transitAlt; bestTime = transit;
+  } else if(winA && winB){
+    const aAlt = altAz(o, winA, obs).altitude;
+    const bAlt = altAz(o, winB, obs).altitude;
+    if(aAlt>=bAlt){ nightMaxAlt=aAlt; bestTime=winA; } else { nightMaxAlt=bAlt; bestTime=winB; }
+  } else if(transit){
+    nightMaxAlt = transitAlt; bestTime = transit;
+  }
+  // geometric ceiling: the highest this object can EVER get from this latitude,
+  // regardless of time of day. For fixed objects this is the meridian altitude.
+  let geomMaxAlt;
+  if(o.body){ geomMaxAlt = (transitAlt!=null)? transitAlt : nightMaxAlt; }
+  else { geomMaxAlt = 90 - Math.abs(obs.latitude - o.dec); }
+  return {transit, transitAlt, nightMaxAlt, geomMaxAlt, bestTime};
+}
+
+/* =========================================================================
+   DIFFICULTY HEURISTIC  (approximate by design)
+   ---------------------------------------------------------------------------
+   Point sources: compare object magnitude to a limiting magnitude derived
+   from aperture, sky darkness and atmospheric extinction at the object's
+   altitude. Extended objects also get a surface-brightness/contrast test so
+   big faint nebulae are judged honestly. Astrophotography shifts limits faint.
+   ========================================================================= */
+const SKY_BG = {dark:21.7, suburban:20.0, bright:18.2};       // mag/arcsec^2 (zenith, no Moon)
+const SKY_PT = {dark:0, suburban:-1.3, bright:-2.6};          // point-source limit penalty
+const MIN_ALT = 10;                                           // below this = effectively not observable
+const LOW_ALT = 20;
+
+function effectiveApertureMM(){
+  const e=S.equip;
+  if(e.instrument==="naked") return 7;
+  if(e.instrument==="binoculars") return (+e.binAp||50);
+  let mm = (+e.aperture||0);
+  if(e.apUnit==="in") mm = mm*25.4;
+  return mm>0? mm : 150; // default 6" if blank
+}
+function surfaceBrightness(o){ // mag/arcsec^2
+  const area = Math.PI/4 * Math.max(o.sizeMaj,0.1) * Math.max(o.sizeMin,0.1); // arcmin^2
+  return o.mag + 2.5*Math.log10(area) + 8.89;
+}
+function isExtendedForSB(o){
+  if(["GX","EN","RN","SNR"].includes(o.type)) return true;
+  if(o.type==="PN" && o.sizeMaj>=3) return true;
+  return false;
+}
+function difficulty(o, geom, night){
+  const notes=[];
+  if(geom.nightMaxAlt < MIN_ALT){
+    // Two distinct "impossible" geometry cases:
+    if(geom.geomMaxAlt < MIN_ALT){
+      // never climbs high enough from this latitude — a horizon limit, true all year.
+      return {key:"horizon", label:"Below the horizon here", cls:"horizon", rank:6,
+        why:`From this latitude it only ever climbs to about ${Math.max(geom.geomMaxAlt,0).toFixed(0)}° — it never clears a usable altitude here, on any date.`};
+    }
+    // it CAN get high, but only while the Sun is up on this date (it's near the Sun now).
+    const moHint = (!o.body) ? ` Try around ${MONTHS[bestMonth(o)]}.` : "";
+    return {key:"sun", label:"Lost in the Sun's glare", cls:"sun", rank:5,
+      why:`It reaches ${geom.geomMaxAlt.toFixed(0)}° but only during daylight on this date — it sits in the Sun's part of the sky right now.${moHint}`};
+  }
+  const astro = S.equip.mode==="astro";
+  const D_cm = effectiveApertureMM()/10;
+  const alt = Math.max(geom.nightMaxAlt, 5);
+  const airmass = 1/Math.sin(alt*D2R);
+  const ext = Math.min(0.28*(airmass-1), 3);
+  // point-source limiting magnitude
+  let pt = 7.5 + 5*Math.log10(D_cm);
+  if(astro){ pt += 0.5*SKY_PT[S.sky] - 0.5*ext + 4.5; }
+  else { pt += SKY_PT[S.sky] - ext - night.darkPenalty; }
+  const magMargin = pt - o.mag;
+
+  const extended = isExtendedForSB(o);
+  let margin = magMargin, mode="brightness";
+  if(extended){
+    // VISUAL DETECTION OF AN EXTENDED OBJECT is not about integrated magnitude — once a
+    // telescope is within magnitude reach, what decides it is:
+    //   - CONTRAST: surface brightness vs the sky background (the core driver),
+    //   - LIGHT GRASP: bigger aperture detects lower contrast,
+    //   - ANGULAR SIZE: the eye integrates over area, so larger objects are easier,
+    //   - CENTRAL CONCENTRATION: emission/planetary nebulae & bright-core galaxies punch
+    //     through; diffuse remnants/reflection nebulae barely do.
+    // This is why a big scope does NOT make a faint low-contrast galaxy "easy".
+    const objSB = surfaceBrightness(o);
+    const skyBg = SKY_BG[S.sky] - night.darkPenalty;            // brighter sky = smaller number
+    const apertureBonus = Math.max(0, 2.5*Math.log10(D_cm/0.7)); // light grasp vs naked eye (mag)
+    const sizeFactor = 1.8*Math.log10(Math.max(o.sizeMaj,1)/12); // >12' easier, smaller harder
+    const coreBonus = {EN:1.3, PN:1.1, GX:0.6, SNR:0.2, RN:0.2}[o.type] || 0;
+    const detect = 0.5 + 0.7*apertureBonus + (astro?5:0);
+    const delta = objSB - skyBg;                                // how much fainter than sky
+    const contrastMargin = detect + coreBonus + sizeFactor - delta;
+    margin = Math.min(magMargin, contrastMargin);               // naked eye can still be mag-limited
+    mode="contrast";
+  }
+
+  // classify on margin alone first
+  const RANK = {1:["easy","Easy to find","easy"], 2:["needs","Needs experience","needs"], 3:["hard","Extremely difficult","hard"]};
+  let key,label,cls,rank;
+  if(margin < 0){ [key,label,cls]=["toofaint","Too faint for your gear","toofaint"]; rank=4; }
+  else { rank = margin>=2.5?1 : (margin>=1.0?2:3); [key,label,cls]=RANK[rank]; }
+
+  // low-altitude bump (don't bump past "extremely difficult")
+  if(key!=="toofaint" && geom.nightMaxAlt<LOW_ALT && rank<3){
+    rank++; [key,label,cls]=RANK[rank];
+    notes.push(`low in the sky (peaks ~${geom.nightMaxAlt.toFixed(0)}°)`);
+  }
+  // Bright Moon: gentle one-notch downgrade for faint/extended targets — never turns a
+  // genuinely bright object "impossible", just harder.
+  if(night.moonIllum>0.55 && night.moonAltMid>0 && (o.mag>6 || extended) && key!=="toofaint"){
+    if(rank<3){ rank++; [key,label,cls]=RANK[rank]; }
+    notes.push(`Moon ~${Math.round(night.moonIllum*100)}% lit tonight`);
+  }
+
+  const why = `Peaks ~${geom.nightMaxAlt.toFixed(0)}°; ${mode} margin ${margin>=0?"+":""}${margin.toFixed(1)} mag vs your `+
+    `${effectiveApertureMM().toFixed(0)}mm under ${S.sky} sky${astro?" (astro)":""}.`+
+    (notes.length?" "+notes.join("; ")+".":"");
+  return {key,label,cls,rank,why};
+}
+
+/* =========================================================================
+   EYEPIECE SUGGESTION (approximate)
+   ========================================================================= */
+function eyepieceSuggestion(o){
+  const e=S.equip;
+  if(e.instrument==="naked") return {text:"naked-eye target"};
+  if(e.instrument==="binoculars") return {text:"binocular target (fixed magnification)"};
+  const focal = +e.focal||0;
+  if(!focal) return {text:"enter focal length for eyepiece tips"};
+  const apMM = effectiveApertureMM();
+  const objDeg = o.sizeMaj/60;
+  const AFOV = 52; // assumed eyepiece apparent field
+  // sane magnification bounds: max useful ~2x aperture(mm); min useful ~aperture/7 (7mm exit pupil)
+  const minEP = focal/(2*apMM);                 // shortest eyepiece worth using (highest power)
+  const maxEP = focal/Math.max(apMM/7, 15);     // longest eyepiece worth using (lowest power)
+  const clamp = (x)=> Math.min(Math.max(x, minEP), maxEP);
+  let epMid, frameDeg = objDeg;
+  if(o.type==="Planet"){
+    epMid = clamp(focal/apMM);                       // tiny & bright → high power (~aperture-number ×)
+  } else if(o.type==="Moon"){
+    frameDeg = 0.52;                                 // the Moon is ~31' wide — a LARGE target, not a planet
+    epMid = clamp((frameDeg*2.2)*focal/AFOV);        // frame the whole disk at low/moderate power
+  } else {
+    // Open clusters & star clouds look best with room to breathe (object ~25% of the field);
+    // compact objects can sit nearer half the field.
+    const framing = (o.type==="OC" || o.type==="AST") ? 4.0 : 2.5;
+    epMid = clamp((objDeg*framing)*focal/AFOV);
+  }
+  let epLow = clamp(epMid*0.7), epHigh = clamp(epMid*1.5);
+  if(epLow>epHigh){ const t=epLow; epLow=epHigh; epHigh=t; }
+  const magMid = Math.round(focal/epMid);
+  let text = (epHigh-epLow < 0.8)
+    ? `best ~${epMid.toFixed(0)} mm (≈${magMid}×)`
+    : `best ~${epLow.toFixed(0)}–${epHigh.toFixed(0)} mm (≈${magMid}×)`;
+  if(o.type==="Moon") text += " for the whole disk; go shorter (higher power) for crater detail";
+  // fit check at lowest practical power (widest true field this scope can show)
+  const maxTrueField = AFOV*maxEP/focal; // deg
+  let fit=true;
+  if(o.type!=="Planet" && o.type!=="Moon" && objDeg>maxTrueField){ fit=false; text+=" — larger than one field"; }
+  // closest owned eyepiece
+  let owned=null;
+  if(Array.isArray(e.eyepieces) && e.eyepieces.length){
+    let best=null,bd=1e9;
+    for(const ep of e.eyepieces){ const d=Math.abs(ep-epMid); if(d<bd){bd=d;best=ep;} }
+    if(best!=null){ owned=`your ${best} mm is closest (≈${Math.round(focal/best)}×)`; }
+  }
+  return {text, owned, fit};
+}
+
+/* =========================================================================
+   BEST MONTH (RA-driven: month the object transits near local midnight)
+   ========================================================================= */
+function bestMonth(o){
+  let d = (((o.ra-12)%24)+24)%24;
+  let days = d/24*365.25;
+  const base = new Date(Date.UTC(2025,2,20));
+  base.setUTCDate(base.getUTCDate()+Math.round(days));
+  return base.getUTCMonth(); // 0..11
+}
+
+/* =========================================================================
+   BUILD COMPUTED ROWS
+   ========================================================================= */
+let NIGHT=null, ROWS=[];
+function objId(o){ return o.id || o.cat[0]; }
+function objDisplayName(o){
+  if(o.body) return o.name;
+  const id = o.cat[0];
+  return o.name ? `${id} · ${o.name}` : id;
+}
+function computeAll(){
+  NIGHT = computeNight();
+  ROWS = [];
+  const all = CATALOG.concat(SOLAR);
+  for(const o of all){
+    const geom = objGeom(o, NIGHT);
+    let mag = o.mag, sizeMaj=o.sizeMaj, sizeMin=o.sizeMin;
+    if(o.body && o.body!=="Moon"){ try{ mag = A.Illumination(A.Body[o.body], geom.bestTime||NIGHT.noon).mag; }catch(e){} }
+    if(o.body==="Moon"){ mag=-11; }
+    const oo = Object.assign({}, o, {mag, sizeMaj:sizeMaj||5, sizeMin:sizeMin||5});
+    const moonUp = geom.nightMaxAlt>=MIN_ALT;
+    const diff = (o.id==="Moon") ? (moonUp
+                  ? {key:"easy", label:"Easy to find", cls:"easy", rank:1, why:`Moon, ${Math.round(NIGHT.moonIllum*100)}% illuminated.`}
+                  : {key:"sun", label:"Below the horizon tonight", cls:"sun", rank:5, why:`The Moon is up only during daylight on this date (${Math.round(NIGHT.moonIllum*100)}% illuminated).`})
+                 : difficulty(oo, geom, NIGHT);
+    ROWS.push({o:oo, id:objId(o), geom, diff,
+      month:(o.body?null:bestMonth(o)),
+      eyepiece:eyepieceSuggestion(oo)});
+  }
+}
+
+/* =========================================================================
+   RENDERING
+   ========================================================================= */
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+let VIEW="tonight";
+const FILTERS={hideImpossible:false, onlyUp:false, messier:false, listed:false, type:""};
+let SORT="diff";
+const PAGE_SIZE=20;
+let SHOWN=PAGE_SIZE;                 // how many rows are currently revealed
+function resetPage(){ SHOWN=PAGE_SIZE; }
+function pagerHTML(total){
+  if(total<=SHOWN) return total? `<div class="small muted" style="margin-top:6px;">Showing all ${total}.</div>` : "";
+  const remaining=total-SHOWN, next=Math.min(PAGE_SIZE,remaining);
+  return `<div style="margin-top:10px;text-align:center;">
+    <button id="showMore" style="width:auto;">▾ Show ${next} more (${remaining} remaining)</button>
+    <div class="small muted" style="margin-top:4px;">Showing ${SHOWN} of ${total}.</div></div>`;
+}
+function wirePager(host){ const b=$("#showMore",host); if(b) b.onclick=()=>{ SHOWN+=PAGE_SIZE; renderTable(); }; }
+
+function phaseName(angle){
+  const a=((angle%360)+360)%360;
+  if(a<22.5||a>=337.5) return "New";
+  if(a<67.5) return "Waxing crescent";
+  if(a<112.5) return "First quarter";
+  if(a<157.5) return "Waxing gibbous";
+  if(a<202.5) return "Full";
+  if(a<247.5) return "Waning gibbous";
+  if(a<292.5) return "Last quarter";
+  return "Waning crescent";
+}
+
+/* Short, tap-to-open descriptions for each table column. */
+const COLHELP = {
+  name:"Catalogue ID and common name. The grey line lists the object's other catalogue numbers.",
+  diff:"How hard this object is to spot with YOUR instrument, sky and date tonight — an estimate. Tap a coloured label for the reasoning behind it.",
+  type:"Kind of object: galaxy, open/globular cluster, emission/planetary nebula, supernova remnant, etc.",
+  con:"The constellation the object lies in — useful for star-hopping to it.",
+  mag:"Integrated (total) brightness. Lower numbers are brighter. Large faint objects can look dimmer than this single number suggests.",
+  size:"Apparent size on the sky, in arcminutes (′). Two numbers (e.g. 9×4′) mean long axis × short axis for a non-round object.",
+  month:"The month the object rides highest at local midnight — i.e. its best season to observe.",
+  time:"The clock time tonight it climbs highest (transits), with its peak altitude. Shown in the site's local time.",
+  eyepiece:"A rough eyepiece focal length to frame it well, with the approximate magnification. If you listed eyepieces you own, the closest match is named. An estimate.",
+  status:"Whether you've logged this as observed or missed. Tap “log” to record date, conditions, a rating and notes."
+};
+function ihelp(key){ return ` <span class="ihelp" data-h="${key}" title="what is this?">i</span>`; }
+function closeColHelp(){ const b=document.querySelector(".helpbox"); if(b) b.remove(); }
+function onIhelp(e, el){
+  e.stopPropagation();
+  const ex=document.querySelector(".helpbox");
+  const same = ex && ex._owner===el;
+  closeColHelp();
+  if(same) return;
+  const box=document.createElement("div");
+  box.className="helpbox"; box._owner=el;
+  box.textContent = COLHELP[el.dataset.h]||"";
+  document.body.appendChild(box);
+  const r=el.getBoundingClientRect();
+  const bw=Math.min(260, window.innerWidth-20);
+  box.style.maxWidth=bw+"px";
+  let left=r.left+window.scrollX-8;
+  const rightEdge=window.scrollX+window.innerWidth-10;
+  if(left+bw>rightEdge) left=rightEdge-bw;
+  if(left<window.scrollX+8) left=window.scrollX+8;
+  box.style.left=left+"px";
+  box.style.top=(r.bottom+window.scrollY+6)+"px";
+}
+function wireHelp(host){ $$(".ihelp",host).forEach(el=>el.onclick=(e)=>onIhelp(e,el)); }
+
+function renderSession(){
+  $("#sessionPanel").style.display="";
+  $("#sessLoc").textContent = S.cur.label + " · " + S.date;
+  const n=NIGHT;
+  const moonPct=Math.round(n.moonIllum*100);
+  let darkLine;
+  if(n.noDark){ darkLine = `<span class="warn">No true astronomical darkness tonight</span> — using ${n.darkType} twilight as the dark window.`; }
+  else if(n.darkType!=="astronomical"){ darkLine = `Best darkness reaches only <b>${n.darkType}</b> twilight tonight.`; }
+  else darkLine = `Astronomical darkness (true dark).`;
+  const ds=n.darkStart, de=n.darkEnd;
+  $("#sessionInfo").innerHTML =
+    `<div class="kv"><span>Sunset → Sunrise</span><b>${fmtLocal(n.sunset)} → ${fmtLocal(n.sunrise)}</b></div>`+
+    `<div class="kv"><span>Dark window (${n.darkType})</span><b>${fmtLocal(ds)} → ${fmtLocal(de)}</b></div>`+
+    `<div class="kv"><span>Moon</span><b>${phaseName(n.moonPhase)} · ${moonPct}% lit ${n.moonAltMid>0?"(up at mid-night)":"(down at mid-night)"}</b></div>`+
+    `<div class="small muted" style="margin-top:6px;">${darkLine} Times shown in site-local ${fmtOff(curOffset())}.`+
+    (moonPct>60?` <span class="warn">Bright Moon — faint targets will be washed out.</span>`:``)+`</div>`;
+}
+
+function labelHTML(diff){ return `<span class="lab ${diff.cls}" title="${esc(diff.why)}">${diff.label}</span>`; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function searchURL(o){ const q=encodeURIComponent((o.cat?o.cat[0]:o.name)+" "+(o.name||"")+" astronomy"); return "https://www.google.com/search?q="+q; }
+function photoURL(o){ const q=encodeURIComponent((o.cat?o.cat[0]:o.name)+" "+(o.name||"")); return "https://www.google.com/search?tbm=isch&q="+q; }
+
+function filteredSortedRows(){
+  let rows=ROWS.slice();
+  if(VIEW==="list") rows=rows.filter(r=>S.list.includes(r.id));
+  if(FILTERS.messier) rows=rows.filter(r=>r.o.m!=null);
+  if(FILTERS.listed) rows=rows.filter(r=>S.list.includes(r.id));
+  if(FILTERS.type) rows=rows.filter(r=>r.o.type===FILTERS.type);
+  if(FILTERS.hideImpossible) rows=rows.filter(r=>!["horizon","sun","toofaint"].includes(r.diff.key));
+  if(FILTERS.onlyUp) rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT);
+  const cmp={
+    diff:(a,b)=> a.diff.rank-b.diff.rank || b.geom.nightMaxAlt-a.geom.nightMaxAlt,
+    time:(a,b)=> (a.geom.bestTime?a.geom.bestTime.getTime():9e15)-(b.geom.bestTime?b.geom.bestTime.getTime():9e15),
+    name:(a,b)=> objDisplayName(a.o).localeCompare(objDisplayName(b.o)),
+    type:(a,b)=> (TYPE_NAMES[a.o.type]||"").localeCompare(TYPE_NAMES[b.o.type]||"") || a.o.mag-b.o.mag,
+    mag:(a,b)=> a.o.mag-b.o.mag,
+    con:(a,b)=> (a.o.con||"~").localeCompare(b.o.con||"~"),
+    month:(a,b)=> ((a.month==null?99:a.month)-(b.month==null?99:b.month))
+  }[SORT];
+  rows.sort(cmp);
+  if(VIEW==="tonight"){ // rank best-placed: up, easiest, highest (no cap — paginated)
+    rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT);
+    rows.sort((a,b)=> a.diff.rank-b.diff.rank || b.geom.nightMaxAlt-a.geom.nightMaxAlt);
+  }
+  return rows;
+}
+
+function renderTable(){
+  closeColHelp();
+  const rows=filteredSortedRows();
+  const host=$("#tableHost");
+  if(VIEW==="list"){ renderListView(rows); return; }
+  const head=`<tr>
+    <th class="sortable" data-s="name">Object${ihelp("name")}</th>
+    <th>Difficulty${ihelp("diff")}</th>
+    <th class="hide-sm sortable" data-s="type">Type${ihelp("type")}</th>
+    <th class="hide-sm sortable" data-s="con">Const.${ihelp("con")}</th>
+    <th class="sortable" data-s="mag">Mag${ihelp("mag")}</th>
+    <th class="hide-sm">Size${ihelp("size")}</th>
+    <th class="hide-sm sortable" data-s="month">Best mo.${ihelp("month")}</th>
+    <th class="sortable" data-s="time">Best time${ihelp("time")}</th>
+    <th class="hide-sm">Eyepiece${ihelp("eyepiece")}</th>
+    <th class="noprint">·</th></tr>`;
+  const pageRows=rows.slice(0,SHOWN);
+  const body=pageRows.map(r=>{
+    const o=r.o;
+    const onList=S.list.includes(r.id);
+    const done=S.log[r.id]&&S.log[r.id].done;
+    const sz = o.body? "—" : (o.sizeMaj===o.sizeMin? o.sizeMaj+"'": o.sizeMaj+"×"+o.sizeMin+"'");
+    const ep = r.eyepiece.text + (r.eyepiece.owned?` · ${r.eyepiece.owned}`:"");
+    return `<tr class="obj-row">
+      <td><span class="obj-name">${esc(objDisplayName(o))}</span> ${done?'✓':''}
+          <div class="tag">${o.cat?esc(o.cat.join(", ")):"solar system"}</div></td>
+      <td>${labelHTML(r.diff)}</td>
+      <td class="hide-sm">${TYPE_NAMES[o.type]||o.type}</td>
+      <td class="hide-sm">${esc(o.con||"—")}</td>
+      <td>${o.body&&o.body!=="Moon"?o.mag.toFixed(1):(o.id==="Moon"?"—":o.mag.toFixed(1))}</td>
+      <td class="hide-sm">${sz}</td>
+      <td class="hide-sm">${r.month==null?"—":MONTHS[r.month].slice(0,3)}</td>
+      <td>${fmtLocal(r.geom.bestTime)}<div class="tag">${r.geom.nightMaxAlt>=MIN_ALT?("↑"+r.geom.nightMaxAlt.toFixed(0)+"°"):"low"}</div></td>
+      <td class="hide-sm small">${esc(ep)}</td>
+      <td class="acts noprint">
+        <a href="${photoURL(o)}" target="_blank" rel="noopener">photo</a>
+        <a href="${searchURL(o)}" target="_blank" rel="noopener">info</a>
+        <a href="#" data-toggle="${esc(r.id)}">${onList?"−list":"+list"}</a>
+        ${onList?`<a href="#" data-log="${esc(r.id)}">log</a>`:""}
+      </td></tr>`;
+  }).join("");
+  host.innerHTML = `<div class="panel"><div class="scroll"><table>${head}${body}</table></div>
+    <div class="small muted" style="margin-top:6px;">${rows.length} object(s) match. ${VIEW==="tonight"?"Best-placed targets for tonight, easiest first.":""}</div>
+    ${pagerHTML(rows.length)}</div>`;
+  // wire sortable headers (re-sorting resets pagination)
+  $$("th.sortable",host).forEach(th=>th.onclick=()=>{ SORT=th.dataset.s; $("#sortBy").value=SORT; resetPage(); renderTable(); });
+  wireRowActions(host);
+  wirePager(host);
+  wireHelp(host);
+}
+
+function renderListView(rows){
+  const host=$("#tableHost");
+  const total=S.list.length;
+  const done=S.list.filter(id=>S.log[id]&&S.log[id].done).length;
+  const mTotal=S.list.filter(id=>{const r=ROWS.find(x=>x.id===id);return r&&r.o.m!=null;}).length;
+  const mDone=S.list.filter(id=>{const r=ROWS.find(x=>x.id===id);return r&&r.o.m!=null&&S.log[id]&&S.log[id].done;}).length;
+  let html=`<div class="panel">
+    <div class="kv"><span>Observed</span><b class="count">${done} / ${total}</b></div>
+    <div class="progress"><span style="width:${total?(done/total*100):0}%"></span></div>
+    ${mTotal?`<div class="small muted" style="margin-top:6px;">Messier on list: ${mDone} / ${mTotal}</div>`:""}
+  </div>`;
+  if(!rows.length){ html+=`<div class="panel muted">Your list is empty. Add objects from the Catalog tab, or load a starter list below.</div>`; }
+  else {
+    const pageRows=rows.slice(0,SHOWN);
+    const body=pageRows.map(r=>{
+      const o=r.o, L=S.log[r.id]||{};
+      const status = L.done? `<span class="lab easy">observed</span>` : (L.missed?`<span class="lab hard">missed</span>`:`<span class="muted small">not yet</span>`);
+      const meta = L.done? `${L.date||""} ${L.rating?("★"+L.rating):""} ${esc(L.notes||"")}` : (L.missed?esc(L.missed):"");
+      return `<tr class="obj-row">
+        <td><span class="obj-name">${esc(objDisplayName(o))}</span><div class="tag">${o.cat?esc(o.cat.join(", ")):"solar"}</div></td>
+        <td>${labelHTML(r.diff)}</td>
+        <td>${status}<div class="tag">${esc(meta||"")}</div></td>
+        <td class="acts noprint">
+          <a href="#" data-log="${esc(r.id)}">log</a>
+          <a href="#" data-toggle="${esc(r.id)}">remove</a>
+        </td></tr>`;
+    }).join("");
+    html+=`<div class="panel"><div class="scroll"><table>
+      <tr><th>Object${ihelp("name")}</th><th>Difficulty${ihelp("diff")}</th><th>Status / log${ihelp("status")}</th><th class="noprint">·</th></tr>${body}</table></div>
+      ${pagerHTML(rows.length)}</div>`;
+  }
+  host.innerHTML=html;
+  wireRowActions(host);
+  wirePager(host);
+  wireHelp(host);
+}
+
+function wireRowActions(host){
+  $$("a[data-toggle]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); toggleList(a.dataset.toggle); });
+  $$("a[data-log]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); openLog(a.dataset.log); });
+}
+function toggleList(id){
+  const i=S.list.indexOf(id);
+  if(i>=0) S.list.splice(i,1); else S.list.push(id);
+  save(); renderTable();
+}
+
+/* ---- Log modal ---- */
+function openLog(id){
+  const r=ROWS.find(x=>x.id===id); if(!r) return;
+  const L=S.log[id]||{};
+  const equipGuess = `${S.equip.instrument}${S.equip.instrument==="telescope"?" "+effectiveApertureMM().toFixed(0)+"mm":""}, ${S.sky} sky`;
+  $("#modalHost").innerHTML=`
+   <div class="modal-bg" id="mbg"><div class="modal">
+    <h2>${esc(objDisplayName(r.o))}</h2>
+    <div class="small muted">${labelHTML(r.diff)} · ${r.diff.why?esc(r.diff.why):""}</div>
+    <label>Did you observe it?</label>
+    <div class="chips">
+      <button class="chip ${L.done?'on':''}" id="obsYes">✓ Observed</button>
+      <button class="chip ${L.missed?'on':''}" id="obsMiss">✗ Missed</button>
+    </div>
+    <div id="obsFields">
+      <label>Date observed</label><input id="lgDate" type="date" value="${L.date||S.date}">
+      <label>Sky conditions</label><input id="lgCond" value="${esc(L.conditions||"")}" placeholder="seeing, transparency, Moon…">
+      <label>Equipment used</label><input id="lgEquip" value="${esc(L.equip||equipGuess)}">
+      <label>Rating (1–5)</label>
+      <select id="lgRate"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option ${L.rating==n?"selected":""}>${n}</option>`).join("")}</select>
+      <label>Notes</label><textarea id="lgNotes" placeholder="What you saw…">${esc(L.notes||"")}</textarea>
+    </div>
+    <div id="missFields" class="hidden">
+      <label>Reason missed (instead of ticking)</label>
+      <textarea id="lgMiss" placeholder="clouded out, too low, ran out of time…">${esc(L.missed||"")}</textarea>
+    </div>
+    <div class="row tight" style="margin-top:10px;">
+      <button class="btn-accent" id="lgSave" style="width:auto;">Save</button>
+      <button id="lgDelete" style="width:auto;">Clear entry</button>
+      <button id="lgClose" style="width:auto;">Cancel</button>
+    </div>
+   </div></div>`;
+  let mode = L.missed? "miss" : "obs";
+  const applyMode=()=>{ $("#obsFields").classList.toggle("hidden",mode==="miss");
+    $("#missFields").classList.toggle("hidden",mode!=="miss");
+    $("#obsYes").classList.toggle("on",mode==="obs"); $("#obsMiss").classList.toggle("on",mode==="miss"); };
+  applyMode();
+  $("#obsYes").onclick=()=>{mode="obs";applyMode();};
+  $("#obsMiss").onclick=()=>{mode="miss";applyMode();};
+  $("#lgClose").onclick=closeModal;
+  $("#mbg").onclick=(e)=>{ if(e.target.id==="mbg") closeModal(); };
+  $("#lgDelete").onclick=()=>{ delete S.log[id]; save(); closeModal(); renderTable(); };
+  $("#lgSave").onclick=()=>{
+    if(!S.list.includes(id)) S.list.push(id);
+    if(mode==="obs"){
+      S.log[id]={done:true, missed:"", date:$("#lgDate").value, conditions:$("#lgCond").value,
+        equip:$("#lgEquip").value, rating:$("#lgRate").value, notes:$("#lgNotes").value};
+    } else {
+      S.log[id]={done:false, missed:$("#lgMiss").value};
+    }
+    save(); closeModal(); renderTable();
+  };
+}
+function closeModal(){ $("#modalHost").innerHTML=""; }
+
+/* =========================================================================
+   PRESETS / EXPORT / IMPORT / PRINT
+   ========================================================================= */
+const TOP20=["M42","M45","M31","M44","M13","M57","M27","M81","M51","M104","M22","M11","M7","M8","M35","M36","NGC869/884","M15","M3","M37"];
+function loadPreset(kind){
+  if(kind==="clear"){ S.list=[]; }
+  else if(kind==="messier"){ CATALOG.filter(o=>o.m!=null).forEach(o=>addUnique(o.cat[0])); }
+  else if(kind==="caldwell"){ CATALOG.filter(o=>o.cald!=null).forEach(o=>addUnique(o.cat[0])); }
+  else if(kind==="top20"){ TOP20.forEach(addUnique); }
+  save(); renderTable();
+}
+function addUnique(id){ if(!S.list.includes(id)) S.list.push(id); }
+
+function exportJSON(){
+  const data={app:"sky-planner", version:1, exported:new Date().toISOString(), list:S.list, log:S.log, locations:S.locations, equip:S.equip, sky:S.sky};
+  download("sky-planner-backup.json", JSON.stringify(data,null,2), "application/json");
+}
+function exportCSV(){
+  const rows=[["id","name","type","constellation","mag","onList","observed","date","rating","conditions","equipment","notes","missedReason"]];
+  for(const id of S.list){
+    const r=ROWS.find(x=>x.id===id); const o=r?r.o:{}; const L=S.log[id]||{};
+    rows.push([id, objDisplayName(o), TYPE_NAMES[o.type]||o.type||"", o.con||"", o.mag!=null?o.mag:"",
+      "yes", L.done?"yes":"", L.date||"", L.rating||"", L.conditions||"", L.equip||"", (L.notes||"").replace(/\n/g," "), (L.missed||"").replace(/\n/g," ")]);
+  }
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  download("sky-planner-log.csv", csv, "text/csv");
+}
+function download(name,content,type){
+  const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function importJSON(file){
+  const rd=new FileReader();
+  rd.onload=()=>{ try{
+    const d=JSON.parse(rd.result);
+    if(d.list) S.list=d.list;
+    if(d.log) S.log=d.log;
+    if(d.locations) S.locations=d.locations;
+    if(d.equip) S.equip=Object.assign(S.equip,d.equip);
+    if(d.sky) S.sky=d.sky;
+    save(); syncForm(); if(NIGHT){computeAll();renderAll();}
+    alert("Import complete: "+(d.list?d.list.length:0)+" objects on list.");
+  }catch(e){ alert("Could not read that file: "+e.message); } };
+  rd.readAsText(file);
+}
+function printChecklist(){
+  if(!S.list.length){ alert("Your list is empty."); return; }
+  window.print();
+}
+
+/* =========================================================================
+   GEOCODING (Open-Meteo, no key) with cache + offline fallback
+   ========================================================================= */
+async function geocode(name){
+  const key=name.trim().toLowerCase();
+  if(S.cityCache[key]){ return S.cityCache[key]; }
+  const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`;
+  const res=await fetch(url);
+  if(!res.ok) throw new Error("lookup failed ("+res.status+")");
+  const j=await res.json();
+  return (j.results||[]).map(r=>({
+    lat:r.latitude, lon:r.longitude, tz:r.timezone,
+    label:[r.name, r.admin1, r.country_code].filter(Boolean).join(", ")
+  }));
+}
+function showGeoResults(list){
+  const host=$("#geoResults");
+  if(!list.length){ host.innerHTML=`<div class="small warn" style="margin-top:4px;">No matches. Use manual lat/lon below.</div>`; return; }
+  host.innerHTML=`<div class="geores">`+list.map((r,i)=>
+    `<button data-gi="${i}">${esc(r.label)} <span class="muted small">(${r.lat.toFixed(2)}, ${r.lon.toFixed(2)})</span></button>`).join("")+`</div>`;
+  $$("button[data-gi]",host).forEach(b=>b.onclick=()=>{ const r=list[+b.dataset.gi];
+    const key=$("#cityInput").value.trim().toLowerCase();
+    S.cityCache[key]=[r]; // cache chosen
+    setLocation(r); host.innerHTML=""; });
+}
+function setLocation(loc){
+  S.cur={lat:loc.lat, lon:loc.lon, tz:loc.tz||null, label:loc.label||`${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}`, fixedOffset:loc.fixedOffset};
+  save(); updateLocStatus();
+}
+function updateLocStatus(){
+  const el=$("#locStatus");
+  if(!S.cur){ el.textContent="No location set yet."; return; }
+  el.innerHTML=`📍 <b>${esc(S.cur.label)}</b> · ${S.cur.lat.toFixed(3)}, ${S.cur.lon.toFixed(3)} · ${fmtOff(curOffset())}${S.cur.tz?` · ${esc(S.cur.tz)}`:" · offset from longitude"}`;
+}
+function renderSavedLocs(){
+  const host=$("#savedLocs");
+  host.innerHTML=S.locations.map((l,i)=>`<button class="chip" data-li="${i}">${esc(l.name)}</button>`).join("")
+    + (S.locations.length?`<button class="chip" data-del="1" title="remove last">⌫</button>`:"");
+  $$("button[data-li]",host).forEach(b=>b.onclick=()=>{ const l=S.locations[+b.dataset.li];
+    setLocation(l); $("#latInput").value=l.lat; $("#lonInput").value=l.lon; });
+  const del=$("button[data-del]",host); if(del) del.onclick=()=>{ S.locations.pop(); save(); renderSavedLocs(); };
+}
+
+/* =========================================================================
+   FORM <-> STATE SYNC + WIRING
+   ========================================================================= */
+function syncForm(){
+  $("#dateInput").value=S.date;
+  $("#mode").value=S.equip.mode; $("#instrument").value=S.equip.instrument; $("#sky").value=S.sky;
+  $("#aperture").value=S.equip.aperture||""; $("#apUnit").value=S.equip.apUnit;
+  $("#focal").value=S.equip.focal||""; $("#scopeType").value=S.equip.scopeType||"";
+  $("#eyepieces").value=(S.equip.eyepieces||[]).join(", "); $("#binAp").value=S.equip.binAp||"";
+  if(S.cur){ $("#latInput").value=S.cur.lat; $("#lonInput").value=S.cur.lon; }
+  toggleInstrumentFields();
+  updateLocStatus(); renderSavedLocs(); updateAssumptionNote();
+  document.body.className = "theme-"+(S.theme||"dark");
+  $("#themeBtn").textContent = S.theme==="red"?"🔴 Night-vision":(S.theme==="normal"?"☀️ Normal":"🌙 Dark");
+}
+function toggleInstrumentFields(){
+  const t=$("#instrument").value;
+  $("#scopeFields").classList.toggle("hidden", t!=="telescope");
+  $("#binFields").classList.toggle("hidden", t!=="binoculars");
+}
+function updateAssumptionNote(){
+  const a=[];
+  if($("#instrument").value==="telescope" && !$("#aperture").value) a.push("aperture blank → assuming 150 mm (6\")");
+  if($("#instrument").value==="telescope" && !$("#focal").value) a.push("focal length blank → eyepiece tips limited");
+  if($("#instrument").value==="binoculars" && !$("#binAp").value) a.push("binocular aperture blank → assuming 50 mm");
+  a.push("difficulty & eyepiece outputs are estimates");
+  $("#assumptionNote").textContent="Note: "+a.join("; ")+".";
+}
+function readEquipFromForm(){
+  S.equip.mode=$("#mode").value; S.equip.instrument=$("#instrument").value; S.sky=$("#sky").value;
+  S.equip.aperture=+$("#aperture").value||(S.equip.instrument==="telescope"?150:0);
+  S.equip.apUnit=$("#apUnit").value; S.equip.focal=+$("#focal").value||0;
+  S.equip.scopeType=$("#scopeType").value;
+  S.equip.eyepieces=$("#eyepieces").value.split(",").map(s=>parseFloat(s)).filter(x=>x>0).sort((a,b)=>b-a);
+  S.equip.binAp=+$("#binAp").value||50;
+  save();
+}
+
+function runCompute(){
+  if(!A){ alert("Astronomy library failed to load. Make sure astronomy.browser.js sits next to this page."); return; }
+  if(!S.cur){ alert("Set a location first (find a city, pick a saved site, or enter lat/lon)."); return; }
+  S.date=$("#dateInput").value||todayStr();
+  readEquipFromForm();
+  try{
+    computeAll();
+  }catch(e){ alert("Computation error: "+e.message); return; }
+  $("#viewTabs").style.display=""; $("#controls").style.display=""; $("#presetPanel").style.display="";
+  resetPage();
+  renderAll();
+  populateTypeFilter();
+  $("#sessionPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderAll(){ renderSession(); renderTable(); }
+
+function populateTypeFilter(){
+  const sel=$("#filterType"); const types=[...new Set(ROWS.map(r=>r.o.type))].sort();
+  sel.innerHTML=`<option value="">All types</option>`+types.map(t=>`<option value="${t}">${TYPE_NAMES[t]||t}</option>`).join("");
+  sel.value=FILTERS.type;
+}
+
+/* ---- wire everything on load ---- */
+function init(){
+  syncForm();
+  if(!S.cur){ S.date=$("#dateInput").value=todayStr(); }
+  // city lookup
+  $("#cityBtn").onclick=async()=>{
+    const name=$("#cityInput").value.trim(); if(!name) return;
+    $("#geoResults").innerHTML=`<div class="small muted" style="margin-top:4px;">Looking up…</div>`;
+    try{
+      const r=await geocode(name);
+      if(Array.isArray(r)) showGeoResults(r); else { setLocation(r); $("#geoResults").innerHTML=`<div class="small" style="margin-top:4px;">Loaded from cache.</div>`; }
+    }catch(e){
+      $("#geoResults").innerHTML=`<div class="small warn" style="margin-top:4px;">Lookup failed (offline?). Use manual lat/lon below.</div>`;
+    }
+  };
+  $("#cityInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();$("#cityBtn").click();} });
+  // manual
+  $("#useManual").onclick=()=>{
+    const lat=parseFloat($("#latInput").value), lon=parseFloat($("#lonInput").value);
+    if(isNaN(lat)||isNaN(lon)){ alert("Enter numeric latitude and longitude."); return; }
+    const off=$("#offInput").value!==""?parseFloat($("#offInput").value):null;
+    setLocation({lat,lon,tz:null,label:`${lat.toFixed(2)}, ${lon.toFixed(2)}`,fixedOffset:off});
+  };
+  $("#saveLoc").onclick=()=>{
+    if(!S.cur){ alert("Set a location first."); return; }
+    const nm=$("#saveName").value.trim()||S.cur.label;
+    S.locations.push({name:nm, lat:S.cur.lat, lon:S.cur.lon, tz:S.cur.tz, fixedOffset:S.cur.fixedOffset});
+    $("#saveName").value=""; save(); renderSavedLocs();
+  };
+  // equipment fields live-update notes
+  ["instrument","aperture","focal","binAp"].forEach(id=>$("#"+id).addEventListener("input",()=>{toggleInstrumentFields();updateAssumptionNote();}));
+  $("#mode").addEventListener("change",updateAssumptionNote);
+  // compute
+  $("#computeBtn").onclick=runCompute;
+  $("#dateInput").addEventListener("change",()=>{ S.date=$("#dateInput").value; save(); if(NIGHT){runCompute();} });
+  // theme cycle
+  $("#themeBtn").onclick=()=>{ S.theme = S.theme==="dark"?"red":(S.theme==="red"?"normal":"dark"); save(); syncForm(); };
+  // tabs
+  $$("#viewTabs .tab").forEach(t=>t.onclick=()=>{ VIEW=t.dataset.view; $$("#viewTabs .tab").forEach(x=>x.classList.toggle("on",x===t));
+    $("#controls").style.display=VIEW==="list"?"none":""; resetPage(); renderTable(); });
+  // sort/filter (each resets pagination)
+  $("#sortBy").onchange=()=>{ SORT=$("#sortBy").value; resetPage(); renderTable(); };
+  $("#filterType").onchange=()=>{ FILTERS.type=$("#filterType").value; resetPage(); renderTable(); };
+  $$("#controls .chip").forEach(c=>c.onclick=()=>{ const f=c.dataset.flag; FILTERS[f]=!FILTERS[f]; c.classList.toggle("on",FILTERS[f]); resetPage(); renderTable(); });
+  // presets / io
+  $$("#presetPanel [data-preset]").forEach(b=>b.onclick=()=>loadPreset(b.dataset.preset));
+  $("#exportJson").onclick=exportJSON; $("#exportCsv").onclick=exportCSV;
+  $("#printBtn").onclick=printChecklist;
+  $("#importBtn").onclick=()=>$("#importFile").click();
+  $("#importFile").onchange=e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); };
+  // dismiss any open column-help popover when clicking elsewhere
+  document.addEventListener("click",(e)=>{
+    if(e.target.closest && (e.target.closest(".ihelp")||e.target.closest(".helpbox"))) return;
+    closeColHelp();
+  });
+  // restore last location into status
+  updateLocStatus();
+}
+init();
+</script>
+
+<!--
+================================================================================
+README — Night Sky Observing Planner
+================================================================================
+WHAT THIS IS
+  A standalone, offline-capable observing planner + logbook. Type a city and a
+  full date; it computes which objects are observable and tags each with a
+  colour difficulty label tuned to your gear and sky. Build a checklist, tick off
+  what you saw, and keep notes — Messier-marathon style, self-refereed.
+
+FILES (drop both into your GitHub Pages repo, side by side)
+  sky-planner.html        <- this page
+  astronomy.browser.js    <- vendored astronomy-engine (MIT). Must sit in the
+                             SAME folder as sky-planner.html.
+
+DEPLOY TO GitHub Pages
+  1. Copy both files into the repo for https://masood-valipour.github.io/masood-valipour/
+     (repo root, or a subfolder — just keep the two files together).
+  2. Commit & push. The page is static; no build step, no keys, no server.
+  3. Link it from your main site, e.g.:
+       <a href="sky-planner.html">Night Sky Observing Planner</a>
+
+OFFLINE BEHAVIOUR
+  - The astronomy maths, catalog, checklist, log, sorting/filtering and labels all
+    run with no network. The ONLY network use is city -> lat/lon lookup
+    (Open-Meteo, no API key), which is cached in localStorage and has a manual
+    lat/lon fallback that works fully offline. No images are ever loaded; "photo"
+    and "info" are plain external links that open in a new tab on click only.
+
+YOUR DATA
+  - Saved in your browser via localStorage (location, gear, sky, theme, list, log).
+  - Export/Import JSON for backup or moving between devices. CSV export for the log.
+  - "Printable checklist" produces a clean Messier-marathon-style print view.
+
+EDITING THE CATALOG
+  - Search this file for "const CATALOG". Each object has RA (decimal hours, J2000),
+    Dec (decimal degrees, J2000), integrated magnitude, and size in arcminutes.
+    Add or correct entries there; everything else (best month, surface brightness,
+    difficulty, eyepiece) is computed automatically.
+
+ACCURACY & HONESTY
+  - Sky geometry (altitude, transit, rise/set, twilight, Moon phase, planet
+    positions) is genuinely computed and reasonably correct.
+  - Difficulty and eyepiece suggestions are deliberate APPROXIMATIONS — heuristics
+    based on aperture, sky-darkness level, surface brightness and altitude. Treat
+    them as helpful estimates, not precise predictions.
+================================================================================
+-->
+</body>
+</html>
