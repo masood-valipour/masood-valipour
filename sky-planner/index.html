@@ -480,6 +480,480 @@ const SOLAR = [
   {id:"Neptune", body:"Neptune", name:"Neptune", type:"Planet", bright:false}
 ];
 
+/* Solar-body equatorial radii (km) for live angular-size in the info panel. */
+const BODY_RADIUS_KM = {Moon:1737, Mercury:2440, Venus:6052, Mars:3390, Jupiter:69911, Saturn:58232, Uranus:25362, Neptune:24622};
+
+/* =========================================================================
+   CURATED FACTS for the info panel.  d = approximate distance in LIGHT-YEARS,
+   b = short English summary (AI-written, treat figures as approximate).
+   Physical size is computed from d + apparent size; nothing here needs network.
+   Keyed by the object's primary id (cat[0], or the solar-body id).
+   ========================================================================= */
+const INFO = {
+  M1:{d:6500,b:"The Crab Nebula — the expanding remnant of a supernova witnessed in 1054 AD, with a spinning neutron star at its core."},
+  M2:{d:37500,b:"One of the richest and most compact globular clusters, holding roughly 150,000 stars about 13 billion years old."},
+  M3:{d:33900,b:"A showpiece globular of around half a million stars, famous for its many variable stars."},
+  M4:{d:7200,b:"One of the closest globular clusters to us, loosely concentrated with a distinctive central bar of stars."},
+  M5:{d:24500,b:"A grand globular cluster, among the oldest known at roughly 13 billion years, with over 100,000 stars."},
+  M6:{d:1600,b:"The Butterfly Cluster, a young open cluster of about 80 stars whose shape suggests a butterfly's wings."},
+  M7:{d:980,b:"Ptolemy's Cluster, a bright naked-eye open cluster noted by Ptolemy in 130 AD, ~80 stars."},
+  M8:{d:4100,b:"The Lagoon Nebula, a vast stellar nursery with a bright core and an embedded young star cluster."},
+  M9:{d:25800,b:"A globular cluster near the galactic centre, partly dimmed by intervening interstellar dust."},
+  M10:{d:14300,b:"A fairly close, bright globular cluster about 80 light-years across."},
+  M11:{d:6200,b:"The Wild Duck Cluster, one of the richest open clusters known, with around 2,900 stars."},
+  M12:{d:15700,b:"A loose globular cluster, unusually sparse in low-mass stars for its class."},
+  M13:{d:22200,b:"The Great Hercules Cluster, the finest globular in northern skies, with several hundred thousand stars."},
+  M14:{d:30300,b:"A rich globular cluster containing several hundred thousand stars."},
+  M15:{d:33600,b:"One of the densest globular clusters, possibly hosting a central black hole; contains a planetary nebula."},
+  M16:{d:7000,b:"The Eagle Nebula, home to the iconic 'Pillars of Creation' and an active young star cluster."},
+  M17:{d:5000,b:"The Omega (Swan) Nebula, one of the brightest and most massive star-forming regions in our galaxy."},
+  M18:{d:4900,b:"A small, young open cluster of about a dozen bright stars in Sagittarius."},
+  M19:{d:28700,b:"One of the most oval-shaped globular clusters, distorted by tidal forces near the galactic centre."},
+  M20:{d:5200,b:"The Trifid Nebula, a striking mix of emission, reflection and dark nebulae split by dust lanes."},
+  M21:{d:4250,b:"A compact, fairly young open cluster of about 57 stars."},
+  M22:{d:10600,b:"One of the brightest globular clusters, very close by, and one of the first ever discovered."},
+  M23:{d:2150,b:"A bright open cluster of about 150 stars spread over a wide field."},
+  M24:{d:10000,b:"The Sagittarius Star Cloud — not a true cluster but a dense window onto distant Milky Way star fields."},
+  M25:{d:2000,b:"A bright, scattered open cluster containing a Cepheid variable star."},
+  M26:{d:5000,b:"A modest open cluster of around 90 stars in Scutum."},
+  M27:{d:1360,b:"The Dumbbell Nebula, the first planetary nebula ever discovered and one of the brightest."},
+  M28:{d:17900,b:"A compact globular cluster, one of the first found to contain a millisecond pulsar."},
+  M29:{d:4000,b:"A small, young open cluster embedded in the rich star fields of Cygnus."},
+  M30:{d:26100,b:"A dense globular cluster that has undergone core collapse, with a sharply concentrated centre."},
+  M31:{d:2500000,b:"The Andromeda Galaxy, the nearest large spiral and the most distant object visible to the naked eye, with ~1 trillion stars."},
+  M32:{d:2650000,b:"A compact dwarf elliptical galaxy, a close satellite of the Andromeda Galaxy."},
+  M33:{d:2730000,b:"The Triangulum Galaxy, third-largest in the Local Group, a face-on spiral rich in star-forming regions."},
+  M34:{d:1500,b:"A bright, loose open cluster of about 100 stars, fine in binoculars."},
+  M35:{d:2800,b:"A large, bright open cluster of several hundred stars, with the richer cluster NGC 2158 nearby."},
+  M36:{d:4100,b:"A young open cluster of about 60 hot blue stars in Auriga."},
+  M37:{d:4500,b:"The richest of Auriga's open clusters, with around 500 stars including red giants."},
+  M38:{d:4200,b:"An open cluster whose brighter stars trace a rough cruciform pattern."},
+  M39:{d:824,b:"A large, very loose open cluster of about 30 stars, best at low power."},
+  M40:{d:510,b:"Winnecke 4 — actually an optical double star, included by Messier where he expected a nebula."},
+  M41:{d:2300,b:"A bright open cluster just below Sirius, with a reddish star near its centre."},
+  M42:{d:1344,b:"The Orion Nebula, the nearest massive star-forming region and the brightest nebula in the sky, lit by the Trapezium stars."},
+  M43:{d:1600,b:"De Mairan's Nebula, a star-forming region that is part of the greater Orion Nebula complex."},
+  M44:{d:577,b:"The Beehive Cluster (Praesepe), one of the nearest open clusters, with around 1,000 stars."},
+  M45:{d:444,b:"The Pleiades (Seven Sisters), a young, bright open cluster of hot blue stars wrapped in reflection nebulosity."},
+  M46:{d:5500,b:"A rich, even open cluster of about 500 stars with a planetary nebula superimposed on it."},
+  M47:{d:1600,b:"A bright, coarse open cluster of about 50 stars, a fine contrast with neighbouring M46."},
+  M48:{d:1500,b:"A large, bright open cluster of around 80 stars visible to the naked eye under dark skies."},
+  M49:{d:56000000,b:"A giant elliptical galaxy, the brightest member of the Virgo Cluster of galaxies."},
+  M50:{d:3000,b:"A bright, heart-shaped open cluster of about 200 stars in Monoceros."},
+  M51:{d:31000000,b:"The Whirlpool Galaxy, a classic grand-design spiral interacting with a smaller companion galaxy."},
+  M52:{d:5000,b:"A rich, compact open cluster of around 200 stars in a dense region of Cassiopeia."},
+  M53:{d:58000,b:"A bright globular cluster, one of the more distant from the galactic centre."},
+  M54:{d:87000,b:"A dense globular cluster that actually belongs to the Sagittarius dwarf galaxy being absorbed by the Milky Way."},
+  M55:{d:17600,b:"A large, loose globular cluster that appears big and bright in southern skies."},
+  M56:{d:32900,b:"A modest globular cluster set against the rich Milky Way between Lyra and Cygnus."},
+  M57:{d:2300,b:"The Ring Nebula, a famous planetary nebula — a shell of gas cast off by a dying Sun-like star."},
+  M58:{d:68000000,b:"A barred spiral galaxy, one of the brightest in the Virgo Cluster."},
+  M59:{d:60000000,b:"An elliptical galaxy in the Virgo Cluster with an unusually fast-rotating core."},
+  M60:{d:55000000,b:"A giant elliptical galaxy in Virgo, paired in the sky with the spiral NGC 4647."},
+  M61:{d:52000000,b:"A face-on barred spiral, one of the larger star-forming galaxies of the Virgo Cluster."},
+  M62:{d:22500,b:"A globular cluster with a notably off-centre, dense core, distorted near the galactic centre."},
+  M63:{d:29000000,b:"The Sunflower Galaxy, a spiral with a patchy, flocculent network of short spiral arms."},
+  M64:{d:17000000,b:"The Black Eye Galaxy, named for the dramatic dark dust band across its bright nucleus."},
+  M65:{d:35000000,b:"A bright spiral and a member of the Leo Triplet of galaxies."},
+  M66:{d:36000000,b:"The largest member of the Leo Triplet, a spiral distorted by past gravitational encounters."},
+  M67:{d:2700,b:"One of the oldest known open clusters at ~4 billion years, a useful Sun-like reference cluster."},
+  M68:{d:33600,b:"A globular cluster in Hydra of roughly 100,000 stars."},
+  M69:{d:29700,b:"A small, metal-rich globular cluster close to the galactic centre."},
+  M70:{d:29400,b:"A compact, core-collapsed globular cluster near the galactic centre."},
+  M71:{d:13000,b:"A loose globular cluster once mistaken for a dense open cluster."},
+  M72:{d:54600,b:"A faint, fairly distant globular cluster in Aquarius."},
+  M73:{d:2500,b:"A small asterism of four stars, not a true cluster, in Aquarius."},
+  M74:{d:32000000,b:"The Phantom Galaxy, a delicate face-on spiral with low surface brightness and well-defined arms."},
+  M75:{d:67500,b:"One of the more remote and densely concentrated globular clusters."},
+  M76:{d:2500,b:"The Little Dumbbell Nebula, a small two-lobed planetary nebula in Perseus."},
+  M77:{d:47000000,b:"A barred spiral and one of the nearest and brightest Seyfert galaxies, with an extremely active nucleus."},
+  M78:{d:1350,b:"The brightest reflection nebula in the sky, glowing by the light of embedded young stars."},
+  M79:{d:41000,b:"An unusual globular cluster that may have originated in a small galaxy now merging with the Milky Way."},
+  M80:{d:32600,b:"A densely concentrated globular cluster between Antares and Beta Scorpii."},
+  M81:{d:11800000,b:"Bode's Galaxy, a grand-design spiral and the dominant member of a nearby group of galaxies."},
+  M82:{d:11500000,b:"The Cigar Galaxy, an edge-on starburst galaxy with intense star formation driven by its neighbour M81."},
+  M83:{d:15000000,b:"The Southern Pinwheel, a bright barred spiral and one of the closest face-on spirals to us."},
+  M84:{d:60000000,b:"A lenticular or elliptical galaxy at the heart of Markarian's Chain in the Virgo Cluster."},
+  M85:{d:60000000,b:"A bright lenticular galaxy on the northern edge of the Virgo Cluster."},
+  M86:{d:52000000,b:"A lenticular galaxy in the Virgo Cluster, notably blueshifted as it falls through the cluster towards us."},
+  M87:{d:53000000,b:"A supergiant elliptical galaxy whose central black hole was the first ever directly imaged."},
+  M88:{d:47000000,b:"A multi-armed spiral galaxy, one of the brighter spirals of the Virgo Cluster."},
+  M89:{d:50000000,b:"A nearly perfectly spherical elliptical galaxy in the Virgo Cluster."},
+  M90:{d:58000000,b:"A large spiral galaxy in Virgo, unusually approaching us as it swings through the cluster."},
+  M91:{d:63000000,b:"A barred spiral galaxy, one of the faintest objects in Messier's catalogue."},
+  M92:{d:26700,b:"A bright, ancient globular cluster often overshadowed by its neighbour M13."},
+  M93:{d:3600,b:"A bright, wedge-shaped open cluster of about 80 stars in Puppis."},
+  M94:{d:16000000,b:"A spiral galaxy with a bright inner ring of vigorous star formation."},
+  M95:{d:33000000,b:"A barred spiral galaxy with a ring-like structure, a member of the Leo I group."},
+  M96:{d:31000000,b:"The brightest galaxy of the Leo I group, an asymmetric spiral."},
+  M97:{d:2030,b:"The Owl Nebula, a planetary nebula whose two dark patches resemble an owl's eyes."},
+  M98:{d:44000000,b:"An edge-on spiral galaxy in the Virgo Cluster, approaching us rather than receding."},
+  M99:{d:50000000,b:"A nearly face-on spiral with an unusually one-sided arm pattern."},
+  M100:{d:55000000,b:"One of the brightest and largest spiral galaxies in the Virgo Cluster."},
+  M101:{d:21000000,b:"The Pinwheel Galaxy, a large, face-on spiral with prominent, asymmetric arms."},
+  M102:{d:50000000,b:"The Spindle Galaxy (NGC 5866), an edge-on lenticular galaxy crossed by a clean dust lane."},
+  M103:{d:8500,b:"A fan-shaped open cluster, one of the more distant in Messier's list."},
+  M104:{d:29000000,b:"The Sombrero Galaxy, an edge-on spiral defined by its bright bulge and dark dust lane."},
+  M105:{d:32000000,b:"An elliptical galaxy in the Leo I group with a well-measured central black hole."},
+  M106:{d:23700000,b:"A spiral galaxy with an active nucleus and anomalous arms traced by hot gas."},
+  M107:{d:20900,b:"A loose globular cluster in Ophiuchus with darker dust patches across it."},
+  M108:{d:46000000,b:"An edge-on barred spiral galaxy mottled with dust, near the Big Dipper."},
+  M109:{d:83500000,b:"A barred spiral galaxy, the most distant object in the Messier catalogue."},
+  M110:{d:2690000,b:"A dwarf elliptical galaxy and the second bright satellite of the Andromeda Galaxy."},
+  "NGC869/884":{d:7500,b:"The Double Cluster, a stunning pair of young, bright open clusters side by side in Perseus."},
+  NGC253:{d:11400000,b:"The Sculptor Galaxy, a bright, dusty starburst spiral seen nearly edge-on."},
+  NGC7293:{d:650,b:"The Helix Nebula, one of the closest planetary nebulae, often called the 'Eye of God'."},
+  NGC6992:{d:2400,b:"The eastern Veil Nebula, part of a large supernova remnant that exploded ~10,000 years ago."},
+  NGC6960:{d:2400,b:"The western Veil Nebula (the 'Witch's Broom'), a delicate filament of the Cygnus Loop remnant."},
+  NGC7000:{d:2590,b:"The North America Nebula, a large emission nebula shaped like the continent."},
+  NGC7009:{d:5000,b:"The Saturn Nebula, a planetary nebula with faint lobes that mimic Saturn's rings."},
+  NGC7662:{d:5600,b:"The Blue Snowball, a bright, compact planetary nebula with a distinct blue tint."},
+  NGC6543:{d:3300,b:"The Cat's Eye Nebula, one of the most structurally complex planetary nebulae known."},
+  NGC2237:{d:5200,b:"The Rosette Nebula, a large flower-shaped emission nebula surrounding a young star cluster."},
+  NGC2244:{d:5200,b:"The young open cluster whose hot stars light up and clear the centre of the Rosette Nebula."},
+  NGC891:{d:30000000,b:"A classic edge-on spiral galaxy split by a striking dark dust lane."},
+  NGC4565:{d:40000000,b:"The Needle Galaxy, one of the most famous edge-on spirals, very thin and dust-laned."},
+  NGC5128:{d:12000000,b:"Centaurus A, the nearest giant active galaxy, crossed by a dark dust band and blasting radio jets."},
+  NGC5139:{d:17000,b:"Omega Centauri, the largest and brightest globular cluster of the Milky Way, with ~10 million stars."},
+  NGC104:{d:16700,b:"47 Tucanae, the second-brightest globular cluster, with a dense, brilliant core."},
+  NGC2070:{d:160000,b:"The Tarantula Nebula, a colossal star-forming region in the Large Magellanic Cloud."},
+  NGC6231:{d:5900,b:"A brilliant young open cluster, the core of the Scorpius OB1 stellar association."},
+  NGC457:{d:7900,b:"The Owl (or ET) Cluster, an open cluster whose two bright stars look like glowing eyes."},
+  NGC7789:{d:7600,b:"Caroline's Rose, a rich open cluster whose star loops and voids suggest rose petals."},
+  NGC6826:{d:4000,b:"The Blinking Planetary, which seems to wink as you shift between direct and averted vision."},
+  NGC2392:{d:6500,b:"The Eskimo (Clown Face) Nebula, a planetary nebula resembling a face in a fur hood."},
+  NGC3242:{d:4800,b:"The Ghost of Jupiter, a planetary nebula about the apparent size of the planet Jupiter."},
+  NGC752:{d:1500,b:"A large, old, loose open cluster best appreciated at low power or in binoculars."},
+  NGC2264:{d:2600,b:"The Christmas Tree Cluster, a young open cluster set in the Cone Nebula region."},
+  NGC3372:{d:7500,b:"The Carina Nebula, one of the largest and brightest nebulae, home to the volatile star Eta Carinae."},
+  NGC3532:{d:1320,b:"The Wishing Well Cluster, a rich, bright open cluster admired as one of the sky's finest."},
+  NGC4755:{d:6440,b:"The Jewel Box, a compact young cluster of contrasting blue and red supergiant stars."},
+  NGC2516:{d:1340,b:"A bright, scattered open cluster in Carina, fine for binoculars."},
+  NGC6752:{d:13000,b:"One of the nearest and brightest globular clusters, third-brightest in the sky."},
+  NGC281:{d:9500,b:"The Pacman Nebula, an emission nebula whose dark dust notch suggests the arcade character."},
+  NGC6888:{d:5000,b:"The Crescent Nebula, a bubble blown by the fierce wind of a massive Wolf-Rayet star."},
+  NGC2903:{d:30000000,b:"A bright barred spiral galaxy in Leo, conspicuously missed by Messier."},
+  NGC4631:{d:25000000,b:"The Whale Galaxy, an edge-on spiral with a distorted, whale-like shape."},
+  NGC7331:{d:40000000,b:"The Deer Lick Galaxy, a spiral often imaged with the distant 'Stephan's Quintet' nearby."},
+  NGC1499:{d:1000,b:"The California Nebula, a long, faint emission nebula shaped like the U.S. state."},
+  NGC55:{d:6500000,b:"A bright, irregular barred galaxy seen nearly edge-on in the Sculptor group."},
+  NGC7635:{d:7100,b:"The Bubble Nebula, a near-perfect sphere of gas blown by a hot massive star."},
+  // solar system (distance/size are computed live; blurb only)
+  Moon:{b:"Earth's only natural satellite and the brightest night-sky object; its phase changes nightly as it orbits Earth."},
+  Mercury:{b:"The smallest planet and closest to the Sun, never straying far from it in twilight."},
+  Venus:{b:"The brightest planet, shrouded in thick clouds and showing phases like the Moon through a telescope."},
+  Mars:{b:"The Red Planet, whose rust-coloured disk and polar caps are visible near opposition."},
+  Jupiter:{b:"The largest planet, with four bright Galilean moons and ever-changing cloud belts."},
+  Saturn:{b:"The ringed planet, whose magnificent ring system is a highlight of any telescope."},
+  Uranus:{b:"A distant ice giant, just at naked-eye limit, showing a tiny pale-green disk in telescopes."},
+  Neptune:{b:"The most distant major planet, a faint blue point requiring a telescope to resolve."}
+};
+
+/* What this KIND of object is (amateur-friendly, by type). Localised. */
+const TYPEINFO = {
+  en:{
+    GX:"Galaxies are vast gravitationally bound systems of stars, gas and dust.",
+    EN:"Emission nebulae are clouds of gas — mostly hydrogen — set glowing by the ultraviolet light of hot nearby stars.",
+    RN:"Reflection nebulae make no light of their own; their dust scatters the light of nearby stars, often looking blue.",
+    PN:"Planetary nebulae are glowing shells of gas shed by dying Sun-like stars — nothing to do with planets.",
+    SNR:"Supernova remnants are the expanding debris of exploded massive stars, seeding space with heavy elements.",
+    OC:"Open clusters are loose groups of young stars born together from one gas cloud.",
+    GC:"Globular clusters are ancient, densely packed balls of stars orbiting the galaxy's halo.",
+    AST:"A star cloud or asterism is a chance line-up of stars, not a true cluster bound by gravity.",
+    DBL:"Double stars are two stars close in the sky — sometimes a real orbiting pair, sometimes a chance alignment.",
+    Planet:"Planets shine by reflected sunlight and slowly wander against the fixed stars night to night.",
+    Moon:"The Moon is Earth's natural satellite; its lit fraction (phase) cycles about every 29.5 days."
+  },
+  fa:{
+    GX:"کهکشان‌ها سامانه‌های عظیمِ گرانشیِ متشکل از ستارگان، گاز و غبارند.",
+    EN:"سحابی‌های نشری ابرهای گاز — بیشتر هیدروژن — هستند که با نور فرابنفشِ ستارگان داغ نزدیک می‌درخشند.",
+    RN:"سحابی‌های بازتابی نورِ خود را ندارند؛ غبارشان نور ستارگان نزدیک را پخش می‌کند و اغلب آبی دیده می‌شوند.",
+    PN:"سحابی‌های سیاره‌نما پوسته‌های گازِ رهاشده از ستارگانِ روبه‌مرگِ خورشیدسان‌اند — ربطی به سیاره ندارند.",
+    SNR:"بازمانده‌های ابرنواختر، آوارِ در حال انبساطِ ستارگان پرجرمِ منفجرشده‌اند که فضا را از عناصر سنگین پر می‌کنند.",
+    OC:"خوشه‌های باز گروه‌های پراکنده‌ای از ستارگان جوان‌اند که از یک ابر گازی زاده شده‌اند.",
+    GC:"خوشه‌های کروی توپ‌های کهن و بسیار فشردهٔ ستارگان‌اند که در هالهٔ کهکشان می‌گردند.",
+    AST:"ابر ستاره‌ای یا آستریزم، هم‌نشینیِ اتفاقیِ ستارگان است، نه خوشه‌ای واقعی که با گرانش به‌هم بسته باشد.",
+    DBL:"ستارگان دوتایی دو ستارهٔ نزدیک در آسمان‌اند — گاهی زوجی واقعی در مدار، گاهی هم‌راستا از دید ما.",
+    Planet:"سیارات با بازتاب نور خورشید می‌درخشند و شب‌به‌شب آرام میان ستارگان ثابت جابه‌جا می‌شوند.",
+    Moon:"ماه قمر طبیعی زمین است؛ بخش روشنش (فاز) هر حدود 29.5 روز یک‌بار تکرار می‌شود."
+  },
+  pl:{
+    GX:"Galaktyki to ogromne, związane grawitacyjnie układy gwiazd, gazu i pyłu.",
+    EN:"Mgławice emisyjne to obłoki gazu — głównie wodoru — świecące pod wpływem ultrafioletu gorących pobliskich gwiazd.",
+    RN:"Mgławice refleksyjne nie świecą własnym światłem; ich pył rozprasza światło pobliskich gwiazd, często na niebiesko.",
+    PN:"Mgławice planetarne to świecące powłoki gazu zrzucone przez umierające gwiazdy podobne do Słońca — bez związku z planetami.",
+    SNR:"Pozostałości supernowych to rozszerzające się szczątki wybuchłych masywnych gwiazd, wzbogacające przestrzeń w ciężkie pierwiastki.",
+    OC:"Gromady otwarte to luźne grupy młodych gwiazd powstałych z jednego obłoku gazu.",
+    GC:"Gromady kuliste to starożytne, gęsto upakowane kule gwiazd krążące w halo galaktyki.",
+    AST:"Obłok gwiazd lub asteryzm to przypadkowe ugrupowanie gwiazd, a nie prawdziwa gromada związana grawitacją.",
+    DBL:"Gwiazdy podwójne to dwie gwiazdy blisko siebie na niebie — czasem prawdziwa para, czasem zbieg perspektywy.",
+    Planet:"Planety świecą odbitym światłem Słońca i powoli wędrują względem gwiazd z nocy na noc.",
+    Moon:"Księżyc to naturalny satelita Ziemi; jego oświetlona część (faza) zmienia się w cyklu około 29,5 dnia."
+  }
+};
+function tTypeInfo(code){ const d=TYPEINFO[LANGCODE]||TYPEINFO.en; return d[code]||TYPEINFO.en[code]||""; }
+
+/* Per-object "Did you know?" facts (English) for notable objects only. */
+const FACTS = {
+  M1:"Its core is a pulsar — a city-sized neutron star spinning about 30 times every second.",
+  M8:"Hidden in its glow are dark 'Bok globules', tiny clouds collapsing to form new stars.",
+  M13:"In 1974 the Arecibo radio message was beamed toward M13 as a greeting to any aliens.",
+  M16:"Its towering 'Pillars of Creation' became one of the Hubble Telescope's most famous images.",
+  M22:"It is one of only a few globular clusters known to contain its own planetary nebula.",
+  M27:"As one of the closest bright planetary nebulae, it previews the Sun's fate in ~5 billion years.",
+  M31:"It is rushing toward us and will collide and merge with the Milky Way in about 4.5 billion years.",
+  M33:"On an exceptionally dark night, sharp-eyed observers can just glimpse it with the naked eye.",
+  M42:"It is the nearest region where massive stars are being born right now, only ~1,340 ly away.",
+  M44:"Galileo was the first to resolve this fuzzy patch into stars, counting about 40 in 1609.",
+  M45:"Though most people see 6–7 stars, the cluster actually contains over 1,000 members.",
+  M51:"This was the first object in which spiral structure was ever recognised, in 1845.",
+  M57:"We are peering down the axis of a gas cylinder, which is why it looks like a smoke ring.",
+  M64:"Its gas inner and outer regions rotate in opposite directions, a sign of a past galaxy merger.",
+  M77:"Its blazing core is powered by a supermassive black hole devouring surrounding gas.",
+  M81:"Its gravity is so strong it triggered the violent starburst in neighbouring galaxy M82.",
+  M82:"It pumps out new stars about 10 times faster than the entire Milky Way.",
+  M87:"Its 6.5-billion-solar-mass black hole was the first ever directly photographed, in 2019.",
+  M104:"Around 2,000 globular clusters swarm its halo — about ten times as many as the Milky Way has.",
+  "NGC869/884":"Both clusters are young — only about 13 million years old — and blaze with hot supergiants.",
+  NGC5128:"This galaxy is tearing apart a smaller spiral it swallowed, fuelling jets from a giant black hole.",
+  NGC5139:"With ~10 million stars, it may be the leftover core of a dwarf galaxy eaten by the Milky Way.",
+  NGC7293:"At about 650 light-years it is one of the closest planetary nebulae to Earth.",
+  NGC2070:"It is so luminous that if it were as close as the Orion Nebula it would cast shadows on Earth.",
+  Moon:"The same side always faces us because its spin and orbit are locked together.",
+  Mercury:"One day on Mercury, sunrise to sunrise, lasts about 176 Earth days.",
+  Venus:"Venus spins backwards, so there the Sun rises in the west and sets in the east.",
+  Mars:"A Martian day is just 37 minutes longer than a day on Earth.",
+  Jupiter:"Its Great Red Spot is a storm wider than Earth that has raged for centuries.",
+  Saturn:"Saturn is so low in density that, given a big enough ocean, it would float on water.",
+  Uranus:"Uranus is tipped right over and rolls around the Sun on its side.",
+  Neptune:"It was discovered by mathematics — predicted from Uranus's wobble before anyone saw it."
+};
+
+/* Rough per-object star count (s) for clusters/galaxies, or stellar mass in solar
+   masses (m) for galaxies where a star count is not meaningful. Order-of-magnitude
+   estimates from typical literature values — shown with "≈" and an approximate note. */
+const COUNTS = {
+  // globular clusters (stars)
+  M2:{s:150000}, M3:{s:500000}, M4:{s:100000}, M5:{s:300000}, M9:{s:250000}, M10:{s:100000},
+  M12:{s:150000}, M13:{s:300000}, M14:{s:300000}, M15:{s:350000}, M19:{s:300000}, M22:{s:300000},
+  M28:{s:100000}, M30:{s:160000}, M53:{s:250000}, M54:{s:1000000}, M55:{s:100000}, M56:{s:100000},
+  M62:{s:150000}, M68:{s:100000}, M69:{s:100000}, M70:{s:100000}, M71:{s:20000}, M72:{s:100000},
+  M75:{s:400000}, M79:{s:150000}, M80:{s:200000}, M92:{s:300000}, M107:{s:100000},
+  NGC5139:{s:10000000}, NGC104:{s:1000000}, NGC6752:{s:100000},
+  // open clusters (stars)
+  M6:{s:80}, M7:{s:80}, M11:{s:2900}, M18:{s:20}, M21:{s:57}, M23:{s:150}, M25:{s:600}, M26:{s:90},
+  M29:{s:50}, M34:{s:100}, M35:{s:500}, M36:{s:60}, M37:{s:500}, M38:{s:100}, M39:{s:30}, M41:{s:100},
+  M44:{s:1000}, M45:{s:1000}, M46:{s:500}, M47:{s:50}, M48:{s:80}, M50:{s:200}, M52:{s:200}, M67:{s:500},
+  M93:{s:80}, M103:{s:40}, "NGC869/884":{s:600}, NGC457:{s:150}, NGC2244:{s:100}, NGC752:{s:100},
+  NGC2264:{s:600}, NGC3532:{s:400}, NGC4755:{s:100}, NGC2516:{s:100}, NGC6231:{s:120}, NGC7789:{s:600},
+  // galaxies (stars; or mass m in solar masses for giant ellipticals)
+  M31:{s:1e12}, M32:{s:3e9}, M33:{s:4e10}, M49:{m:1e12}, M51:{s:1.6e11}, M58:{s:1e11}, M59:{m:2e11},
+  M60:{m:1e12}, M61:{s:1e11}, M63:{s:1e11}, M64:{s:1e11}, M65:{s:1e11}, M66:{s:1e11}, M74:{s:1e11},
+  M77:{s:1e11}, M81:{s:2.5e11}, M82:{s:3e10}, M83:{s:1e11}, M84:{m:5e11}, M85:{m:1e11}, M86:{m:1e11},
+  M87:{m:1e12}, M88:{s:2e11}, M89:{m:1e11}, M90:{s:1e11}, M91:{s:8e10}, M94:{s:4e10}, M95:{s:4e10},
+  M96:{s:1e11}, M98:{s:1e11}, M99:{s:1e11}, M100:{s:1e11}, M101:{s:1e12}, M102:{m:1e11}, M104:{s:8e11},
+  M105:{m:1e11}, M106:{s:4e11}, M108:{s:1e11}, M109:{s:2e11}, M110:{s:1e10},
+  NGC253:{s:1e11}, NGC891:{s:1e11}, NGC4565:{s:1e11}, NGC5128:{m:1e12}, NGC2903:{s:1e11},
+  NGC4631:{s:1e11}, NGC7331:{s:1e11}, NGC55:{s:1e10}
+};
+
+/* Farsi translations of the object summaries (INFO.b). English is the fallback
+   for any object/language without a translation. */
+const INFO_FA = {
+  M1:"سحابی خرچنگ — بازماندهٔ در حال انبساطِ ابرنواختری که در سال ۱۰۵۴ میلادی دیده شد، با ستارهٔ نوترونیِ چرخانی در مرکزش.",
+  M2:"یکی از غنی‌ترین و فشرده‌ترین خوشه‌های کروی، با حدود ۱۵۰٬۰۰۰ ستارهٔ نزدیک به ۱۳ میلیارد سال.",
+  M3:"خوشهٔ کرویِ تماشایی با حدود نیم‌میلیون ستاره، مشهور به فراوانیِ ستارگان متغیرش.",
+  M4:"یکی از نزدیک‌ترین خوشه‌های کروی به ما، با تراکم کم و میله‌ای از ستارگان در مرکز.",
+  M5:"خوشهٔ کرویِ باشکوه و از کهن‌ترین‌ها با حدود ۱۳ میلیارد سال و بیش از ۱۰۰٬۰۰۰ ستاره.",
+  M6:"خوشهٔ پروانه، خوشهٔ بازِ جوانی از حدود ۸۰ ستاره که شکلش بال‌های پروانه را تداعی می‌کند.",
+  M7:"خوشهٔ بطلمیوس، خوشهٔ بازِ روشن و قابل‌رؤیت با چشم غیرمسلح که بطلمیوس در سال ۱۳۰ میلادی ثبتش کرد.",
+  M8:"سحابی مرداب، زایشگاه عظیم ستاره‌ای با هسته‌ای روشن و خوشهٔ ستاره‌ای جوانِ نهفته در آن.",
+  M9:"خوشهٔ کروی نزدیک مرکز کهکشان که بخشی از نورش را غبار میان‌ستاره‌ای کم کرده.",
+  M10:"خوشهٔ کرویِ نسبتاً نزدیک و روشن با حدود ۸۰ سال نوری پهنا.",
+  M11:"خوشهٔ مرغابی وحشی، یکی از غنی‌ترین خوشه‌های باز شناخته‌شده با حدود ۲٬۹۰۰ ستاره.",
+  M12:"خوشهٔ کرویِ کم‌تراکم که برای رده‌اش به‌طور غیرعادی از ستارگان کم‌جرم تهی است.",
+  M13:"خوشهٔ بزرگ هرکول، بهترین خوشهٔ کروی آسمان شمالی با چند صد هزار ستاره.",
+  M14:"خوشهٔ کرویِ غنی شامل چند صد هزار ستاره.",
+  M15:"یکی از متراکم‌ترین خوشه‌های کروی، شاید با سیاه‌چاله‌ای در مرکز؛ یک سحابی سیاره‌نما هم دارد.",
+  M16:"سحابی عقاب، خانهٔ «ستون‌های آفرینشِ» نمادین و خوشهٔ ستاره‌ای جوان و فعال.",
+  M17:"سحابی امگا (قو)، یکی از درخشان‌ترین و پرجرم‌ترین مناطق ستاره‌زایی کهکشان ما.",
+  M18:"خوشهٔ بازِ کوچک و جوانی از حدود دوازده ستارهٔ روشن در کماندار.",
+  M19:"یکی از بیضی‌شکل‌ترین خوشه‌های کروی که نیروهای کشندی نزدیک مرکز کهکشان آن را کشیده‌اند.",
+  M20:"سحابی سه‌بخشی، آمیزهٔ چشمگیری از سحابی نشری، بازتابی و تاریک که رگه‌های غبار آن را شکافته.",
+  M21:"خوشهٔ بازِ فشرده و نسبتاً جوانی از حدود ۵۷ ستاره.",
+  M22:"یکی از درخشان‌ترین خوشه‌های کروی، بسیار نزدیک، و از نخستین خوشه‌های کشف‌شده.",
+  M23:"خوشهٔ بازِ روشنی از حدود ۱۵۰ ستاره که در میدانی وسیع پخش شده‌اند.",
+  M24:"ابر ستاره‌ای کماندار — نه خوشه‌ای واقعی، بلکه پنجره‌ای متراکم به میدان‌های دور ستارگان راه شیری.",
+  M25:"خوشهٔ بازِ روشن و پراکنده که یک ستارهٔ متغیر قیفاووسی دارد.",
+  M26:"خوشهٔ بازِ متوسطی از حدود ۹۰ ستاره در سپر.",
+  M27:"سحابی دمبل، نخستین سحابی سیاره‌نمای کشف‌شده و یکی از درخشان‌ترین‌ها.",
+  M28:"خوشهٔ کرویِ فشرده، از نخستین خوشه‌هایی که در آن تپ‌اخترِ هزارثانیه‌ای یافت شد.",
+  M29:"خوشهٔ بازِ کوچک و جوانی که در میدان‌های پرستارهٔ ماکیان جای گرفته.",
+  M30:"خوشهٔ کرویِ متراکمی که فروپاشیِ هسته را پشت سر گذاشته و مرکزی بسیار غلیظ دارد.",
+  M31:"کهکشان آندرومدا، نزدیک‌ترین کهکشان مارپیچی بزرگ و دورترین جرمِ قابل‌رؤیت با چشم غیرمسلح، با حدود ۱ تریلیون ستاره.",
+  M32:"کهکشان بیضویِ کوتولهٔ فشرده، قمری نزدیک به کهکشان آندرومدا.",
+  M33:"کهکشان مثلث، سومین کهکشان بزرگ گروه محلی، مارپیچی رو‌به‌رو و سرشار از مناطق ستاره‌زایی.",
+  M34:"خوشهٔ بازِ روشن و پراکنده‌ای از حدود ۱۰۰ ستاره، عالی با دوربین دوچشمی.",
+  M35:"خوشهٔ بازِ بزرگ و روشنی از چند صد ستاره، با خوشهٔ غنی‌تر NGC 2158 در نزدیکی.",
+  M36:"خوشهٔ بازِ جوانی از حدود ۶۰ ستارهٔ آبیِ داغ در ارابه‌ران.",
+  M37:"غنی‌ترین خوشهٔ باز ارابه‌ران با حدود ۵۰۰ ستاره از جمله غول‌های سرخ.",
+  M38:"خوشهٔ بازی که ستارگان روشن‌ترش الگویی نزدیک به صلیب می‌سازند.",
+  M39:"خوشهٔ بازِ بزرگ و بسیار پراکنده‌ای از حدود ۳۰ ستاره، بهترین با بزرگ‌نمایی کم.",
+  M40:"وینکهٔ ۴ — در واقع یک ستارهٔ دوتاییِ دیداری که مسیه آن را جایی که انتظار سحابی داشت ثبت کرد.",
+  M41:"خوشهٔ بازِ روشنی درست پایین شعرای یمانی، با ستاره‌ای سرخ‌فام نزدیک مرکزش.",
+  M42:"سحابی جبار، نزدیک‌ترین منطقهٔ ستاره‌زاییِ پرجرم و درخشان‌ترین سحابی آسمان که ستارگان ذوزنقه روشنش کرده‌اند.",
+  M43:"سحابی دو مایران، منطقه‌ای ستاره‌زا که بخشی از مجموعهٔ بزرگ‌تر سحابی جبار است.",
+  M44:"خوشهٔ کندوی عسل (پراسپه)، یکی از نزدیک‌ترین خوشه‌های باز با حدود ۱٬۰۰۰ ستاره.",
+  M45:"پروین (هفت‌خواهران)، خوشهٔ بازِ جوان و روشن از ستارگان آبیِ داغ که در سحابی بازتابی پیچیده‌اند.",
+  M46:"خوشهٔ بازِ غنی و یکنواختی از حدود ۵۰۰ ستاره با یک سحابی سیاره‌نما روی آن.",
+  M47:"خوشهٔ بازِ روشن و درشت‌دانه‌ای از حدود ۵۰ ستاره، تضادی زیبا با همسایه‌اش M46.",
+  M48:"خوشهٔ بازِ بزرگ و روشنی از حدود ۸۰ ستاره که زیر آسمان تاریک با چشم غیرمسلح دیده می‌شود.",
+  M49:"کهکشان بیضویِ غول‌پیکر، درخشان‌ترین عضو خوشهٔ کهکشانی دوشیزه.",
+  M50:"خوشهٔ بازِ روشن و قلب‌مانندی از حدود ۲۰۰ ستاره در تک‌شاخ.",
+  M51:"کهکشان گرداب، مارپیچی کلاسیکِ بزرگ‌طرح که با کهکشانی کوچک‌تر برهم‌کنش دارد.",
+  M52:"خوشهٔ بازِ غنی و فشرده‌ای از حدود ۲۰۰ ستاره در ناحیه‌ای پرستاره از ذات‌الکرسی.",
+  M53:"خوشهٔ کرویِ روشن، یکی از دورترین‌ها از مرکز کهکشان.",
+  M54:"خوشهٔ کرویِ متراکمی که در واقع به کهکشان کوتولهٔ کماندار تعلق دارد که راه شیری در حال بلعیدن آن است.",
+  M55:"خوشهٔ کرویِ بزرگ و کم‌تراکمی که در آسمان جنوبی بزرگ و روشن دیده می‌شود.",
+  M56:"خوشهٔ کرویِ متوسطی در برابر راه شیریِ غنی میان شلیاق و ماکیان.",
+  M57:"سحابی حلقه، سحابی سیاره‌نمای مشهور — پوسته‌ای از گاز که ستاره‌ای خورشیدسانِ روبه‌مرگ به بیرون رانده.",
+  M58:"کهکشان مارپیچیِ میله‌دار، یکی از درخشان‌ترین‌ها در خوشهٔ دوشیزه.",
+  M59:"کهکشان بیضوی در خوشهٔ دوشیزه با هسته‌ای که به‌طور غیرعادی سریع می‌چرخد.",
+  M60:"کهکشان بیضویِ غول‌پیکر در دوشیزه که در آسمان با کهکشان مارپیچی NGC 4647 جفت دیده می‌شود.",
+  M61:"کهکشان مارپیچیِ میله‌دارِ رو‌به‌رو، از بزرگ‌ترین کهکشان‌های ستاره‌زای خوشهٔ دوشیزه.",
+  M62:"خوشهٔ کرویی با هسته‌ای به‌طور چشمگیر نامتقارن و متراکم، تغییرشکل‌یافته نزدیک مرکز کهکشان.",
+  M63:"کهکشان آفتابگردان، مارپیچی با شبکه‌ای تکه‌تکه از بازوهای کوتاه.",
+  M64:"کهکشان چشم‌سیاه، به‌خاطر نوار غبار تیرهٔ چشمگیر روی هستهٔ روشنش نام گرفته.",
+  M65:"کهکشان مارپیچیِ روشن و عضوی از سه‌گانهٔ شیر.",
+  M66:"بزرگ‌ترین عضو سه‌گانهٔ شیر، مارپیچی که برخوردهای گرانشیِ گذشته آن را تغییرشکل داده.",
+  M67:"یکی از کهن‌ترین خوشه‌های باز شناخته‌شده با حدود ۴ میلیارد سال، مرجعی مفید از ستارگان خورشیدسان.",
+  M68:"خوشهٔ کروی در شجاع با حدود ۱۰۰٬۰۰۰ ستاره.",
+  M69:"خوشهٔ کرویِ کوچک و فلز-غنی نزدیک مرکز کهکشان.",
+  M70:"خوشهٔ کرویِ فشرده و فروپاشیده‌هسته نزدیک مرکز کهکشان.",
+  M71:"خوشهٔ کرویِ کم‌تراکمی که زمانی به‌اشتباه خوشهٔ بازِ متراکم پنداشته می‌شد.",
+  M72:"خوشهٔ کرویِ کم‌نور و نسبتاً دور در دلو.",
+  M73:"آستریزمی کوچک از چهار ستاره در دلو، نه خوشه‌ای واقعی.",
+  M74:"کهکشان شبح، مارپیچیِ رو‌به‌رویِ ظریف با درخشندگی سطحیِ کم و بازوهای خوش‌تعریف.",
+  M75:"یکی از دورترین و متراکم‌ترین خوشه‌های کروی.",
+  M76:"سحابی دمبل کوچک، سحابی سیاره‌نمای کوچک و دولُختی در برساووش.",
+  M77:"کهکشان مارپیچیِ میله‌دار و یکی از نزدیک‌ترین و درخشان‌ترین کهکشان‌های سیفرت، با هسته‌ای بسیار فعال.",
+  M78:"درخشان‌ترین سحابی بازتابی آسمان که با نور ستارگان جوانِ نهفته در آن می‌درخشد.",
+  M79:"خوشهٔ کرویِ غیرعادی که شاید از کهکشانی کوچک سرچشمه گرفته که اکنون با راه شیری ادغام می‌شود.",
+  M80:"خوشهٔ کرویِ متراکمی میان قلب‌العقرب و بتای عقرب.",
+  M81:"کهکشان بوده، مارپیچیِ بزرگ‌طرح و عضو غالب گروهی نزدیک از کهکشان‌ها.",
+  M82:"کهکشان سیگار، کهکشان ستاره‌فشانِ لبه‌به‌لبه با ستاره‌زایی شدید که همسایه‌اش M81 برانگیخته.",
+  M83:"کهکشان آسیابادیِ جنوبی، مارپیچی میله‌دارِ روشن و یکی از نزدیک‌ترین مارپیچی‌های رو‌به‌رو به ما.",
+  M84:"کهکشان عدسی یا بیضوی در قلب «زنجیرهٔ مارکاریان» در خوشهٔ دوشیزه.",
+  M85:"کهکشان عدسیِ روشن در لبهٔ شمالی خوشهٔ دوشیزه.",
+  M86:"کهکشان عدسی در خوشهٔ دوشیزه که هنگام سقوط در خوشه به‌سوی ما، به‌طور چشمگیری به ما نزدیک می‌شود.",
+  M87:"کهکشان بیضویِ اَبَرغول که سیاه‌چالهٔ مرکزی‌اش نخستین سیاه‌چالهٔ مستقیماً تصویربرداری‌شده بود.",
+  M88:"کهکشان مارپیچیِ چندبازو، یکی از درخشان‌ترین مارپیچی‌های خوشهٔ دوشیزه.",
+  M89:"کهکشان بیضویِ تقریباً کاملاً کروی در خوشهٔ دوشیزه.",
+  M90:"کهکشان مارپیچیِ بزرگ در دوشیزه که هنگام چرخش در خوشه به‌طور غیرعادی به ما نزدیک می‌شود.",
+  M91:"کهکشان مارپیچیِ میله‌دار، یکی از کم‌نورترین اجرام کاتالوگ مسیه.",
+  M92:"خوشهٔ کرویِ روشن و کهن که اغلب زیر سایهٔ همسایه‌اش M13 می‌ماند.",
+  M93:"خوشهٔ بازِ روشن و گوه‌مانندی از حدود ۸۰ ستاره در پاشنهٔ کشتی.",
+  M94:"کهکشان مارپیچی با حلقهٔ درونیِ روشنی از ستاره‌زایی پرشتاب.",
+  M95:"کهکشان مارپیچیِ میله‌دار با ساختاری حلقه‌مانند، عضوی از گروه شیر I.",
+  M96:"درخشان‌ترین کهکشان گروه شیر I، مارپیچی نامتقارن.",
+  M97:"سحابی جغد، سحابی سیاره‌نمایی که دو لکهٔ تیره‌اش چشمان جغد را تداعی می‌کند.",
+  M98:"کهکشان مارپیچیِ لبه‌به‌لبه در خوشهٔ دوشیزه که به‌جای دور شدن، به ما نزدیک می‌شود.",
+  M99:"کهکشان مارپیچیِ تقریباً رو‌به‌رو با الگوی بازوییِ به‌طور غیرعادی یک‌طرفه.",
+  M100:"یکی از درخشان‌ترین و بزرگ‌ترین کهکشان‌های مارپیچی خوشهٔ دوشیزه.",
+  M101:"کهکشان آسیاباد، مارپیچیِ بزرگ و رو‌به‌رو با بازوهای برجسته و نامتقارن.",
+  M102:"کهکشان دوک (NGC 5866)، کهکشان عدسیِ لبه‌به‌لبه که نوار تمیزی از غبار آن را قطع کرده.",
+  M103:"خوشهٔ بازِ بادبزن‌مانند، یکی از دورترین‌ها در فهرست مسیه.",
+  M104:"کهکشان کلاه‌مکزیکی، مارپیچیِ لبه‌به‌لبه که برآمدگی روشن و نوار غبار تیره‌اش آن را مشخص می‌کند.",
+  M105:"کهکشان بیضوی در گروه شیر I با سیاه‌چالهٔ مرکزیِ خوب‌اندازه‌گیری‌شده.",
+  M106:"کهکشان مارپیچی با هسته‌ای فعال و بازوهایی غیرعادی که گاز داغ ردشان را می‌کشد.",
+  M107:"خوشهٔ کرویِ کم‌تراکمی در مارافسای با لکه‌های تیرهٔ غبار روی آن.",
+  M108:"کهکشان مارپیچیِ میله‌دارِ لبه‌به‌لبه و پر از غبار، نزدیک ملاقه (خرس بزرگ).",
+  M109:"کهکشان مارپیچیِ میله‌دار، دورترین جرم کاتالوگ مسیه.",
+  M110:"کهکشان بیضویِ کوتوله و دومین قمر روشن کهکشان آندرومدا.",
+  "NGC869/884":"خوشهٔ دوگانه، جفت خیره‌کننده‌ای از خوشه‌های بازِ جوان و روشن در کنار هم در برساووش.",
+  NGC253:"کهکشان تندیس‌گر، مارپیچیِ ستاره‌فشانِ روشن و پرغبار که تقریباً لبه‌به‌لبه دیده می‌شود.",
+  NGC7293:"سحابی مارپیچ، یکی از نزدیک‌ترین سحابی‌های سیاره‌نما که اغلب «چشم خدا» نامیده می‌شود.",
+  NGC6992:"سحابی توری شرقی، بخشی از بازماندهٔ بزرگ ابرنواختری که حدود ۱۰٬۰۰۰ سال پیش منفجر شد.",
+  NGC6960:"سحابی توری غربی («جاروی جادوگر»)، رشتهٔ ظریفی از بازماندهٔ حلقهٔ ماکیان.",
+  NGC7000:"سحابی آمریکای شمالی، سحابی نشریِ بزرگی به شکل آن قاره.",
+  NGC7009:"سحابی زحل، سحابی سیاره‌نمایی با لُخت‌های کم‌نوری که حلقه‌های زحل را تقلید می‌کنند.",
+  NGC7662:"گلولهٔ‌برفیِ آبی، سحابی سیاره‌نمای روشن و فشرده‌ای با ته‌رنگ آبیِ مشخص.",
+  NGC6543:"سحابی چشم‌گربه، یکی از پیچیده‌ترین سحابی‌های سیاره‌نما از نظر ساختار.",
+  NGC2237:"سحابی رزِت، سحابی نشریِ بزرگ و گل‌مانندی که خوشهٔ ستاره‌ای جوانی را احاطه کرده.",
+  NGC2244:"خوشهٔ ستاره‌ای جوانی که ستارگان داغش مرکز سحابی رزِت را روشن و پاک‌سازی می‌کنند.",
+  NGC891:"کهکشان مارپیچیِ لبه‌به‌لبهٔ کلاسیک که نوار غبار تیرهٔ چشمگیری آن را شکافته.",
+  NGC4565:"کهکشان سوزن، یکی از مشهورترین مارپیچی‌های لبه‌به‌لبه، بسیار باریک و غبارنوار.",
+  NGC5128:"قنطورس A، نزدیک‌ترین کهکشان فعالِ غول‌پیکر که نوار غبار تیره‌ای آن را قطع کرده و فوران‌های رادیویی پرتاب می‌کند.",
+  NGC5139:"اومگا قنطورس، بزرگ‌ترین و درخشان‌ترین خوشهٔ کروی راه شیری با حدود ۱۰ میلیون ستاره.",
+  NGC104:"۴۷ توکان، دومین خوشهٔ کرویِ درخشان آسمان با هسته‌ای متراکم و خیره‌کننده.",
+  NGC2070:"سحابی رتیل، منطقهٔ ستاره‌زاییِ غول‌پیکر در ابر بزرگ ماژلانی.",
+  NGC6231:"خوشهٔ بازِ جوان و درخشان، هستهٔ تجمع ستاره‌ای عقرب OB1.",
+  NGC457:"خوشهٔ جغد (یا ET)، خوشهٔ بازی که دو ستارهٔ روشنش مانند چشمانی درخشان به‌نظر می‌رسند.",
+  NGC7789:"گل‌سرخ کارولین، خوشهٔ بازِ غنی که حلقه‌ها و خلأهای ستاره‌ای‌اش گلبرگ‌های رز را تداعی می‌کند.",
+  NGC6826:"سحابی سیاره‌نمای چشمک‌زن که هنگام جابه‌جایی نگاه میان مستقیم و کناری انگار چشمک می‌زند.",
+  NGC2392:"سحابی اسکیمو (صورت دلقک)، سحابی سیاره‌نمایی شبیه صورتی در کلاه خزدار.",
+  NGC3242:"شبح مشتری، سحابی سیاره‌نمایی تقریباً هم‌اندازهٔ ظاهریِ سیارهٔ مشتری.",
+  NGC752:"خوشهٔ بازِ بزرگ، کهن و کم‌تراکم که با بزرگ‌نمایی کم یا دوربین دوچشمی بهتر دیده می‌شود.",
+  NGC2264:"خوشهٔ درخت کریسمس، خوشهٔ بازِ جوانی در ناحیهٔ سحابی مخروط.",
+  NGC3372:"سحابی شاه‌تخته، یکی از بزرگ‌ترین و درخشان‌ترین سحابی‌ها، خانهٔ ستارهٔ ناپایدار اتا کارینا.",
+  NGC3532:"خوشهٔ چاه آرزو، خوشهٔ بازِ غنی و روشنی که از زیباترین‌های آسمان به‌شمار می‌رود.",
+  NGC4755:"جعبهٔ جواهر، خوشهٔ جوان و فشرده‌ای از ستارگان اَبَرغول آبی و سرخِ متضاد.",
+  NGC2516:"خوشهٔ بازِ روشن و پراکنده‌ای در شاه‌تخته، عالی برای دوربین دوچشمی.",
+  NGC6752:"یکی از نزدیک‌ترین و درخشان‌ترین خوشه‌های کروی، سومین خوشهٔ درخشان آسمان.",
+  NGC281:"سحابی پک‌من، سحابی نشری که شکاف تیرهٔ غبارش آن شخصیت بازی را تداعی می‌کند.",
+  NGC6888:"سحابی هلال، حبابی که بادِ شدید ستارهٔ پرجرم ولف-رایه آن را دمیده.",
+  NGC2903:"کهکشان مارپیچیِ میله‌دارِ روشنی در شیر که مسیه به‌طرز چشمگیری از قلمش افتاد.",
+  NGC4631:"کهکشان نهنگ، مارپیچیِ لبه‌به‌لبه‌ای با شکلی تغییرشکل‌یافته و نهنگ‌مانند.",
+  NGC7331:"کهکشان دیرلیک، مارپیچی که اغلب با «پنج‌گانهٔ استفان» دور در نزدیکی‌اش تصویر می‌شود.",
+  NGC1499:"سحابی کالیفرنیا، سحابی نشریِ بلند و کم‌نوری به شکل ایالت کالیفرنیا.",
+  NGC55:"کهکشان میله‌دارِ نامنظم و روشنی که تقریباً لبه‌به‌لبه در گروه تندیس‌گر دیده می‌شود.",
+  NGC7635:"سحابی حباب، کره‌ای تقریباً کامل از گاز که ستارهٔ داغ و پرجرمی آن را دمیده.",
+  Moon:"تنها قمر طبیعی زمین و درخشان‌ترین جرم آسمان شب؛ فازش هر شب با گردش به‌دور زمین تغییر می‌کند.",
+  Mercury:"کوچک‌ترین سیاره و نزدیک‌ترین به خورشید که هرگز در گرگ‌ومیش از آن دور نمی‌شود.",
+  Venus:"درخشان‌ترین سیاره، پوشیده در ابرهای غلیظ، که در تلسکوپ مانند ماه فاز نشان می‌دهد.",
+  Mars:"سیارهٔ سرخ که قرص زنگاری و کلاهک‌های قطبی‌اش نزدیک مقابله دیده می‌شوند.",
+  Jupiter:"بزرگ‌ترین سیاره، با چهار قمر گالیله‌ایِ روشن و کمربندهای ابریِ همواره‌متغیر.",
+  Saturn:"سیارهٔ حلقه‌دار که دستگاه حلقه‌های باشکوهش نقطهٔ اوج هر تلسکوپی است.",
+  Uranus:"غول یخیِ دور، درست در مرز دید چشم غیرمسلح، که در تلسکوپ قرص کوچک سبز-کم‌رنگی نشان می‌دهد.",
+  Neptune:"دورترین سیارهٔ اصلی، نقطهٔ آبیِ کم‌نوری که برای تفکیک به تلسکوپ نیاز دارد."
+};
+const FACTS_FA = {
+  M1:"هستهٔ آن یک تپ‌اختر است — ستارهٔ نوترونیِ هم‌اندازهٔ یک شهر که حدود ۳۰ بار در ثانیه می‌چرخد.",
+  M8:"در درخشش آن «گویچه‌های بوک» تیره پنهان‌اند؛ ابرهای کوچکی که در حال فروپاشی برای ساختن ستارگان نو هستند.",
+  M13:"در سال ۱۹۷۴ پیام رادیویی آرسیبو به‌سوی M13 فرستاده شد، به‌عنوان سلامی به هر بیگانهٔ احتمالی.",
+  M16:"«ستون‌های آفرینشِ» سربه‌فلک‌کشیدهٔ آن یکی از مشهورترین تصاویر تلسکوپ هابل شدند.",
+  M22:"یکی از معدود خوشه‌های کروی است که سحابی سیاره‌نمای خاص خود را دارد.",
+  M27:"به‌عنوان یکی از نزدیک‌ترین سحابی‌های سیاره‌نمای روشن، سرنوشت خورشید را در حدود ۵ میلیارد سال آینده پیش‌نمایش می‌کند.",
+  M31:"در حال نزدیک‌شدن به ماست و در حدود ۴٫۵ میلیارد سال آینده با راه شیری برخورد و ادغام خواهد شد.",
+  M33:"در شبی به‌ویژه تاریک، رصدگرانِ تیزبین می‌توانند آن را به‌سختی با چشم غیرمسلح ببینند.",
+  M42:"نزدیک‌ترین منطقه‌ای است که هم‌اکنون در آن ستارگان پرجرم متولد می‌شوند، تنها در حدود ۱٬۳۴۰ سال نوریِ ما.",
+  M44:"گالیله نخستین کسی بود که این لکهٔ مه‌آلود را به ستاره تفکیک کرد و در سال ۱۶۰۹ حدود ۴۰ ستاره شمرد.",
+  M45:"هرچند بیشتر مردم ۶ تا ۷ ستاره می‌بینند، این خوشه در واقع بیش از ۱٬۰۰۰ عضو دارد.",
+  M51:"این نخستین جرمی بود که در آن، در سال ۱۸۴۵، ساختار مارپیچی شناسایی شد.",
+  M57:"ما در راستای محور استوانه‌ای از گاز به آن می‌نگریم، و به همین دلیل مانند حلقه‌ای از دود دیده می‌شود.",
+  M64:"نواحی درونی و بیرونیِ گاز آن در جهت‌های مخالف می‌چرخند، نشانه‌ای از ادغامی کهکشانی در گذشته.",
+  M77:"هستهٔ سوزانش را سیاه‌چاله‌ای اَبَرپرجرم که گاز پیرامون را می‌بلعد، نیرو می‌دهد.",
+  M81:"گرانشش چنان نیرومند است که ستاره‌فشانیِ شدید را در کهکشان همسایه M82 برانگیخت.",
+  M82:"حدود ۱۰ برابرِ کل راه شیری ستارهٔ نو تولید می‌کند.",
+  M87:"سیاه‌چالهٔ ۶٫۵ میلیارد برابرِ جرم خورشیدش، نخستین سیاه‌چالهٔ مستقیماً عکس‌برداری‌شده بود (۲۰۱۹).",
+  M104:"حدود ۲٬۰۰۰ خوشهٔ کروی در هاله‌اش می‌گردند — حدود ده برابرِ تعداد راه شیری.",
+  "NGC869/884":"هر دو خوشه جوان‌اند — تنها حدود ۱۳ میلیون سال — و از اَبَرغول‌های داغ می‌درخشند.",
+  NGC5128:"این کهکشان مارپیچی کوچکی را که بلعیده از هم می‌درد و فوران‌هایی از سیاه‌چاله‌ای غول‌پیکر را تغذیه می‌کند.",
+  NGC5139:"با حدود ۱۰ میلیون ستاره، شاید هستهٔ باقی‌ماندهٔ کهکشانی کوتوله باشد که راه شیری آن را بلعیده.",
+  NGC7293:"در حدود ۶۵۰ سال نوری، یکی از نزدیک‌ترین سحابی‌های سیاره‌نما به زمین است.",
+  NGC2070:"چنان پرنور است که اگر به‌اندازهٔ سحابی جبار نزدیک بود، روی زمین سایه می‌انداخت.",
+  Moon:"همیشه یک روی آن به‌سوی ماست، زیرا چرخش و گردشش با هم قفل شده‌اند.",
+  Mercury:"یک روزِ عطارد، از طلوع تا طلوع، حدود ۱۷۶ روز زمینی طول می‌کشد.",
+  Venus:"زهره وارونه می‌چرخد، پس آنجا خورشید از باختر طلوع و در خاور غروب می‌کند.",
+  Mars:"یک روزِ مریخ تنها ۳۷ دقیقه از روز زمین بلندتر است.",
+  Jupiter:"لکهٔ سرخ بزرگش توفانی پهن‌تر از زمین است که قرن‌هاست می‌خروشد.",
+  Saturn:"چگالی زحل چنان کم است که اگر اقیانوسی به‌اندازهٔ کافی بزرگ بود، روی آب شناور می‌ماند.",
+  Uranus:"اورانوس کاملاً به پهلو افتاده و مانند توپی به‌دور خورشید می‌غلتد.",
+  Neptune:"با ریاضیات کشف شد — پیش از آنکه کسی آن را ببیند، از لرزش مدار اورانوس پیش‌بینی شد."
+};
+function objBlurb(id){ if(LANGCODE==="fa" && INFO_FA[id]) return INFO_FA[id]; const i=INFO[id]; return i?i.b:""; }
+function objFact(id){ if(LANGCODE==="fa" && FACTS_FA[id]) return FACTS_FA[id]; return FACTS[id]||""; }
+
 const TYPE_NAMES = {GX:"Galaxy", EN:"Emission nebula", RN:"Reflection nebula", PN:"Planetary nebula",
   SNR:"Supernova remnant", OC:"Open cluster", GC:"Globular cluster", AST:"Star cloud/asterism",
   DBL:"Double star", Planet:"Planet", Moon:"Moon"};
@@ -576,7 +1050,7 @@ const I18N = {
     helpDiffNote:"Tap any label in the table to see the reasoning. They are honest <b>estimates</b>, not precise predictions.",
     helpActions:"Per-object actions",
     helpA1:"<b>+ / ✓</b> (first column) — add to / remove from your list; <b>log</b> appears once it's on your list.",
-    helpA2:"<b>map</b> — opens Stellarium Web centred on the object · <b>photo</b> — image search · <b>info</b> — web search.",
+    helpA2:"<b>map</b> — opens Stellarium Web centred on the object · <b>photo</b> — image search · <b>info</b> — a facts &amp; figures panel.",
     helpA3:"Tap the small <b>i</b> on any column header for what it means.",
     helpGood:"Good to know",
     helpG1:"<b>Private &amp; offline</b> — your list, log and settings live only in this browser; nothing is uploaded. Use <b>Export/Import JSON</b> to back up or move between devices.",
@@ -668,7 +1142,7 @@ const I18N = {
     helpDiffNote:"روی هر برچسب در جدول بزنید تا دلیلش را ببینید. این‌ها <b>تخمین</b>‌اند، نه پیش‌بینی دقیق.",
     helpActions:"کنش‌های هر جرم",
     helpA1:"<b>+ / ✓</b> (ستون اول) — افزودن/حذف از فهرست؛ <b>ثبت</b> پس از افزوده‌شدن ظاهر می‌شود.",
-    helpA2:"<b>map</b> — Stellarium Web را روی جرم باز می‌کند · <b>photo</b> — جست‌وجوی تصویر · <b>info</b> — جست‌وجوی وب.",
+    helpA2:"<b>map</b> — Stellarium Web را روی جرم باز می‌کند · <b>photo</b> — جست‌وجوی تصویر · <b>info</b> — پنل حقایق و مشخصات.",
     helpA3:"روی <b>i</b>ِ کوچکِ هر سرستون بزنید تا معنایش را ببینید.",
     helpGood:"خوب است بدانید",
     helpG1:"<b>خصوصی و آفلاین</b> — فهرست، دفترچه و تنظیمات فقط در همین مرورگر می‌مانند؛ چیزی آپلود نمی‌شود. برای پشتیبان یا انتقال، از <b>خروجی/ورود JSON</b> استفاده کنید.",
@@ -760,7 +1234,7 @@ const I18N = {
     helpDiffNote:"Dotknij dowolnej etykiety w tabeli, by zobaczyć uzasadnienie. To uczciwe <b>szacunki</b>, nie dokładne prognozy.",
     helpActions:"Akcje dla obiektu",
     helpA1:"<b>+ / ✓</b> (pierwsza kolumna) — dodaj/usuń z listy; <b>dziennik</b> pojawia się, gdy obiekt jest na liście.",
-    helpA2:"<b>map</b> — otwiera Stellarium Web na obiekcie · <b>photo</b> — szukaj obrazów · <b>info</b> — szukaj w sieci.",
+    helpA2:"<b>map</b> — otwiera Stellarium Web na obiekcie · <b>photo</b> — szukaj obrazów · <b>info</b> — panel faktów i danych.",
     helpA3:"Dotknij małego <b>i</b> przy nagłówku kolumny, by poznać jego znaczenie.",
     helpGood:"Warto wiedzieć",
     helpG1:"<b>Prywatne i offline</b> — lista, dziennik i ustawienia są tylko w tej przeglądarce; nic nie jest wysyłane. Użyj <b>Eksport/Import JSON</b> do kopii lub przenoszenia.",
@@ -785,6 +1259,12 @@ function tPhase(name){ const d=I18N[LANGCODE]||I18N.en; return (d.phases&&d.phas
 function tTw(word){ const d=I18N[LANGCODE]||I18N.en; return (d.tw&&d.tw[word]) || word; }
 // wrap designations/numbers so they render left-to-right inside RTL text
 function ltr(s){ return LANGCODE==="fa" ? `<span class="ltr">${s}</span>` : s; }
+// Constellation names per language (English kept as the data key).
+const CONS = {
+ fa:{Andromeda:"آندرومدا",Aquarius:"دلو",Auriga:"ارابه‌ران",Cancer:"خرچنگ","Canes Venatici":"سگ‌های شکاری","Canis Major":"سگ بزرگ",Capricornus:"جدی",Carina:"شاه‌تخته",Cassiopeia:"ذات‌الکرسی",Centaurus:"قنطورس",Cetus:"نهنگ","Coma Berenices":"گیسوی برنیکه",Crux:"صلیب جنوبی",Cygnus:"ماکیان",Dorado:"ماهی زرین",Draco:"اژدها",Gemini:"دوپیکر",Hercules:"جاثی",Hydra:"شجاع",Leo:"شیر",Lepus:"خرگوش",Lyra:"شلیاق",Monoceros:"تک‌شاخ",Ophiuchus:"مارافسای",Orion:"شکارچی",Pavo:"طاووس",Pegasus:"اسب بالدار",Perseus:"برساووش",Pisces:"ماهی‌ها",Puppis:"پاشنهٔ کشتی",Sagitta:"تیر",Sagittarius:"کماندار",Scorpius:"عقرب",Sculptor:"تندیس‌گر",Scutum:"سپر",Serpens:"مار",Taurus:"گاو",Triangulum:"مثلث",Tucana:"توکان","Ursa Major":"خرس بزرگ",Virgo:"دوشیزه",Vulpecula:"روباه"},
+ pl:{Andromeda:"Andromeda",Aquarius:"Wodnik",Auriga:"Woźnica",Cancer:"Rak","Canes Venatici":"Psy Gończe","Canis Major":"Wielki Pies",Capricornus:"Koziorożec",Carina:"Kil",Cassiopeia:"Kasjopeja",Centaurus:"Centaur",Cetus:"Wieloryb","Coma Berenices":"Warkocz Bereniki",Crux:"Krzyż Południa",Cygnus:"Łabędź",Dorado:"Złota Ryba",Draco:"Smok",Gemini:"Bliźnięta",Hercules:"Herkules",Hydra:"Hydra",Leo:"Lew",Lepus:"Zając",Lyra:"Lutnia",Monoceros:"Jednorożec",Ophiuchus:"Wężownik",Orion:"Orion",Pavo:"Paw",Pegasus:"Pegaz",Perseus:"Perseusz",Pisces:"Ryby",Puppis:"Rufa",Sagitta:"Strzała",Sagittarius:"Strzelec",Scorpius:"Skorpion",Sculptor:"Rzeźbiarz",Scutum:"Tarcza",Serpens:"Wąż",Taurus:"Byk",Triangulum:"Trójkąt",Tucana:"Tukan","Ursa Major":"Wielka Niedźwiedzica",Virgo:"Panna",Vulpecula:"Lisek"}
+};
+function tCon(name){ if(!name) return name; const d=CONS[LANGCODE]; return (d&&d[name])||name; }
 // difficulty "why" tooltip + note templates (kept separate to keep the main dict tidy)
 Object.assign(I18N.en.ui,{
   whyHorizon:"From this latitude it only ever climbs to about {alt}° — it never clears a usable altitude here, on any date.",
@@ -814,6 +1294,35 @@ Object.assign(I18N.pl.ui,{
   whyMoon:"Księżyc, {pct}% oświetlenia.", whyMoonDown:"Księżyc jest nad horyzontem tylko za dnia w tej dacie ({pct}% oświetlenia)."
 });
 I18N.en.ui.colStatus="Status / log"; I18N.fa.ui.colStatus="وضعیت / ثبت"; I18N.pl.ui.colStatus="Status / dziennik";
+I18N.en.ui.lblDidYouKnow="Did you know?"; I18N.fa.ui.lblDidYouKnow="نکتهٔ جالب:"; I18N.pl.ui.lblDidYouKnow="Czy wiesz, że…";
+Object.assign(I18N.en.ui,{lblStars:"Stars (approx.)", lblMass:"Mass", starsWord:"stars", numThousand:"thousand", numMillion:"million", numBillion:"billion", numTrillion:"trillion"});
+Object.assign(I18N.fa.ui,{lblStars:"تعداد ستاره (تقریبی)", lblMass:"جرم", starsWord:"ستاره", numThousand:"هزار", numMillion:"میلیون", numBillion:"میلیارد", numTrillion:"تریلیون"});
+Object.assign(I18N.pl.ui,{lblStars:"Gwiazdy (ok.)", lblMass:"Masa", starsWord:"gwiazd", numThousand:"tys.", numMillion:"mln", numBillion:"mld", numTrillion:"bln"});
+// info-panel labels
+Object.assign(I18N.en.ui,{
+  lblCatalogue:"Catalogue", lblType:"Type", lblConstellation:"Constellation", lblMagnitude:"Magnitude",
+  lblApparent:"Apparent size", lblActual:"Actual size", lblDistance:"Distance", lblSurfBright:"Surface brightness",
+  lblBestMonth:"Best month", lblTonight:"Tonight", lblDistanceNow:"Distance now", lblAngular:"Angular size",
+  lblIllum:"Illuminated", lblPhase:"Phase", readMoreWiki:"Read more on Wikipedia →",
+  infoSummaryNote:"Summary is AI-written — treat figures as approximate.",
+  acrossWord:"across", lyShort:"ly", klyShort:"kly", MlyShort:"Mly", tonightPeak:"peaks {alt}° at {time}"
+});
+Object.assign(I18N.fa.ui,{
+  lblCatalogue:"کاتالوگ", lblType:"نوع", lblConstellation:"صورت فلکی", lblMagnitude:"قدر",
+  lblApparent:"اندازهٔ ظاهری", lblActual:"اندازهٔ واقعی", lblDistance:"فاصله", lblSurfBright:"درخشندگی سطحی",
+  lblBestMonth:"بهترین ماه", lblTonight:"امشب", lblDistanceNow:"فاصلهٔ کنونی", lblAngular:"اندازهٔ زاویه‌ای",
+  lblIllum:"روشن", lblPhase:"فاز", readMoreWiki:"بیشتر در ویکی‌پدیا ←",
+  infoSummaryNote:"این توضیح با هوش مصنوعی نوشته شده — اعداد را تقریبی در نظر بگیرید.",
+  acrossWord:"عرض", lyShort:"ly", klyShort:"kly", MlyShort:"Mly", tonightPeak:"اوج {alt}° در {time}"
+});
+Object.assign(I18N.pl.ui,{
+  lblCatalogue:"Katalog", lblType:"Typ", lblConstellation:"Gwiazdozbiór", lblMagnitude:"Jasność",
+  lblApparent:"Rozmiar widomy", lblActual:"Rozmiar rzeczywisty", lblDistance:"Odległość", lblSurfBright:"Jasność pow.",
+  lblBestMonth:"Najlepszy miesiąc", lblTonight:"Dziś w nocy", lblDistanceNow:"Odległość teraz", lblAngular:"Rozmiar kątowy",
+  lblIllum:"Oświetlenie", lblPhase:"Faza", readMoreWiki:"Więcej w Wikipedii →",
+  infoSummaryNote:"Opis napisany przez AI — liczby traktuj jako przybliżone.",
+  acrossWord:"średnicy", lyShort:"l.ś.", klyShort:"tys. l.ś.", MlyShort:"mln l.ś.", tonightPeak:"maks. {alt}° o {time}"
+});
 function diffLabel(key){ return t({easy:"diffEasy",needs:"diffNeeds",hard:"diffHard",toofaint:"diffToofaint",sun:"diffSun",horizon:"diffHorizon"}[key]); }
 function skyWord(){ return t({dark:"skyShortDark",suburban:"skyShortSub",bright:"skyShortBright"}[S.sky]); }
 
@@ -1309,6 +1818,83 @@ function skyMapName(o){
 function skyMapURL(o){ return "https://stellarium-web.org/skysource/"+encodeURIComponent(skyMapName(o)); }
 function searchURL(o){ return "https://www.google.com/search?q="+encodeURIComponent(objQuery(o)); }
 function photoURL(o){ return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(objQuery(o)); }
+// Wikipedia search in the reader's language (lands on the article or a results page)
+function wikiURL(o){
+  let q;
+  if(o.body) q = (o.name||o.id).replace(/^The\s+/i,"");
+  else if(o.m!=null) q = "Messier "+o.m+(o.name?" "+o.name:"");
+  else q = (o.cat&&o.cat[0]? o.cat[0].split("/")[0].replace(/^(NGC|IC)(\d)/,"$1 $2"):"")+(o.name?" "+o.name:"");
+  return `https://${LANGCODE}.wikipedia.org/w/index.php?search=`+encodeURIComponent(q.trim());
+}
+// distance / physical-size formatting (light-years -> ly / kly / Mly), localised unit
+function fmtLy(ly){
+  const num=(x,d)=> (+x.toFixed(d)).toLocaleString("en-US");
+  if(ly>=1e6) return num(ly/1e6, ly/1e6<10?1:0)+" "+t("MlyShort");
+  if(ly>=1000) return num(ly/1000, ly/1000<10?1:0)+" "+t("klyShort");
+  // keep decimals for small values so sub-light-year sizes don't round to 0
+  const d = ly<1 ? 2 : (ly<10 ? 1 : 0);
+  return num(ly, d)+" "+t("lyShort");
+}
+function physSize(distLy, angArcmin){ return fmtLy(distLy*(angArcmin/60*Math.PI/180))+" "+t("acrossWord"); }
+// big-number with localised scale word (thousand/million/billion/trillion); small counts shown literally
+function fmtBig(n){
+  const r=(x)=> (+x.toPrecision(2)).toLocaleString("en-US");
+  if(n<10000) return Math.round(n).toLocaleString("en-US");
+  if(n>=1e12) return r(n/1e12)+" "+t("numTrillion");
+  if(n>=1e9)  return r(n/1e9)+" "+t("numBillion");
+  if(n>=1e6)  return r(n/1e6)+" "+t("numMillion");
+  return r(n/1e3)+" "+t("numThousand");
+}
+
+/* ---- Info panel (computed facts + live solar data + curated blurb + Wikipedia) ---- */
+function openInfo(id){
+  const r=ROWS.find(x=>x.id===id); if(!r) return;
+  const o=r.o, info=INFO[id]||{}, kv=[];
+  const add=(label,val)=>{ if(val!=null && val!=="") kv.push(`<div class="kv"><span>${label}</span><b>${val}</b></div>`); };
+  add(t("lblType"), tType(o.type));
+  if(o.con) add(t("lblConstellation"), esc(tCon(o.con)));
+  if(o.id!=="Moon") add(t("lblMagnitude"), '<span class="ltr">'+o.mag.toFixed(1)+'</span>');
+  if(o.body){
+    const time = r.geom.bestTime||NIGHT.noon;
+    try{
+      const ill=A.Illumination(A.Body[o.body], time), distKm=ill.geo_dist*149597870.7;
+      add(t("lblDistanceNow"), '<span class="ltr">'+ill.geo_dist.toFixed(o.body==="Moon"?4:2)+" AU</span>");
+      const rad=BODY_RADIUS_KM[o.body];
+      if(rad) add(t("lblAngular"), '<span class="ltr">'+(2*Math.atan(rad/distKm)*206264.806).toFixed(1)+"″</span>");
+      add(t("lblIllum"), '<span class="ltr">'+Math.round(ill.phase_fraction*100)+"%</span>");
+    }catch(e){}
+  } else {
+    add(t("lblApparent"), '<span class="ltr">'+(o.sizeMaj===o.sizeMin? o.sizeMaj+"′" : o.sizeMaj+"×"+o.sizeMin+"′")+'</span>');
+    if(isExtendedForSB(o)) add(t("lblSurfBright"), '<span class="ltr">'+surfaceBrightness(o).toFixed(1)+" mag/″²</span>");
+    if(info.d){ add(t("lblDistance"), '<span class="ltr">'+fmtLy(info.d)+'</span>'); add(t("lblActual"), '<span class="ltr">'+physSize(info.d,o.sizeMaj)+'</span>'); }
+    const c=COUNTS[id];
+    if(c && c.s!=null) add(t("lblStars"), "≈ "+fmtBig(c.s)+" "+t("starsWord"));
+    else if(c && c.m!=null) add(t("lblMass"), '≈ '+fmtBig(c.m)+' <span class="ltr">M☉</span>');
+    add(t("lblBestMonth"), monthLabelFromDate(r.monthDate,false));
+  }
+  if(r.geom.nightMaxAlt>=MIN_ALT) add(t("lblTonight"), t("tonightPeak",{alt:'<span class="ltr">'+r.geom.nightMaxAlt.toFixed(0)+'</span>', time:'<span class="ltr">'+fmtLocal(r.geom.bestTime)+'</span>'}));
+  const bl=objBlurb(id), fct=objFact(id);
+  const proseBits=[];
+  if(bl) proseBits.push(`<p class="small" style="margin-top:10px;margin-bottom:4px;">${esc(bl)}</p>`);
+  const tinfo=tTypeInfo(o.type);
+  if(tinfo) proseBits.push(`<div class="small muted">${esc(tinfo)}</div>`);
+  if(fct) proseBits.push(`<div class="small" style="margin-top:8px;">💡 <b>${t("lblDidYouKnow")}</b> ${esc(fct)}</div>`);
+  if(bl||fct) proseBits.push(`<div class="small muted" style="margin-top:8px;">${t("infoSummaryNote")}</div>`);
+  const blurb = proseBits.join("");
+  $("#modalHost").innerHTML=`
+   <div class="modal-bg" id="ibg"><div class="modal">
+     <h2 class="ltr">${esc(objDisplayName(o))}</h2>
+     <div class="small muted">${o.cat?'<span class="ltr">'+esc(o.cat.join(" · "))+'</span>':t("solarSystem")} · ${labelHTML(r.diff)}</div>
+     <div style="margin-top:8px;">${kv.join("")}</div>
+     ${blurb}
+     <div class="row tight" style="margin-top:12px;">
+       <a class="tab" style="width:auto;text-decoration:none;line-height:1.9;" href="${wikiURL(o)}" target="_blank" rel="noopener">${t("readMoreWiki")}</a>
+       <button id="iClose" style="width:auto;">${t("close")}</button>
+     </div>
+   </div></div>`;
+  $("#iClose").onclick=closeModal;
+  $("#ibg").onclick=(e)=>{ if(e.target.id==="ibg") closeModal(); };
+}
 
 function filteredSortedRows(){
   let rows=ROWS.slice();
@@ -1325,7 +1911,7 @@ function filteredSortedRows(){
     name:(a,b)=> objDisplayName(a.o).localeCompare(objDisplayName(b.o)),
     type:(a,b)=> (tType(a.o.type)||"").localeCompare(tType(b.o.type)||"") || a.o.mag-b.o.mag,
     mag:(a,b)=> a.o.mag-b.o.mag,
-    con:(a,b)=> (a.o.con||"~").localeCompare(b.o.con||"~"),
+    con:(a,b)=> (tCon(a.o.con)||"~").localeCompare(tCon(b.o.con)||"~"),
     month:(a,b)=> monthSortKey(a)-monthSortKey(b)
   }[SORT];
   if(VIEW==="tonight") rows=rows.filter(r=>r.geom.nightMaxAlt>=MIN_ALT); // only what's up
@@ -1366,7 +1952,7 @@ function renderTable(){
           </div></div></td>
       <td>${labelHTML(r.diff)}</td>
       <td class="hide-sm">${tType(o.type)||o.type}</td>
-      <td class="hide-sm"><span class="ltr">${esc(o.con||"—")}</span></td>
+      <td class="hide-sm">${esc(tCon(o.con)||"—")}</td>
       <td><span class="ltr">${o.body&&o.body!=="Moon"?o.mag.toFixed(1):(o.id==="Moon"?"—":o.mag.toFixed(1))}</span></td>
       <td class="hide-sm"><span class="ltr">${sz}</span></td>
       <td class="hide-sm">${monthLabelFromDate(r.monthDate, true)}</td>
@@ -1375,7 +1961,7 @@ function renderTable(){
       <td class="acts noprint">
         <a href="${skyMapURL(o)}" target="_blank" rel="noopener">map</a>
         <a href="${photoURL(o)}" target="_blank" rel="noopener">photo</a>
-        <a href="${searchURL(o)}" target="_blank" rel="noopener">info</a>
+        <a href="#" data-info="${esc(r.id)}">info</a>
       </td></tr>`;
   }).join("");
   host.innerHTML = `<div class="panel"><div class="scroll"><table>${head}${body}</table></div>
@@ -1428,6 +2014,7 @@ function renderListView(rows){
 function wireRowActions(host){
   $$("[data-toggle]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); toggleList(a.dataset.toggle); });
   $$("[data-log]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); openLog(a.dataset.log); });
+  $$("[data-info]",host).forEach(a=>a.onclick=(e)=>{e.preventDefault(); openInfo(a.dataset.info); });
 }
 function toggleList(id){
   const i=S.list.indexOf(id);
